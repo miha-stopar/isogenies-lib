@@ -130,7 +130,8 @@ macro_rules! define_ec_helpers {
         /// E[m] is isomorphic to Z_m x Z_m, let's denote P and Q the generators of E[m].
         /// If we know how the endomorphism maps the generators P and Q,
         /// we can construct a 2x2 matrix that corresponds to the endomorphism on E[m].
-        /// This function applies the matrix to the point R = P + Q = k * P0 + l * Q0.
+        /// This function applies the endomorphism gamma to the points P = k * P0, Q = l * Q0.
+        /// It returns gamma(P), gamma(Q), gamma(P - Q).
         pub fn apply_endomorphism_on_torsion_group(curve: &Curve, coord: Matrix<Integer>, imprim: Integer, torsion: Integer, mat2: Matrix<Integer>, mat3: Matrix<Integer>, mat4: Matrix<Integer>, P: &Point, Q: &Point) -> (Point, Point, Point) {
             /*
             M = |mat00 mat10|

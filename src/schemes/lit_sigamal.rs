@@ -61,11 +61,13 @@ macro_rules! define_litsigamal {
                 // Randomize Qa
                 // Qa = a1 * Pa + a2 * Qa
                 // TODO: use dblmul
+                /*
                 let mut bytes = big_to_bytes(a1);
                 let a1Pa = self.curve.mul(&Pa, &bytes, bytes.len() * 8);
                 bytes = big_to_bytes(a2);
                 let a2Qa = self.curve.mul(&Qa, &bytes, bytes.len() * 8);
-                Qa = self.curve.add(&a1Pa, &a2Qa);
+                let Qa_rand = self.curve.add(&a1Pa, &a2Qa);
+                */
 
                 let mut c1: Integer;
                 let mut c2: Integer;
@@ -84,11 +86,13 @@ macro_rules! define_litsigamal {
                 }
                 // Pc = c1 * Pc + c2 * Qc
                 // TODO: use dblmul
-                bytes = big_to_bytes(c1);
+                /*
+                let mut bytes = big_to_bytes(c1);
                 let c1Pc = self.curve.mul(&Pc, &bytes, bytes.len() * 8);
                 bytes = big_to_bytes(c2);
                 let c2Qc = self.curve.mul(&Qc, &bytes, bytes.len() * 8);
                 Pc = self.curve.add(&c1Pc, &c2Qc);
+                */
 
                 // N = (l_a**(2*a) - n**2) * l_b**b
                 let tau = l_a.big().pow(power_a * 2) - self.n * self.n;
@@ -101,12 +105,7 @@ macro_rules! define_litsigamal {
                 // let gamma = QuatAlgEl::new("2011185045392199242481466685241103431236289913375605487988529329864805134553257030694326259418924424563378327667027885353428994775042308664556073155839862".big(), "10853501034135357035889336862977087605953185135487653652185963537341394638859475493620188339725879895509904749276277210794053785439623299471028262804950610".big(), "-10310443381405150524300858171174973139".big(), "-5988292950171597878820895074482233260".big(), 2.big(), qa.clone());
                 // let gamma = QuatAlgEl::new("8".big(), "4".big(), "6".big(), "2".big(), 2.big(), qa.clone());
 
-                // let gamma = QuatAlgEl::new("2011185045392199242481466685241103431236289913375605487988529329864805134553257030694326259418924424563378327667027885353428994775042308664556073155839862".big(), "10853501034135357035889336862977087605953185135487653652185963537341394638859475493620188339725879895509904749276277210794053785439623299471028262804950610".big(), "-10310443381405150524300858171174973139".big(), "-5988292950171597878820895074482233260".big(), 2.big(), qa.clone());
-
-                let gamma = QuatAlgEl::new("12438122981279082530580154370455515949426546571783775599841409735688020657743566670317349247383366128276797224590897687418693932406293124037751296924501724".big(), "33421844375087071646780030668302789396979173001517474713223550355563704785253646650376906179723303183092207272674743906841643325724028906856886927071952077".big(), "118287257238515240750857735462690960763".big(), "12842514859574082180489774512612831798".big(), 1.big(), qa.clone());
-                // let gamma = QuatAlgEl::new("12438122981279082530580154370455515949426546571783775599841409735688020657743566670317349247383366128276797224590897687418693932406293124037751296924501724".big(), "0".big(), "0".big(), "0".big(), 1.big(), qa.clone());
-                // let gamma = QuatAlgEl::new("12438122981279082530580154370455515949426546571783775599841409735688020657743566670317349247383366128276797224590897687418693932406293124037751296924501724".big(), "33421844375087071646780030668302789396979173001517474713223550355563704785253646650376906179723303183092207272674743906841643325724028906856886927071952077".big(), "0".big(), "0".big(), 1.big(), qa.clone());
-
+                let gamma = QuatAlgEl::new("8425099297649819352166379388758583438269420404259906871066684285709655835562922681747598532398853172000034459777928781756277965902285271705188053172406860".big(), "10672475422448534529312519343800163927437511879170590252915490695777092409588869040995562812407263134190749362059361293778411214787787911660929131931909741".big(), "7138531157822206556546664362792862977".big(), "6507363534081204197854356661058574173".big(), 1.big(), qa.clone());
                 
                 println!("");
                 println!("");
@@ -124,10 +123,29 @@ macro_rules! define_litsigamal {
                 println!("");
 
                 let torsion = l_a.big().pow(power_a);
-                let (Pa_new, Qa_new, PmQa_new) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion, mat2_2, mat2_3, mat2_4, &Pa, &Qa);
+                let (Pa_gamma, Qa_gamma, PmQa_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion, mat2_2, mat2_3, mat2_4, &Pa, &Qa);
+                // let (Pa_gamma1, Qa_gamma, PmQa_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion, mat2_2, mat2_3, mat2_4, &a1Pa, &a2Qa);
+                // let Pa_gamma = self.curve.add(&Pa_gamma1, &Qa_gamma);
+
+                //
+                let mut bytes = big_to_bytes(a1);
+                let a1Pa = self.curve.mul(&Pa_gamma, &bytes, bytes.len() * 8);
+                bytes = big_to_bytes(a2);
+                let a2Qa = self.curve.mul(&Qa_gamma, &bytes, bytes.len() * 8);
+                let Qa_rand_gamma = self.curve.add(&a1Pa, &a2Qa);
 
                 let torsion = l_b.big().pow(power_b);
-                let (Pb_new, Qb_new, PmQb_new) = apply_endomorphism_on_torsion_group(&self.curve, coord, imprim, torsion, mat3_2, mat3_3, mat3_4, &Pb, &Qb);
+                let (Pb_gamma, Qb_gamma, PmQb_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion, mat3_2, mat3_3, mat3_4, &Pb, &Qb);
+
+                let torsion = l_c.big().pow(power_c);
+                let (Pc_gamma, Qc_gamma, PmQc_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord, imprim, torsion, mat5_2, mat5_3, mat5_4, &Pc, &Qc);
+
+                let mut bytes = big_to_bytes(c1);
+                let c1Pc = self.curve.mul(&Pc_gamma, &bytes, bytes.len() * 8);
+                bytes = big_to_bytes(c2);
+                let c2Qc = self.curve.mul(&Qc_gamma, &bytes, bytes.len() * 8);
+                let Pc_rand_gamma = self.curve.add(&c1Pc, &c2Qc);
+
 
                 println!("Pb X: {}", Pb.X / Pb.Z);
                 println!("");
@@ -144,23 +162,66 @@ macro_rules! define_litsigamal {
 
                 println!("");
                 println!("");
+
+                println!("Pa X: {}", Pa.X / Pa.Z);
+                println!("");
+                println!("Pa Y: {}", Pa.Y / Pa.Z);
+                println!("");
                 println!("");
 
-
-                println!("Pb_new X: {}", Pb_new.X / Pb_new.Z);
+                println!("Qa X: {}", Qa.X / Qa.Z);
                 println!("");
-                println!("Pb_new Y: {}", Pb_new.Y / Pb_new.Z);
+                println!("Qa Y: {}", Qa.Y / Qa.Z);
                 println!("");
-
-                println!("Qb_new X: {}", Qb_new.X / Qb_new.Z);
-                println!("");
-                println!("Qb_new Y: {}", Qb_new.Y / Qb_new.Z);
                 println!("");
 
+                println!("Pc X: {}", Pc.X / Pc.Z);
+                println!("");
+                println!("Pc Y: {}", Pc.Y / Pc.Z);
+                println!("");
+                println!("");
 
-                let dlog1 = ec_lit::dlog_3(&self.curve, &Pb_new, &Qb_new, 162);
-                let dlog2 = ec_lit::dlog_3(&self.curve, &Qb_new, &Pb_new, 162);
-                
+                println!("Qc X: {}", Qc.X / Qc.Z);
+                println!("");
+                println!("Qc Y: {}", Qc.Y / Qc.Z);
+                println!("");
+                println!("");
+
+                println!("========================");
+
+
+                println!("Pb_gamma X: {}", Pb_gamma.X / Pb_gamma.Z);
+                println!("");
+                println!("Pb_gamma Y: {}", Pb_gamma.Y / Pb_gamma.Z);
+                println!("");
+
+                println!("Qb_gamma X: {}", Qb_gamma.X / Qb_gamma.Z);
+                println!("");
+                println!("Qb_gamma Y: {}", Qb_gamma.Y / Qb_gamma.Z);
+                println!("");
+
+                println!("");
+
+                println!("Pa_gamma X: {}", Pa_gamma.X / Pa_gamma.Z);
+                println!("");
+                println!("Pa_gamma Y: {}", Pa_gamma.Y / Pa_gamma.Z);
+                println!("");
+
+                println!("Qa_rand_gamma X: {}", Qa_rand_gamma.X / Qa_rand_gamma.Z);
+                println!("");
+                println!("Qa_rand_gamma Y: {}", Qa_rand_gamma.Y / Qa_rand_gamma.Z);
+                println!("");
+
+                println!("");
+
+                println!("Pc_rand_gamma X: {}", Pc_rand_gamma.X / Pc_rand_gamma.Z);
+                println!("");
+                println!("Pc_rand_gamma Y: {}", Pc_rand_gamma.Y / Pc_rand_gamma.Z);
+                println!("");
+ 
+                let dlog1 = ec_lit::dlog_3(&self.curve, &Pb_gamma, &Qb_gamma, 162);
+                let dlog2 = ec_lit::dlog_3(&self.curve, &Qb_gamma, &Pb_gamma, 162);
+ 
                 println!("dlog1: {}", dlog1);
                 println!("");
                 println!("dlog2: {}", dlog2);
@@ -169,16 +230,40 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("");
 
-                /*
-                println!("====== mapped =======");
+                // TODO: set [2^a]Pa_gamma = (1,*)
+
+                bytes = big_to_bytes(dlog2); // TODO
+                let dlog_Qb = self.curve.mul(&Qb, &bytes, bytes.len() * 8);
+                let kernel1 = self.curve.sub(&Pb, &dlog_Qb); // TODO: PointX directly
+
+                let kernel1x = PointX::new_xz(&kernel1.X, &kernel1.Z);
+
+                println!("kernel1 X: {}", kernel1.X / kernel1.Z);
                 println!("");
-                println!("{}", Pa_new.X / Pa_new.Z);
+                println!("kernel Y: {}", kernel1.Y / kernel1.Z);
                 println!("");
 
+                // TODO 
+                let n = 36;
+
+                // Precomputed with strategy.py
+                let strategy: [usize; 35] = [21, 14, 5, 3, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
+
+                // endomorphism gamma is of order (l_a**(2*a) - n**2) * l_b**b
+                // let's take the isogeny gamma1 with kernel: ker(gamma) \cap E[l_b**b]
+
+                // TODO: eval_points are [Pa, Qa, R]
+
+                // TODO: remove, just for testing, instead use the kernel of 
+                let eval_points = [PaX, QaX]; 
+                let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &kernel1x, &eval_points, n, &strategy);
+
                 println!("");
-                println!("{}", Pa_new.Y / Pa_new.Z);
                 println!("");
-                */
+                println!("");
+                println!("codomain: {}", codomain);
+                println!("");
+
 
                 /*
                 println!("{}", Qa_new);
@@ -205,22 +290,6 @@ macro_rules! define_litsigamal {
 
                 E1                                                            E
                 */
-
-                // TODO 
-                let n = 36;
-
-                // Precomputed with strategy.py
-                let strategy: [usize; 35] = [21, 14, 5, 3, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
-
-                // endomorphism gamma is of order (l_a**(2*a) - n**2) * l_b**b
-                // let's take the isogeny gamma1 with kernel: ker(gamma) \cap E[l_b**b]
-
-                // TODO: eval_points are [Pa, Qa, R]
-
-                // TODO: remove, just for testing, instead use the kernel of 
-                let eval_points = [PaX, QaX]; 
-                let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &PbX, &eval_points, n, &strategy);
-
 
             }
 
