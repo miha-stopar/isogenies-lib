@@ -1,0 +1,899 @@
+#![allow(non_snake_case)]
+#![allow(non_upper_case_globals)]
+
+pub mod Fp117 {
+    const N: usize = 2;
+    const WIN_LEN: usize = 5;
+    const BITLEN: usize = 117;
+    const MODULUS: [u64; N] = [0xFFFFFFFFFFFFFFFF, 0x00155FFFFFFFFFFF];
+    const HALF_MODULUS: [u64; N] = [0x0000000000000000, 0x000AB00000000000];
+    const R_VAL: [u64; N] = [0x0000000000000BFA, 0x0000400000000000];
+    const MINUS_R_VAL: [u64; N] = [0xFFFFFFFFFFFFF405, 0x00151FFFFFFFFFFF];
+    const DR_VAL: [u64; N] = [0x00000000000017F4, 0x0000800000000000];
+    const TR_VAL: [u64; N] = [0x00000000000023EE, 0x0000C00000000000];
+    const QR_VAL: [u64; N] = [0x0000000000002FE8, 0x0001000000000000];
+    const R2_VAL: [u64; N] = [0xFA02FE80C02FA053, 0x001060BFA02FE80B];
+    const P0I: u64 = 1;
+    const TFIXDIV_VAL: [u64; N] = [0xD1CF38F4EBFF31E9, 0x0001B8E0C1722796];
+    const TDEC_VAL: [u64; N] = [0x02FE80BFA02FE80B, 0x0014E00000000BFA];
+    const SQRT_EH: [u8; 2] = [12, 21];
+    const SQRT_EL: usize = 21;
+    const FOURTH_ROOT_EH: [u8; 2] = [22, 10];
+    const FOURTH_ROOT_EL: usize = 21;
+    const P1: u64 = 2868903935;
+    const P1DIV_M: u64 = 9169434198312072418;
+
+    crate::finitefield::fp_gen::define_fp_core! {}
+
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp_gen::define_fp_tests! {}
+    }
+}
+
+pub mod Fp117Ext {
+    use super::Fp117::Fp;
+    const NQR_RE: Fp = Fp::new([0xB02349AC7D8B6CF2, 0x00006E1B649F9ECF]);
+
+    crate::finitefield::fp2_gen::define_fp2_core! {}
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp2_gen::define_fp2_tests! {}
+    }
+}
+
+pub mod Fp214 {
+    const N: usize = 4;
+    const WIN_LEN: usize = 5;
+    const BITLEN: usize = 214;
+    const MODULUS: [u64; N] = [
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0x000000000020FFFF,
+    ];
+    const HALF_MODULUS: [u64; N] = [
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000108000,
+    ];
+    const R_VAL: [u64; N] = [
+        0x000007C1F07C1F07,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000190000,
+    ];
+    const MINUS_R_VAL: [u64; N] = [
+        0xFFFFF83E0F83E0F8,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0x000000000007FFFF,
+    ];
+    const DR_VAL: [u64; N] = [
+        0x00000F83E0F83E0F,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000110000,
+    ];
+    const TR_VAL: [u64; N] = [
+        0x00001745D1745D17,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000090000,
+    ];
+    const QR_VAL: [u64; N] = [
+        0x00001F07C1F07C1F,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000010000,
+    ];
+    const R2_VAL: [u64; N] = [
+        0x4E841D265156460D,
+        0xF07C1F07C22CAA32,
+        0x1F07C1F07C1F07C1,
+        0x000000000014F07C,
+    ];
+    const P0I: u64 = 1;
+    const TFIXDIV_VAL: [u64; N] = [
+        0xE191A61CEBD9D188,
+        0x5152A05A0AC1B0AB,
+        0xD62F41FFFC5A4C68,
+        0x00000000000FCDAD,
+    ];
+    const TDEC_VAL: [u64; N] = [
+        0xF07C1F07C22CAA32,
+        0x1F07C1F07C1F07C1,
+        0xC1F07C1F07C1F07C,
+        0x00000000000A1F07,
+    ];
+    const SQRT_EH: [u8; 2] = [2, 2];
+    const SQRT_EL: usize = 41;
+    const FOURTH_ROOT_EH: [u8; 2] = [1, 1];
+    const FOURTH_ROOT_EL: usize = 41;
+    const P1: u64 = 2214592511;
+    const P1DIV_M: u64 = 17328759600548262035;
+
+    crate::finitefield::fp_gen::define_fp_core! {}
+
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp_gen::define_fp_tests! {}
+    }
+}
+
+pub mod Fp214Ext {
+    use super::Fp214::Fp;
+    const NQR_RE: Fp = Fp::new([
+        0x3D11618D8905DA42,
+        0xD18F2B1A8884F443,
+        0xF8076F8328125C4D,
+        0x000000000016FB92,
+    ]);
+
+    crate::finitefield::fp2_gen::define_fp2_core! {}
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp2_gen::define_fp2_tests! {}
+    }
+}
+
+pub mod Fp509 {
+    const N: usize = 8;
+    const WIN_LEN: usize = 5;
+    const BITLEN: usize = 509;
+    const MODULUS: [u64; N] = [
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0x107FFFFFFFFFFFFF,
+    ];
+    const HALF_MODULUS: [u64; N] = [
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0840000000000000,
+    ];
+    const R_VAL: [u64; N] = [
+        0x000000000000000F,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0880000000000000,
+    ];
+    const MINUS_R_VAL: [u64; N] = [
+        0xFFFFFFFFFFFFFFF0,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0x07FFFFFFFFFFFFFF,
+    ];
+    const DR_VAL: [u64; N] = [
+        0x000000000000001F,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0080000000000000,
+    ];
+    const TR_VAL: [u64; N] = [
+        0x000000000000002E,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0900000000000000,
+    ];
+    const QR_VAL: [u64; N] = [
+        0x000000000000003E,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0100000000000000,
+    ];
+    const R2_VAL: [u64; N] = [
+        0xE0F83E0F83E0F92E,
+        0x3E0F83E0F83E0F83,
+        0x83E0F83E0F83E0F8,
+        0xF83E0F83E0F83E0F,
+        0x0F83E0F83E0F83E0,
+        0xE0F83E0F83E0F83E,
+        0x3E0F83E0F83E0F83,
+        0x0CE0F83E0F83E0F8,
+    ];
+    const P0I: u64 = 1;
+    const TFIXDIV_VAL: [u64; N] = [
+        0x33C62F5F2E7B71D7,
+        0xF3311A525595291C,
+        0x451B17497727F4C5,
+        0x5CDEBD71C54997FB,
+        0xFBF9A5511DBDADF3,
+        0x94DC847854DB2654,
+        0xCC2B39D273AC32BF,
+        0x015944E461C393EB,
+    ];
+    const TDEC_VAL: [u64; N] = [
+        0x3E0F83E0F83E0F83,
+        0x83E0F83E0F83E0F8,
+        0xF83E0F83E0F83E0F,
+        0x0F83E0F83E0F83E0,
+        0xE0F83E0F83E0F83E,
+        0x3E0F83E0F83E0F83,
+        0x83E0F83E0F83E0F8,
+        0x0E8000000000000F,
+    ];
+    const SQRT_EH: [u8; 2] = [2, 2];
+    const SQRT_EL: usize = 100;
+    const FOURTH_ROOT_EH: [u8; 2] = [1, 1];
+    const FOURTH_ROOT_EL: usize = 100;
+    const P1: u64 = 2214592511;
+    const P1DIV_M: u64 = 17328759600548262035;
+
+    crate::finitefield::fp_gen::define_fp_core! {}
+
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp_gen::define_fp_tests! {}
+    }
+}
+
+pub mod Fp509Ext {
+    use super::Fp509::Fp;
+    const NQR_RE: Fp = Fp::new([
+        0x657B1D5619957F90,
+        0x7DC7D38596BB85C0,
+        0x25E8365868E98865,
+        0xF66F7F244671316B,
+        0x1165CB8A00AE5B59,
+        0x6AC9A5C6CD182171,
+        0x1DACDC54AE08C8A3,
+        0x0DBE2F9586713665,
+    ]);
+
+    crate::finitefield::fp2_gen::define_fp2_core! {}
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp2_gen::define_fp2_tests! {}
+    }
+}
+
+pub mod Fp1757 {
+    const N: usize = 28;
+    const WIN_LEN: usize = 5;
+    const BITLEN: usize = 1757;
+    const MODULUS: [u64; N] = [
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0x0000000013FFFFFF,
+    ];
+    const HALF_MODULUS: [u64; N] = [
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x000000000A000000,
+    ];
+    const R_VAL: [u64; N] = [
+        0x0000000CCCCCCCCC,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000010000000,
+    ];
+    const MINUS_R_VAL: [u64; N] = [
+        0xFFFFFFF333333333,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0x0000000003FFFFFF,
+    ];
+    const DR_VAL: [u64; N] = [
+        0x0000001999999999,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x000000000C000000,
+    ];
+    const TR_VAL: [u64; N] = [
+        0x0000002666666666,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000008000000,
+    ];
+    const QR_VAL: [u64; N] = [
+        0x0000003333333333,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000004000000,
+    ];
+    const R2_VAL: [u64; N] = [
+        0xA3D70A3D70A3D70A,
+        0xCCCCCCCCCCCCCD70,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0x0000000004CCCCCC,
+    ];
+    const P0I: u64 = 1;
+    const TFIXDIV_VAL: [u64; N] = [
+        0xBCD35A858793DD97,
+        0xDFA43FE5C91D14E3,
+        0xF837B4A2339C0EBE,
+        0xA027525460AA64C2,
+        0xAC083126E9E1B089,
+        0x978D4FDF3B645A1C,
+        0xB645A1CAC083126E,
+        0x083126E978D4FDF3,
+        0x8D4FDF3B645A1CAC,
+        0x45A1CAC083126E97,
+        0x3126E978D4FDF3B6,
+        0x4FDF3B645A1CAC08,
+        0xA1CAC083126E978D,
+        0x26E978D4FDF3B645,
+        0xDF3B645A1CAC0831,
+        0xCAC083126E978D4F,
+        0xE978D4FDF3B645A1,
+        0x3B645A1CAC083126,
+        0xC083126E978D4FDF,
+        0x78D4FDF3B645A1CA,
+        0x645A1CAC083126E9,
+        0x83126E978D4FDF3B,
+        0xD4FDF3B645A1CAC0,
+        0x5A1CAC083126E978,
+        0x126E978D4FDF3B64,
+        0xFDF3B645A1CAC083,
+        0x1CAC083126E978D4,
+        0x00000000133B645A,
+    ];
+    const TDEC_VAL: [u64; N] = [
+        0xCCCCCCCCCCCCCD70,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0xCCCCCCCCCCCCCCCC,
+        0x000000000CCCCCCC,
+    ];
+    const SQRT_EH: [u8; 1] = [20];
+    const SQRT_EL: usize = 350;
+    const FOURTH_ROOT_EH: [u8; 1] = [10];
+    const FOURTH_ROOT_EL: usize = 350;
+    const P1: u64 = 2684354559;
+    const P1DIV_M: u64 = 11068046455220847252;
+
+    crate::finitefield::fp_gen::define_fp_core! {}
+
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp_gen::define_fp_tests! {}
+    }
+}
+
+pub mod Fp1757Ext {
+    use super::Fp1757::Fp;
+    const NQR_RE: Fp = Fp::new([
+        0xE3D14C4EF997CFF5,
+        0x905772A763118DB8,
+        0x5A418E76C791139A,
+        0xEFD60FF36E61C3E7,
+        0x87454F5BD311031E,
+        0xB806F20E6C01F9DA,
+        0x40164FB3ABC89C43,
+        0x79D1E908988D59B4,
+        0xA517BD336C009B8F,
+        0x3DC34D35BC9817B7,
+        0xD7989C1C57E990A2,
+        0x399FB72360DA2866,
+        0xC9EE0E93286CDE02,
+        0xC8FE91F83AB8CC9A,
+        0x701DBBE5F62CB7F7,
+        0x2228F5D1373EEB56,
+        0x0E780CEB6AB8D54B,
+        0x845F883D73C5E4E5,
+        0x36D17C395749E5A2,
+        0xFB99DC4A3751F979,
+        0x3BE49ACA2E68B643,
+        0xCC60F6B1034322A8,
+        0xCE47CFE25D85C5DB,
+        0x7DC906EBB88D05E3,
+        0x74F3D10AAC766AB5,
+        0x0D6FF54B7D5A5397,
+        0xAF578D13FEA24B20,
+        0x000000000C416D49,
+    ]);
+
+    crate::finitefield::fp2_gen::define_fp2_core! {}
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp2_gen::define_fp2_tests! {}
+    }
+}
+
+pub mod Fp5248 {
+    const N: usize = 4;
+    const WIN_LEN: usize = 5;
+    const BITLEN: usize = 251;
+    const MODULUS: [u64; N] = [
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0x04FFFFFFFFFFFFFF,
+    ];
+    const HALF_MODULUS: [u64; N] = [
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0280000000000000,
+    ];
+    const R_VAL: [u64; N] = [
+        0x0000000000000033,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0100000000000000,
+    ];
+    const MINUS_R_VAL: [u64; N] = [
+        0xFFFFFFFFFFFFFFCC,
+        0xFFFFFFFFFFFFFFFF,
+        0xFFFFFFFFFFFFFFFF,
+        0x03FFFFFFFFFFFFFF,
+    ];
+    const DR_VAL: [u64; N] = [
+        0x0000000000000066,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0200000000000000,
+    ];
+    const TR_VAL: [u64; N] = [
+        0x0000000000000099,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0300000000000000,
+    ];
+    const QR_VAL: [u64; N] = [
+        0x00000000000000CC,
+        0x0000000000000000,
+        0x0000000000000000,
+        0x0400000000000000,
+    ];
+    const R2_VAL: [u64; N] = [
+        0x3333333333333D70,
+        0x3333333333333333,
+        0x3333333333333333,
+        0x0333333333333333,
+    ];
+    const P0I: u64 = 1;
+    const TFIXDIV_VAL: [u64; N] = [
+        0x49BA5E3BCD35A858,
+        0xF7CED916872B020C,
+        0x72B020C49BA5E353,
+        0x025E353F7CED9168,
+    ];
+    const TDEC_VAL: [u64; N] = [
+        0x3333333333333333,
+        0x3333333333333333,
+        0x3333333333333333,
+        0x0100000000000033,
+    ];
+    const SQRT_EH: [u8; 1] = [10];
+    const SQRT_EL: usize = 49;
+    const FOURTH_ROOT_EH: [u8; 1] = [5];
+    const FOURTH_ROOT_EL: usize = 49;
+    const P1: u64 = 2684354559;
+    const P1DIV_M: u64 = 11068046455220847252;
+
+    crate::finitefield::fp_gen::define_fp_core! {}
+
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp_gen::define_fp_tests! {}
+    }
+}
+
+pub mod Fp5248Ext {
+    use super::Fp5248::Fp;
+    const NQR_RE: Fp = Fp::new([
+        0x8966B696D7F56B97,
+        0x8CFCC2A86E34F828,
+        0x69BFE598FFB26E5C,
+        0x04E5BCE6BB3B7C84,
+    ]);
+
+    crate::finitefield::fp2_gen::define_fp2_core! {}
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp2_gen::define_fp2_tests! {}
+    }
+}
+
+pub mod FpLit128 {
+    const N: usize = 13;
+    const BITLEN: usize = 778;
+    const MODULUS: [u64; N] = [
+        0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xD2F9953ED2093F37, 0xD32A66EC7798CF1B, 0x7064A2C96F9B6E96, 0x90508BDB319726DB, 0xC6EB4C14E7EAFF40, 0x0C7094E1E204904C, 0x000000000000033F
+    ];
+    const HALF_MODULUS: [u64; N] = [
+        0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0xE97CCA9F69049F9C, 0x699533763BCC678D, 0xB8325164B7CDB74B, 0x482845ED98CB936D, 0x6375A60A73F57FA0, 0x86384A70F1024826, 0x000000000000019F
+    ];
+    const R_VAL: [u64; N] = [
+        0x004EDC022898EA62, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0xD274AC28DB6C9C90, 0xFCF1C17F9D5BDF2F, 0xB76E2FBC860956CC, 0xB7FFE9FA88B5B33A, 0xCCDDE587D03C6D4F, 0xFBF1E870B0187C1E, 0x00000000000000FE
+    ];
+    const MINUS_R_VAL: [u64; N] = [
+        0xFFB123FDD767159D, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0x0084E915F69CA2A7, 0xD638A56CDA3CEFEC, 0xB8F6730CE99217C9, 0xD850A1E0A8E173A0, 0xFA0D668D17AE91F0, 0x107EAC7131EC142D, 0x0000000000000240
+    ];
+    const DR_VAL: [u64; N] = [
+        0x009DB8045131D4C4, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0xA4E95851B6D93920, 0xF9E382FF3AB7BE5F, 0x6EDC5F790C12AD99, 0x6FFFD3F5116B6675, 0x99BBCB0FA078DA9F, 0xF7E3D0E16030F83D, 0x00000000000001FD
+    ];
+    const TR_VAL: [u64; N] = [
+        0x00EC940679CABF26, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x775E047A9245D5B0, 0xF6D5447ED8139D8F, 0x264A8F35921C0466, 0x27FFBDEF9A2119B0, 0x6699B09770B547EF, 0xF3D5B9521049745C, 0x00000000000002FC
+    ];
+    const QR_VAL: [u64; N] = [
+        0x013B7008A263A989, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x76D91B649BA93308, 0x209C9F11FDD6ADA3, 0x6D541C28A889EC9D, 0x4FAF1C0EF13FA60F, 0x6C8C4A0A5906B5FE, 0xE3570CE0DE5D602E, 0x00000000000000BC
+    ];
+    const R2_VAL: [u64; N] = [
+        0x42466E36AD45C3F6, 0x6CF4C0FA5E6CE5A0, 0xFE5AFF94269DAE99, 0xE2AEB9668FDEAC07, 0xCB15A0FA8F528B40, 0xCFF2AF49ADCFA14A, 0xBCF51565026DE25D, 0x4424414050F43714, 0x798C88103EE31003, 0xB6A0466BBFE33C21, 0x77DD9BA8F733C9CE, 0x7B7608E28A45BE44, 0x0000000000000170
+    ];
+    const THREE_INV_VAL: [u64; N] = [
+        0x556F9EAB62DDA376, 0x5555555555555555, 0x5555555555555555, 0x5555555555555555, 0x5555555555555555, 0x5555555555555555, 0x4626E40D9E798985, 0xA9A5EB2A89C94A65, 0x3D24BA942CADC799, 0x92AAA35382E73BBE, 0x999F4C829ABECF1A, 0xFEA5F8259008295F, 0x0000000000000054
+    ];
+    const P0I: u64 = 1;
+    const TFIXDIV_VAL: [u64; N] = [
+        0xAC755F3E16221177, 0x1B685253E5927CE1, 0xF56A1CA052714173, 0x1CBD44138FC1DE7C, 0x908F61F105A55B21, 0x30086F18285D1AAE, 0xC8DEE6129E55201A, 0x991BBF12D1B6AFFE, 0xE7CD1311EE01437D, 0xCF6B794EF6A6B73F, 0xF119482DE9A65E54, 0xB115555C42D9D94C, 0x00000000000001C0
+    ];
+    const TDEC_VAL: [u64; N] = [
+        0x6CF4C0FA5E6CE5A0, 0xFE5AFF94269DAE99, 0xE2AEB9668FDEAC07, 0xCB15A0FA8F528B40, 0xCFF2AF49ADCFA14A, 0x43C59BC6C4904A2D, 0xB71174F903BA3EFA, 0x96F452F37D803439, 0x2CB54EE4B2DC8233, 0xD164C4F30F2ECAE4, 0xDAEAA5793D868B86, 0x25D836026FA406AB, 0x00000000000000D7
+    ];
+    const WIN_LEN: usize = 5;
+    const SQRT_EH: [u8; 79] = [
+        7, 31, 9, 2, 4, 13, 31, 20, 18, 25, 23, 20, 23, 17, 7, 3, 19, 23, 3, 27, 13, 6, 21, 12, 26, 22, 20, 27, 22, 25, 23, 5, 25, 2, 5, 25, 0, 23, 13, 27, 4, 23, 12, 12, 22, 29, 5, 2, 10, 16, 4, 16, 30, 15, 21, 31, 28, 20, 0, 19, 22, 14, 3, 19, 9, 16, 4, 1, 4, 30, 16, 19, 18, 16, 3, 3, 30, 19, 1
+    ];
+    const SQRT_EL: usize = 77;
+    const FOURTH_ROOT_EH: [u8; 79] = [
+        16, 19, 31, 4, 1, 18, 22, 15, 10, 25, 28, 11, 26, 27, 24, 19, 17, 25, 27, 17, 29, 6, 19, 10, 6, 13, 11, 26, 13, 27, 28, 27, 18, 12, 17, 18, 12, 16, 27, 22, 13, 18, 11, 6, 6, 27, 30, 2, 1, 5, 8, 2, 8, 31, 23, 26, 15, 14, 10, 16, 9, 11, 23, 17, 25, 4, 8, 18, 0, 2, 15, 24, 9, 9, 24, 17, 1, 31, 25
+    ];
+    const FOURTH_ROOT_EL: usize = 76;
+    const P1: u64 = 3485670437;
+    const P1DIV_M: u64 = 4282932740617556152;
+
+    crate::finitefield::fp_gen::define_fp_core!{}
+
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp_gen::define_fp_tests!{}
+    }
+}
+
+pub mod FpLit128Ext {
+    use super::FpLit128::Fp;
+    const NQR_RE: Fp = Fp::new([
+        0x494D9497DAC41940, 0x22C250AC00A0934D, 0xEA037D1F9E340178, 0xEA5324A84CEC04E8, 0x455980F956EFC125, 0x7C9AD8D2B54F2B27, 0x25FB0436138AB599, 0x01CBCEB97E086663, 0x194196F5C4A4A629, 0x84274FCFF03471EB, 0xB1B2B03CC919B4AC, 0x4169EB4F508A699A, 0x00000000000000C2
+    ]);
+
+    const P1_N_BITLEN: usize = 387;
+    const P1_N: [u8; 49] = [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4
+    ];
+    const P1_B: usize = 386;
+
+    const P1_C_BITLEN: usize = 257;
+    const P1_C: [u8; 33] = [
+        137, 124, 219, 248, 101, 0, 108, 120, 192, 93, 208, 149, 65, 201, 193, 92, 186, 124, 152, 167, 130, 129, 253, 214, 9, 77, 139, 39, 122, 247, 182, 178, 1
+    ];
+    const P1_C_EXP: usize = 162;
+    const P1_F: u64 = 30;
+
+    const P1_DIV_N_BITLEN: usize = 392;
+    const P1_DIV_N: [u8; 49] = [
+        206, 79, 130, 180, 79, 101, 190, 244, 198, 51, 230, 29, 187, 153, 202, 180, 165, 219, 230, 91, 178, 40, 25, 220, 182, 201, 101, 204, 246, 34, 20, 36, 208, 191, 250, 57, 5, 211, 186, 49, 19, 36, 129, 120, 56, 37, 28, 195, 207
+    ];
+
+    const P1_DIV_C_BITLEN: usize = 521;
+    const P1_DIV_C: [u8; 66] = [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 120, 39, 62, 130, 75, 246, 135, 229, 15, 87, 193, 57, 103, 133, 216, 101, 233, 1
+    ];
+
+    crate::finitefield::fp2_gen::define_fp2_core! {}
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp2_gen::define_fp2_tests! {}
+    }
+}
+
+pub mod SQIsignLvl1 {
+    const N: usize = 4;
+    const WIN_LEN: usize = 5;
+    const BITLEN: usize = 254;
+    const MODULUS: [u64; N] = [
+        0xFFFFFFFFFFFFFFFF, 0x252C9E49355147FF, 0x33A6A86587407437, 0x34E29E286B95D98C
+    ];
+    const HALF_MODULUS: [u64; N] = [
+        0x0000000000000000, 0x92964F249AA8A400, 0x19D35432C3A03A1B, 0x1A714F1435CAECC6
+    ];
+    const R_VAL: [u64; N] = [
+        0x0000000000000004, 0x6B4D86DB2ABAE000, 0x31655E69E2FE2F23, 0x2C75875E51A899CF
+    ];
+    const MINUS_R_VAL: [u64; N] = [
+        0xFFFFFFFFFFFFFFFB, 0xB9DF176E0A9667FF, 0x024149FBA4424513, 0x086D16CA19ED3FBD
+    ];
+    const DR_VAL: [u64; N] = [
+        0x0000000000000009, 0xB16E6F6D20247800, 0x2F24146E3EBBEA0F, 0x2408709437BB5A12
+    ];
+    const TR_VAL: [u64; N] = [
+        0x000000000000000E, 0xF78F57FF158E1000, 0x2CE2CA729A79A4FB, 0x1B9B59CA1DCE1A55
+    ];
+    const QR_VAL: [u64; N] = [
+        0x0000000000000013, 0x3DB040910AF7A800, 0x2AA18076F6375FE8, 0x132E430003E0DA98
+    ];
+    const R2_VAL: [u64; N] = [
+        0x233625AE400674D4, 0x20AFD6C1025A1C2E, 0x30A841AB0920655D, 0x0D72E7D67C30CD3D
+    ];
+    const P0I: u64 = 1;
+    const TFIXDIV_VAL: [u64; N] = [
+        0x788877C1302C961F, 0x16A3CEC53526FC00, 0x7DB719F5274E1345, 0x103F808AA6FA6A94
+    ];
+    const TDEC_VAL: [u64; N] = [
+        0x510E9971AE49BC2E, 0x1B7CE680DEAF2CF2, 0x2F8DFCE53994D5CB, 0x07462B35A359825C
+    ];
+    const SQRT_EH: [u8; 37] = [
+        8, 10, 20, 10, 19, 4, 25, 19, 12, 9, 9, 14, 3, 26, 1, 8, 7, 12, 25, 16, 10, 19, 14, 6, 12, 12, 22, 11, 25, 21, 1, 5, 30, 20, 24, 9, 3
+    ];
+    const SQRT_EL: usize = 14;
+    const FOURTH_ROOT_EH: [u8; 37] = [
+        4, 5, 10, 21, 9, 18, 28, 9, 22, 20, 4, 23, 1, 29, 0, 20, 3, 22, 12, 8, 21, 9, 7, 3, 6, 6, 27, 21, 28, 26, 16, 2, 15, 10, 28, 20, 1
+    ];
+    const FOURTH_ROOT_EL: usize = 14;
+    const P1: u64 = 3549067425;
+    const P1DIV_M: u64 = 3876912545540035505;
+    const NQR_RE_VAL: [u64; N] = [
+        0x5A66A2185B2B5808, 0x7705ECB95CCB22EC, 0x742A73324BD4122C, 0x087C9D191E6EA304
+    ];
+
+    crate::finitefield::fp_gen::define_fp_core!{}
+
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp_gen::define_fp_tests!{}
+    }
+}
+
+pub mod SQIsignLvl1Ext {
+    use super::SQIsignLvl1::Fp;
+    const NQR_RE: Fp = Fp::new([
+        0x5A66A2185B2B5808, 0x7705ECB95CCB22EC, 0x742A73324BD4122C, 0x087C9D191E6EA304
+    ]);
+
+    crate::finitefield::fp2_gen::define_fp2_core! {}
+    #[cfg(test)]
+    mod tests {
+        crate::finitefield::fp2_gen::define_fp2_tests! {}
+    }
+}
+
