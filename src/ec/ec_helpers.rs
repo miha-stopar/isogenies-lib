@@ -8,6 +8,8 @@ macro_rules! define_ec_helpers {
         // use std::ops::Div;
         use crate::util::{big_to_bytes, bytes_from_str, Big};
         use num_traits::Pow;
+        use rand::prelude::*;
+        use rand_chacha::ChaCha20Rng;
 
         /// The m-torsion group (denoted E[m]) is a group of points P for which it holds mP = 0.
         /// E[m] is isomorphic to Z_m x Z_m, let's denote P and Q the generators of E[m].
@@ -151,76 +153,16 @@ macro_rules! define_ec_helpers {
             let mat00mat01 = &mat_bytes[4];
             let mat10mat11 = &mat_bytes[5];
 
-            /*
-            TODO
-            println!("++");
-            println!("P");
-            println!("{}", P.X / P.Z);
-            println!("");
-            println!("{}", P.Y);
-            println!("");
-
-            println!("++");
-            println!("Q");
-            println!("{}", Q.X / Q.Z);
-            println!("");
-            println!("{}", Q.Y);
-            println!("");
-            */
-
             let P_new1 = curve.mul(P, &mat00, mat00.len() * 8);
             let P_new2 = curve.mul(Q, &mat10, mat10.len() * 8);
-
-            println!("");
-            println!("");
-            println!("mat10: {:?}", mat10);
-            println!("");
-            println!("P_new2: {}", P_new2);
-            println!("");
-
             // mat00 * P + mat10 * Q
             let P_new = curve.add(&P_new1, &P_new2);
 
-            /*
-            println!("");
-            println!("mat00: {:?}", mat00);
-            println!("mat00 len: {}", mat00.len());
-            println!("P_new1");
-            println!("{}", P_new1.X / P_new1.Z);
-            println!("");
-
-            // let P_new2 = P_new2.neg();
-
-            println!("");
-            println!("mat10: {:?}", mat10);
-            println!("mat10 len: {}", mat10.len());
-            println!("P_new2");
-            println!("{}", P_new2.X / P_new2.Z);
-            println!("");
-            println!("{}", P_new2.Y / P_new2.Z);
-            println!("");
-
-            println!("");
-            println!("P_new");
-            println!("{}", P_new.X / P_new.Z);
-            println!("");
-            println!("{}", P_new.Y / P_new.Z);
-            println!("");
-            */
-
             let Q_new1 = curve.mul(&P, &mat01, mat01.len() * 8);
-
             let Q_new2 = curve.mul(&Q, &mat11, mat11.len() * 8);
             // mat01 * P + mat11 * Q
             let Q_new = curve.add(&Q_new1, &Q_new2);
             
-            /*
-            println!("");
-            println!("Q_new");
-            println!("{}", Q_new);
-            println!("");
-            */
-
             let PmQ_new1 = curve.mul(P, &mat00mat01, mat00mat01.len() * 8);
             let PmQ_new2 = curve.mul(Q, &mat10mat11, mat10mat11.len() * 8);
             // (mat00 * P + mat10 * Q) - (mat10 * P + mat11 * Q) = (mat00 - mat10) * P + (mat10 - mat11) * Q
@@ -228,6 +170,51 @@ macro_rules! define_ec_helpers {
 
             // TODO: replace with xdblmul
             (P_new, Q_new, PmQ_new)
+        }
+
+        pub fn generate_random_fp(curve: &Curve, order: Integer, f: Integer) -> Point {
+            // p + 1 = order * f
+            let mut rng = ChaCha20Rng::from_entropy();
+            let mut X: Fp;
+            let mut P: Point;
+            let f_bytes = big_to_bytes(f);
+
+            loop {
+                X = Fp::rand(&mut rng);
+                let FqX = Fq::new(&X, &Fp::ZERO);
+                let Pxz = PointX::new_xz(&FqX, &Fq::ONE);
+                let (Px, _) = curve.complete_pointX(&Pxz); // TODO
+                P = curve.mul(&Px, &f_bytes, f_bytes.len() * 8);
+
+                let bytes = big_to_bytes(order.clone() - 1);
+                let Q = curve.mul(&P, &bytes, bytes.len() * 8);
+
+                if Q.isinfinity() == 0x00000000 {
+                    return P
+                }
+            }
+        }
+
+        pub fn generate_random_fq(curve: &Curve, order: Integer, f: Integer) -> Point {
+            // p + 1 = order * f
+            let mut rng = ChaCha20Rng::from_entropy();
+            let mut X: Fq;
+            let mut P: Point;
+            let f_bytes = big_to_bytes(f);
+
+            loop {
+                X = Fq::rand(&mut rng);
+                let Pxz = PointX::new_xz(&X, &Fq::ONE);
+                let (Px, _) = curve.complete_pointX(&Pxz); // TODO
+                P = curve.mul(&Px, &f_bytes, f_bytes.len() * 8);
+
+                let bytes = big_to_bytes(order.clone() - 1);
+                let Q = curve.mul(&P, &bytes, bytes.len() * 8);
+
+                if Q.isinfinity() == 0x00000000 {
+                    return P
+                }
+            }
         }
 
         pub fn is_jac_equal(P: &Point, Q: &Point) -> bool {

@@ -6,18 +6,53 @@ macro_rules! define_litsigamal {
         use crate::util::{generate_random_range};
         use crate::ec_lit;
 
+        pub fn get_params(lam: u32) -> (u32, u32, u32, u32) {
+            let a = lam * 3;
+            let b: u32;
+            let c: u32;
+            let f: u32;
+
+            if lam == 128 {
+                b = 162;
+                c = 56;
+                f = 30;
+            } else if lam == 192 {
+                b = 243;
+                c = 83;
+                f = 118;
+            } else if lam == 256 {
+                b = 324;
+                c = 111;
+                f = 436;
+            } else {
+                panic!("lam should be 128 or 192 or 256");
+            }
+
+            (a, b, c, f)
+        }
+
         /// LITSiGamal struct
         #[derive(Clone, Debug)]
         pub struct LITSiGamal {
             curve: Curve,
             p: Integer,
+            l_a: u32,
+            l_b: u32,
+            l_c: u32,
+            a: u32,
+            b: u32,
+            c: u32,
+            f: u32,
+            scalar_without_b: Integer, // p + 1 = scalar_without_b * l_b**b
             n: u32,
         }
 
         impl LITSiGamal {
-            pub fn new(curve: Curve, p: Integer, n: u32) -> Self {
+            pub fn new(curve: Curve, p: Integer, l_a: u32, l_b: u32, l_c: u32, a: u32, b: u32, c: u32, f: u32, n: u32) -> Self {
+                let scalar_without_b = l_a.big().pow(a + 2) * l_c.big().pow(c) * f;
+
                 Self {
-                    curve, p, n
+                    curve, p, l_a, l_b, l_c, a, b, c, f, scalar_without_b, n
                 }
             }
 
@@ -122,10 +157,8 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("");
 
-                let torsion = l_a.big().pow(power_a);
-                let (Pa_gamma, Qa_gamma, PmQa_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion, mat2_2, mat2_3, mat2_4, &Pa, &Qa);
-                // let (Pa_gamma1, Qa_gamma, PmQa_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion, mat2_2, mat2_3, mat2_4, &a1Pa, &a2Qa);
-                // let Pa_gamma = self.curve.add(&Pa_gamma1, &Qa_gamma);
+                let torsion_a = l_a.big().pow(power_a);
+                let (Pa_gamma, Qa_gamma, PmQa_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion_a, mat2_2, mat2_3, mat2_4, &Pa, &Qa);
 
                 //
                 let mut bytes = big_to_bytes(a1);
@@ -134,17 +167,19 @@ macro_rules! define_litsigamal {
                 let a2Qa = self.curve.mul(&Qa_gamma, &bytes, bytes.len() * 8);
                 let Qa_rand_gamma = self.curve.add(&a1Pa, &a2Qa);
 
-                let torsion = l_b.big().pow(power_b);
-                let (Pb_gamma, Qb_gamma, PmQb_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion, mat3_2, mat3_3, mat3_4, &Pb, &Qb);
+                let torsion_b = l_b.big().pow(power_b);
+                let (Pb_gamma, Qb_gamma, PmQb_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion_b.clone(), mat3_2, mat3_3, mat3_4, &Pb, &Qb);
 
-                let torsion = l_c.big().pow(power_c);
-                let (Pc_gamma, Qc_gamma, PmQc_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord, imprim, torsion, mat5_2, mat5_3, mat5_4, &Pc, &Qc);
+                let torsion_c = l_c.big().pow(power_c);
+                let (Pc_gamma, Qc_gamma, PmQc_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord, imprim, torsion_c, mat5_2, mat5_3, mat5_4, &Pc, &Qc);
 
                 let mut bytes = big_to_bytes(c1);
                 let c1Pc = self.curve.mul(&Pc_gamma, &bytes, bytes.len() * 8);
                 bytes = big_to_bytes(c2);
                 let c2Qc = self.curve.mul(&Qc_gamma, &bytes, bytes.len() * 8);
-                let Pc_rand_gamma = self.curve.add(&c1Pc, &c2Qc);
+                let R = self.curve.add(&c1Pc, &c2Qc);
+
+                let Rx = PointX::new_xz(&R.X, &R.Z);
 
 
                 println!("Pb X: {}", Pb.X / Pb.Z);
@@ -158,7 +193,6 @@ macro_rules! define_litsigamal {
                 println!("Qb Y: {}", Qb.Y / Qb.Z);
                 println!("");
                 println!("");
-
 
                 println!("");
                 println!("");
@@ -214,9 +248,9 @@ macro_rules! define_litsigamal {
 
                 println!("");
 
-                println!("Pc_rand_gamma X: {}", Pc_rand_gamma.X / Pc_rand_gamma.Z);
+                println!("R X: {}", R.X / R.Z);
                 println!("");
-                println!("Pc_rand_gamma Y: {}", Pc_rand_gamma.Y / Pc_rand_gamma.Z);
+                println!("R Y: {}", R.Y / R.Z);
                 println!("");
  
                 let dlog1 = ec_lit::dlog_3(&self.curve, &Pb_gamma, &Qb_gamma, 162);
@@ -255,14 +289,44 @@ macro_rules! define_litsigamal {
                 // TODO: eval_points are [Pa, Qa, R]
 
                 // TODO: remove, just for testing, instead use the kernel of 
-                let eval_points = [PaX, QaX]; 
+                let eval_points = [PaX, QaX, Rx]; 
                 let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &kernel1x, &eval_points, n, &strategy);
+
+                /*
+                40462640216449207672168992988623511775336924066853855274546745222615865684900642222898108382455842618365117964778639196177347207085357604725664385427796579295592436532010871949667738164957851517164788313374798288498756871920103663953*sqrtminus
+                + 970541812902597247581586118962672018735900274268797204095167395803112287493471491598698090128841200813831380874652397438640565161195302840313904161390870177508026650386592721124672238490254317774184133590356799364984120716582941706095
+
+                1249722545006266441120006262083514632766815889237780158930324325671112785250730980429928525004234781246451849490611409020519930843445073584072794696443427504458825306819336321611899670903300187189923829452476229237796629934363670095154*sqrtminus
+                + 220835060888732177714055873396130338211426525716735667126531717994944550825260327261201226324233211400965520569038349098555557429025991989295434705054844308790847237100964246142971652968315021176800459089181506969495264032362279571665
+                */
+
+                /*
+                let Px = Fq::new(
+                    &Fp::decode_reduce(&bytes_from_str("970541812902597247581586118962672018735900274268797204095167395803112287493471491598698090128841200813831380874652397438640565161195302840313904161390870177508026650386592721124672238490254317774184133590356799364984120716582941706095")),
+                    &Fp::decode_reduce(&bytes_from_str("40462640216449207672168992988623511775336924066853855274546745222615865684900642222898108382455842618365117964778639196177347207085357604725664385427796579295592436532010871949667738164957851517164788313374798288498756871920103663953")),
+                );
+                let Pz = Fq::new(
+                    &Fp::decode_reduce(&bytes_from_str("1249722545006266441120006262083514632766815889237780158930324325671112785250730980429928525004234781246451849490611409020519930843445073584072794696443427504458825306819336321611899670903300187189923829452476229237796629934363670095154")),
+                    &Fp::decode_reduce(&bytes_from_str("220835060888732177714055873396130338211426525716735667126531717994944550825260327261201226324233211400965520569038349098555557429025991989295434705054844308790847237100964246142971652968315021176800459089181506969495264032362279571665")),
+                );
+               
+                let FF = PointX::new_xz(&Px, &Pz);
+                let (A24_plus, A24_minus, K1, K2) = three_isogeny_codomain(&FF);
+                let A = &(&A24_plus + A24_minus).mul2() / &(&A24_plus - &A24_minus);
+
+                let codomain = Curve::new(&A);
 
                 println!("");
                 println!("");
                 println!("");
                 println!("codomain: {}", codomain);
                 println!("");
+                println!("A24_plus: {}", A24_plus);
+                println!("");
+
+                println!("A24_minus: {}", A24_minus);
+                println!("");
+                */
 
 
                 /*
@@ -290,6 +354,9 @@ macro_rules! define_litsigamal {
 
                 E1                                                            E
                 */
+
+                let Pbr = generate_random_fp(&self.curve, torsion_b.clone(), self.scalar_without_b.clone());
+                let Qbr = generate_random_fq(&self.curve, torsion_b, self.scalar_without_b.clone());
 
             }
 
