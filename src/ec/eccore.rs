@@ -1052,28 +1052,48 @@ macro_rules! define_ec_core {
 
         /// Given a point P = (XP : ZP) of order 3, computes the
         /// 3-isogeny codomain with coefficient A represented as
-        /// (A + 2) / 4 and (A - 2) / 4 along with constants K1, K2
-        /// used for computing images
+        /// (A + 2C) / 4C (where A24 = A + 2C, C24 = 4C)
+        /// along with constants K1, K2 used for computing images
         #[inline]
         pub fn three_isogeny_codomain(P: &PointX) -> (Fq, Fq, Fq, Fq) {
             let K1 = &P.X - &P.Z;
-            let t0 = K1.square();
             let K2 = &P.X + &P.Z;
-            let t1 = K2.square();
+            let R1 = K1.square();
+            let R2 = K2.square();
+
+            let mut R3 = R2 + R1;
+            let mut R4 = K1 + K2;
+            R4 = R4.square();
+            R4 = R4 - R3;
+            R3 = R4 + R2;
+            R4 = R4 + R1;
+            let mut R5 = R1 + R4;
+            R5.set_mul2();
+            R5 = R5 + R2;
+            let mut A24 = R5 * R3;
+            R5 = R2 + R3;
+            R5.set_mul2();
+            R5 = R5 + R1;
+            R5 = R5 * R4;
+            let C24 = R5 - A24;
+            A24 += C24; // TODO: simply R5?
+            /*
             let mut t3 = &P.X + &P.X;
             t3.set_square();
-            let t2 = &t3 - &t0;
-            t3 -= &t1;
-            let mut t4 = &t0 + &t3;
+            let t2 = &t3 - &R1;
+            t3 -= &R2;
+            let mut t4 = &R1 + &t3;
             t4.set_mul2();
-            t4 += &t1;
+            t4 += &R2;
             let A24_minus = &t2 * &t4;
-            t4 = &t1 + &t2;
+            t4 = &R2 + &t2;
             t4.set_mul2();
-            t4 += &t0;
+            t4 += &R1;
             let A24_plus = &t3 * &t4;
+            */
 
-            (A24_plus, A24_minus, K1, K2)
+            //(A24_plus, A24_minus, K1, K2)
+            (A24, C24, K1, K2)
         }
 
         /// Given constants (K1, K2) along with the point Q = (XQ : ZQ)

@@ -300,33 +300,35 @@ macro_rules! define_litsigamal {
                 + 220835060888732177714055873396130338211426525716735667126531717994944550825260327261201226324233211400965520569038349098555557429025991989295434705054844308790847237100964246142971652968315021176800459089181506969495264032362279571665
                 */
 
-                /*
                 let Px = Fq::new(
                     &Fp::decode_reduce(&bytes_from_str("970541812902597247581586118962672018735900274268797204095167395803112287493471491598698090128841200813831380874652397438640565161195302840313904161390870177508026650386592721124672238490254317774184133590356799364984120716582941706095")),
                     &Fp::decode_reduce(&bytes_from_str("40462640216449207672168992988623511775336924066853855274546745222615865684900642222898108382455842618365117964778639196177347207085357604725664385427796579295592436532010871949667738164957851517164788313374798288498756871920103663953")),
                 );
                 let Pz = Fq::new(
-                    &Fp::decode_reduce(&bytes_from_str("1249722545006266441120006262083514632766815889237780158930324325671112785250730980429928525004234781246451849490611409020519930843445073584072794696443427504458825306819336321611899670903300187189923829452476229237796629934363670095154")),
                     &Fp::decode_reduce(&bytes_from_str("220835060888732177714055873396130338211426525716735667126531717994944550825260327261201226324233211400965520569038349098555557429025991989295434705054844308790847237100964246142971652968315021176800459089181506969495264032362279571665")),
+                    &Fp::decode_reduce(&bytes_from_str("1249722545006266441120006262083514632766815889237780158930324325671112785250730980429928525004234781246451849490611409020519930843445073584072794696443427504458825306819336321611899670903300187189923829452476229237796629934363670095154")),
                 );
                
                 let FF = PointX::new_xz(&Px, &Pz);
-                let (A24_plus, A24_minus, K1, K2) = three_isogeny_codomain(&FF);
-                let A = &(&A24_plus + A24_minus).mul2() / &(&A24_plus - &A24_minus);
+                let (A24, C24, K1, K2) = three_isogeny_codomain(&FF);
+                // let A = &(&A24_plus + A24_minus).mul2() / &(&A24_plus - &A24_minus);
 
-                let codomain = Curve::new(&A);
+                // let codomain = Curve::new(&A);
 
                 println!("");
                 println!("");
                 println!("");
                 println!("codomain: {}", codomain);
                 println!("");
-                println!("A24_plus: {}", A24_plus);
+                println!("A24: {}", A24);
                 println!("");
 
-                println!("A24_minus: {}", A24_minus);
+                println!("C24: {}", C24);
                 println!("");
-                */
+
+                println!("A24 X: {}", A24 / C24);
+                println!("");
+
 
 
                 /*
@@ -355,8 +357,60 @@ macro_rules! define_litsigamal {
                 E1                                                            E
                 */
 
-                let Pbr = generate_random_fp(&self.curve, torsion_b.clone(), self.scalar_without_b.clone());
-                let Qbr = generate_random_fq(&self.curve, torsion_b, self.scalar_without_b.clone());
+                let Pb1 = generate_random_fp(&codomain, torsion_b.clone(), self.scalar_without_b.clone());
+                let Qb1 = generate_random_fq(&codomain, torsion_b, self.scalar_without_b.clone());
+
+                // apply endomorphism [n]:
+                bytes = big_to_bytes(Integer::from(self.n));
+                let torsion8_Pb = self.curve.mul(&Pb1, &bytes, bytes.len() * 8);
+                let torsion8_Qb = self.curve.mul(&Qb1, &bytes, bytes.len() * 8);
+
+                let ell_product = EllipticProduct::new(&codomain, &self.curve);
+
+                let factor = l_a.big().pow(self.a - 1);
+                bytes = big_to_bytes(factor);
+                let torsion8_Pa = self.curve.mul(&Pa_gamma, &bytes, bytes.len() * 8);
+                let torsion8_Qa = self.curve.mul(&Qa_gamma, &bytes, bytes.len() * 8);
+
+                let P1P2 = CouplePoint::new(&torsion8_Pa, &torsion8_Qa);
+                let Q1Q2 = CouplePoint::new(&torsion8_Qa, &torsion8_Qb);
+
+                // TODO:
+                let image_points = vec![
+                    P1P2
+                    // CouplePoint::new(&self.two_dim.P, &self.two_dim.Q),
+                    // CouplePoint::new(&self.two_dim.omegaP, &self.two_dim.omegaQ),
+                ];
+
+                // Precomputed with strategy.py
+                // TODO: derive 383 from self.a
+                let strategy: [usize; 383] = [144, 89, 55, 34, 27, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 6, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
+
+                let (product, points) = product_isogeny(
+                    &ell_product,
+                    &P1P2,
+                    &Q1Q2,
+                    &image_points,
+                    self.a as usize,
+                    &strategy,
+                );
+
+                println!("");
+                println!("product: {:?}", product);
+                println!("");
+
+                /*
+                for i in 0..6 {
+                    let (product, points) = product_isogeny(
+                        &ell_product,
+                        &P1P2,
+                        &Q1Q2,
+                        &image_points,
+                        self.a as usize,
+                        &strategy,
+                    );
+                }
+                */
 
             }
 
