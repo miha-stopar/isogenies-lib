@@ -1007,38 +1007,62 @@ macro_rules! define_ec_core {
         // Implementation of 3-isogenies
         //
 
-        /// Alternative repeated tripling using the formula compatible with
-        /// the codomain computation with A24_plus and A24_minus
-        fn triple_e_point_iter_into(P: &mut PointX, A24_plus: &Fq, A24_minus: &Fq, e: usize) {
+        fn triple_e_point_iter_into(P: &mut PointX, A24: &Fq, K1: &Fq, e: usize) {
             #[inline(always)]
-            fn xTPL(XP: &mut Fq, ZP: &mut Fq, A24_plus: &Fq, A24_minus: &Fq) {
-                let mut t0 = *XP - *ZP;
-                let mut t2 = t0.square();
-                let mut t1 = *XP + *ZP;
-                let mut t3 = t1.square();
-                let t4 = &t1 + &t0;
-                t0 = &t1 - &t0;
-                t1 = t4.square();
-                t1 -= &t3;
-                t1 -= &t2;
-                let t5 = &t3 * A24_plus;
-                t3 *= &t5;
-                let t6 = &t2 * A24_minus;
-                t2 *= &t6;
-                t3 = &t2 - &t3;
-                t2 = &t5 - &t6;
-                t1 *= &t2;
-                t2 = &t3 + &t1;
-                t2.set_square();
-                *XP = &t2 * &t4;
-                t1 = &t3 - &t1;
-                t1.set_square();
-                *ZP = &t1 * &t0;
+            fn xTPL(XP: &mut Fq, ZP: &mut Fq, A24: &Fq, K1: &Fq) {
+                let mut R1 = *XP - *ZP;
+                let mut R2 = R1.square();
+                let R3 = *XP + *ZP;
+                let mut R4 = R3.square();
+                let mut R5 = R4 + R2;
+                let mut R6 = R2 - R4;
+                let R7 = R4 * K1;
+                let R8 = R2 * A24;
+                R4 = R8 + R7;
+                R2 = R7 - R8;
+                R4 = R4 * R6;
+                R5 = R2 * R5;
+                R2 = R2 * R6;
+                R2.set_mul2();
+                R6 = R4 + R5;
+                R5 = R4 - R5;
+                R4 = R6 + R2;
+                R6 = R6 - R2;
+                R4 = R4 * R6;
+                R6 = R2 * R5;
+                R6.set_mul2();
+                R5 = R4 - R6;
+                R4 = R4 + R6;
+                R2 = R4 * R3;
+                R1 = R1 * R5;
+                *XP = R2 + R1;
+                *ZP = R2 - R1;
+
+                /*
+                let t4 = &R3 + &R1;
+                R1 = &R3 - &R1;
+                R3 = t4.square();
+                R3 -= &R4;
+                R3 -= &R2;
+                let t5 = &R4 * A24_plus;
+                R4 *= &t5;
+                let t6 = &R2 * A24_minus;
+                R2 *= &t6;
+                R4 = &R2 - &R4;
+                R2 = &t5 - &t6;
+                R3 *= &R2;
+                R2 = &R4 + &R3;
+                R2.set_square();
+                *XP = &R2 * &t4;
+                R3 = &R4 - &R3;
+                R3.set_square();
+                *ZP = &R3 * &R1;
+                */
             }
             let mut X = P.X;
             let mut Z = P.Z;
             for _ in 0..e {
-                xTPL(&mut X, &mut Z, A24_plus, A24_minus);
+                xTPL(&mut X, &mut Z, A24, K1);
             }
             P.X = X;
             P.Z = Z;
@@ -1157,9 +1181,9 @@ macro_rules! define_ec_core {
             let mut S: PointX;
 
             // For repeated triples we need A24_±
-            let mut A24_plus = &E.A + Fq::TWO;
-            let mut A24_minus = &E.A - Fq::TWO;
-            let mut K1: Fq;
+            let mut A24 = &E.A - Fq::TWO;
+            let mut C24: Fq;
+            let mut K1: Fq = &K.X - &K.Z;
             let mut K2: Fq;
 
             // ======================================================
@@ -1178,7 +1202,7 @@ macro_rules! define_ec_core {
                     level.push(strategy[strat_idx]);
 
                     // Triple the points according to the strategy
-                    triple_e_point_iter_into(&mut S, &A24_plus, &A24_minus, strategy[strat_idx]);
+                    triple_e_point_iter_into(&mut S, &A24, &K1, strategy[strat_idx]);
 
                     // Add the point to the image points
                     kernel_pts.push(S);
@@ -1193,7 +1217,7 @@ macro_rules! define_ec_core {
                 level.pop();
 
                 // Compute the codomain constants
-                (A24_plus, A24_minus, K1, K2) = three_isogeny_codomain(&S);
+                (A24, C24, K1, K2) = three_isogeny_codomain(&S);
 
                 // Push all kernel points through the isogeny
                 for ker in kernel_pts.iter_mut() {
@@ -1207,8 +1231,8 @@ macro_rules! define_ec_core {
 
             // Recover codomain coefficient
             // let A = recover_montgomery_coefficient(&xP, &xQ, &xPQ);
-            let A = &(&A24_plus + A24_minus).mul2() / &(&A24_plus - &A24_minus);
-            let codomain = Curve::new(&A);
+            // let A = &(&A24_plus + A24_minus).mul2() / &(&A24_plus - &A24_minus);
+            let codomain = Curve::new(&A24); // TODO
 
             (codomain, image_points)
         }
