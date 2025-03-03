@@ -896,7 +896,7 @@ macro_rules! define_ec_core {
 
         impl fmt::Display for Curve {
             fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                write!(f, "Montgomery Curve with coefficient: {}", self.A)
+                write!(f, "Montgomery Curve with coefficient: {}, A24: {}", self.A, self.A24)
             }
         }
 
@@ -1001,7 +1001,7 @@ macro_rules! define_ec_core {
 
         /// Given a point P = (XP : ZP) of order 3, computes the
         /// 3-isogeny codomain with coefficient A represented as
-        /// (A + 2C) / 4C (where A24 = A + 2C, C24 = 4C)
+        /// (A + 2C) / 4C (where A24_num = A + 2C, A24_denom = 4C)
         /// along with constants K1, K2 used for computing images
         #[inline]
         pub fn three_isogeny_codomain(P: &PointX) -> (Fq, Fq, Fq, Fq) {
@@ -1019,30 +1019,15 @@ macro_rules! define_ec_core {
             let mut R5 = R1 + R4;
             R5.set_mul2();
             R5 = R5 + R2;
-            let mut A24 = R5 * R3;
+            let mut A24_num = R5 * R3;
             R5 = R2 + R3;
             R5.set_mul2();
             R5 = R5 + R1;
             R5 = R5 * R4;
-            let C24 = R5 - A24;
-            A24 += C24; // TODO: simply R5?
-            /*
-            let mut t3 = &P.X + &P.X;
-            t3.set_square();
-            let t2 = &t3 - &R1;
-            t3 -= &R2;
-            let mut t4 = &R1 + &t3;
-            t4.set_mul2();
-            t4 += &R2;
-            let A24_minus = &t2 * &t4;
-            t4 = &R2 + &t2;
-            t4.set_mul2();
-            t4 += &R1;
-            let A24_plus = &t3 * &t4;
-            */
+            let A24_denom = R5 - A24_num;
+            A24_num += A24_denom; // TODO: simply R5?
 
-            //(A24_plus, A24_minus, K1, K2)
-            (A24, C24, K1, K2)
+            (A24_num, A24_denom, K1, K2)
         }
 
         /// Given constants (K1, K2) along with the point Q = (XQ : ZQ)
@@ -1072,11 +1057,9 @@ macro_rules! define_ec_core {
             n: usize,
             strategy: &[usize],
         ) -> (Curve, [PointX; N]) {
-            // Create a deque for the kernel elements
             let mut kernel_pts = vec![*K];
             let mut image_points = *eval_points;
 
-            // Bookkeeping for optimised strategy
             let mut strat_idx = 0;
             let mut level: Vec<usize> = vec![0];
             let mut prev: usize;
@@ -1084,33 +1067,16 @@ macro_rules! define_ec_core {
 
             // For initalisation
             let mut S: PointX;
-
-            // For repeated triples we need A24_±
-            // let mut A24 = &E.A - Fq::TWO;
-            // let mut A24 = Fq::ONE;
-            // let mut A24 = (E.A - &Fq::TWO).half().half();
-            // TODO: A24 is computed for the curve already, use that one
-            let mut A24 = (-&Fq::ONE).half();
             let mut E_curr = *E;
 
-            let mut C24 = Fq::TWO; // TODO
-            let mut K1: Fq = &K.X - &K.Z;
+            let mut A24_num;
+            let mut A24_denom;
+            let mut K1: Fq;
             let mut K2: Fq;
-
-            // ======================================================
-            // Compute the 3^n isogeny chain
-            // =======================================================
 
             for k in 0..n {
                 prev = level.iter().sum();
                 kernel_len = kernel_pts.len();
-
-                /*
-                println!("=================");
-                println!("k: {}", k);
-                println!("prev: {}", prev);
-                println!("");
-                */
 
                 // Recover the point from the list
                 S = kernel_pts[kernel_len - 1];
@@ -1118,16 +1084,6 @@ macro_rules! define_ec_core {
                 while prev != (n - 1 - k) {
                     // Add the next strategy to the level
                     level.push(strategy[strat_idx]);
-
-                    println!("???");
-                    println!("strat_idx: {}", strategy[strat_idx]);
-                    println!("");
-
-                    println!("{}", S.X / S.Z);
-                    println!("");
-
-                    println!("A24 {}", A24/C24);
-                    println!("");
 
                     // Triple the points according to the strategy
                     triple_e_point_iter_into(&E_curr, &mut S, strategy[strat_idx]);
@@ -1138,31 +1094,15 @@ macro_rules! define_ec_core {
                     // Update the strategy bookkeepping
                     prev += strategy[strat_idx];
                     strat_idx += 1;
-
-                    // println!("prev: {}", prev);
-                    println!("{}", S.X / S.Z);
-                    println!("");
                 }
-
-                println!("===========");
-                println!("");
 
                 // Clear out the used kernel point and update level
                 kernel_pts.pop();
                 level.pop();
 
-                println!("");
-                println!("!!!!!!!!!!!!!!!!!!!!");
-                println!("kernel: {}", S.X / S.Z);
-                println!("");
-
                 // Compute the codomain constants
-                (A24, C24, K1, K2) = three_isogeny_codomain(&S);
-                E_curr = Curve::new_fromA24(&(A24/C24));
-
-                println!("A24[0]/A24[1]:");
-                println!("{}", A24/C24);
-                println!("");
+                (A24_num, A24_denom, K1, K2) = three_isogeny_codomain(&S);
+                E_curr = Curve::new_fromA24(&(A24_num/A24_denom));
 
                 // Push all kernel points through the isogeny
                 for ker in kernel_pts.iter_mut() {
@@ -1174,11 +1114,7 @@ macro_rules! define_ec_core {
                 }
             }
 
-            // Recover codomain coefficient
-            // let A = &(&A24_plus + A24_minus).mul2() / &(&A24_plus - &A24_minus);
-            let codomain = Curve::new(&A24); // TODO
-
-            (codomain, image_points)
+            (E_curr, image_points)
         }
     };
 } // End of macro: define_ec_core

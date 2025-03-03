@@ -1,13 +1,12 @@
 # README
 
 This work uses:
- * [two-isogenies](https://github.com/ThetaIsogenies/two-isogenies) for the computation of (2, 2)-isogenies.
+ * [two-isogenies](https://github.com/ThetaIsogenies/two-isogenies) for the computation of (2, 2)-isogenies. Thanks [Jack](https://github.com/giacomopope)!
  * [KLaPoTi: An asymptotically efficient isogeny group action from 2-dimensional isogenies](https://eprint.iacr.org/2024/1844) which provides the Rust implementation for the quaternion algebra,
 the [KLPT algorithm](https://eprint.iacr.org/2014/505.pdf),
 and the [Cornacchia algorithm](https://en.wikipedia.org/wiki/Cornacchia%27s_algorithm).
  * Sage scripts from [LIT-SiGamal: An efficient isogeny-based PKE based on a LIT diagram](https://eprint.iacr.org/2024/521).
- * 3-isogenies code by [Giacomo Pope](https://github.com/giacomopope). Thanks Jack!
- * (2, 2)-isogenies and 3-isogenies code uses the [macros for finite fields](https://github.com/pornin/crrl/blob/main/src/backend/w64/gfgen.rs) provided by [Thomas Pornin](https://github.com/pornin).
+ * The code for elliptic curve operations is based on the [macros for finite fields](https://github.com/pornin/crrl/blob/main/src/backend/w64/gfgen.rs) provided by [Thomas Pornin](https://github.com/pornin).
 
 ## Computing the isogeny chain
 
