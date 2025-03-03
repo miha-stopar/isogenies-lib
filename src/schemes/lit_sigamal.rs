@@ -181,7 +181,7 @@ macro_rules! define_litsigamal {
 
                 let Rx = PointX::new_xz(&R.X, &R.Z);
 
-
+                /*
                 println!("Pb X: {}", Pb.X / Pb.Z);
                 println!("");
                 println!("Pb Y: {}", Pb.Y / Pb.Z);
@@ -252,6 +252,7 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("R Y: {}", R.Y / R.Z);
                 println!("");
+                */
  
                 let dlog1 = ec_lit::dlog_3(&self.curve, &Pb_gamma, &Qb_gamma, 162);
                 let dlog2 = ec_lit::dlog_3(&self.curve, &Qb_gamma, &Pb_gamma, 162);
@@ -278,16 +279,21 @@ macro_rules! define_litsigamal {
                 println!("");
 
                 // TODO 
-                let n = 36;
+                let n = 162;
 
                 // Precomputed with strategy.py
-                let strategy: [usize; 35] = [21, 14, 5, 3, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
+                // let strategy: [usize; 35] = [21, 14, 5, 3, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
+                // let strategy: [usize; 161] = [55, 38, 34, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 13, 8, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
+
+                // From Sage LITSiGamal:
+                let strategy: [usize; 161] = [65, 37, 23, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 9, 5, 4, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 28, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1];
 
                 // endomorphism gamma is of order (l_a**(2*a) - n**2) * l_b**b
                 // let's take the isogeny gamma1 with kernel: ker(gamma) \cap E[l_b**b]
 
                 // TODO: eval_points are [Pa, Qa, R]
 
+                /*
                 let Px = Fq::new(
                     &Fp::decode_reduce(&bytes_from_str("970541812902597247581586118962672018735900274268797204095167395803112287493471491598698090128841200813831380874652397438640565161195302840313904161390870177508026650386592721124672238490254317774184133590356799364984120716582941706095")),
                     &Fp::decode_reduce(&bytes_from_str("40462640216449207672168992988623511775336924066853855274546745222615865684900642222898108382455842618365117964778639196177347207085357604725664385427796579295592436532010871949667738164957851517164788313374798288498756871920103663953")),
@@ -297,12 +303,13 @@ macro_rules! define_litsigamal {
                     &Fp::decode_reduce(&bytes_from_str("1249722545006266441120006262083514632766815889237780158930324325671112785250730980429928525004234781246451849490611409020519930843445073584072794696443427504458825306819336321611899670903300187189923829452476229237796629934363670095154")),
                 );
                 let FF = PointX::new_xz(&Px, &Pz);
+                */
 
 
                 // TODO: remove, just for testing, instead use the kernel of 
                 let eval_points = [PaX, QaX, Rx]; 
-                // let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &kernel1x, &eval_points, n, &strategy);
-                let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &FF, &eval_points, n, &strategy);
+                let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &kernel1x, &eval_points, n, &strategy);
+                // let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &FF, &eval_points, n, &strategy);
                
                 // let (A24, C24, K1, K2) = three_isogeny_codomain(&FF);
                 // let A = &(&A24_plus + A24_minus).mul2() / &(&A24_plus - &A24_minus);

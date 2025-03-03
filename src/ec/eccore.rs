@@ -221,6 +221,13 @@ macro_rules! define_ec_core {
                 }
             }
 
+            pub fn new_fromA24(A24: &Fq) -> Self {
+                Self {
+                    A: Fq::ONE, // TODO, but not used
+                    A24: *A24,
+                }
+            }
+
             /// Set the point to the provided affine coordinate.
             /// IMPORTANT: this function does NOT check that the point is
             /// really part of the curve.
@@ -511,44 +518,10 @@ macro_rules! define_ec_core {
 
             #[inline(always)]
             pub fn xadd(self, Xp: &Fq, Zp: &Fq, X0: &Fq, Z0: &Fq, X1: &mut Fq, Z1: &mut Fq) {
-                /*
-                println!("hmmm");
-                println!("{}", X0);
-                println!("{}", Z0);
-                println!("----");
-                println!("{}", X1);
-                println!("{}", Z1);
-                println!("");
-
-                println!("-----------");
-                println!("{}", &(X0 - Z0));
-                println!("{}", &(&*X1 + &*Z1));
-
-                println!("----");
-                println!("{}", &(X0 + Z0));
-                println!("{}", &(&*X1 - &*Z1));
-                */
-
-                let V1 = &(X0 - Z0) * &(&*X1 + &*Z1); // t0 = x0 + z0, t1 = x0 - z0, t2 = x1 + z1, t3 = x1 - z1  
-                let V2 = &(X0 + Z0) * &(&*X1 - &*Z1); // t0 = t0 * t3 = (x0 + z0) * (x1 - z1)
-
-                /*
-                println!("{}", V1);
-                println!("");
-                println!("{}", V2);
-                println!("");
-                */
-
-                *X1 = Zp * &(&V1 + &V2).square(); //     t1 = t1 * t2 = (x0 - z0) * (x1 + z1)
-                *Z1 = Xp * &(&V1 - &V2).square(); //     t2 = t0 + t1 = (x0 + z0) * (x1 - z1) + (x0 - z0) * (x1 + z1)
-                //                                       t3 = t0 - t1 = (x0 + z0) * (x1 - z1) - (x0 - z0) * (x1 + z1)
-
-                /*
-                println!("{}", X1);
-                println!("");
-                println!("{}", Z1);
-                println!("");
-                */
+                let V1 = &(X0 - Z0) * &(&*X1 + &*Z1);
+                let V2 = &(X0 + Z0) * &(&*X1 - &*Z1);
+                *X1 = Zp * &(&V1 + &V2).square();
+                *Z1 = Xp * &(&V1 - &V2).square();
             }
 
             #[inline(always)]
@@ -1005,73 +978,25 @@ macro_rules! define_ec_core {
         }
 
         // Implementation of 3-isogenies
-        //
 
-        fn triple_e_point_iter_into(P: &mut PointX, A24: &Fq, K1: &Fq, e: usize) {
+        fn triple_e_point_iter_into(E: &Curve, P: &mut PointX, e: usize) {
             #[inline(always)]
-            fn xTPL(XP: &mut Fq, ZP: &mut Fq, A24: &Fq, K1: &Fq) {
-                let mut R1 = *XP - *ZP;
-                let mut R2 = R1.square();
-                let R3 = *XP + *ZP;
-                let mut R4 = R3.square();
-                let mut R5 = R4 + R2;
-                let mut R6 = R2 - R4;
-                let R7 = R4 * K1;
-                let R8 = R2 * A24;
-                R4 = R8 + R7;
-                R2 = R7 - R8;
-                R4 = R4 * R6;
-                R5 = R2 * R5;
-                R2 = R2 * R6;
-                R2.set_mul2();
-                R6 = R4 + R5;
-                R5 = R4 - R5;
-                R4 = R6 + R2;
-                R6 = R6 - R2;
-                R4 = R4 * R6;
-                R6 = R2 * R5;
-                R6.set_mul2();
-                R5 = R4 - R6;
-                R4 = R4 + R6;
-                R2 = R4 * R3;
-                R1 = R1 * R5;
-                *XP = R2 + R1;
-                *ZP = R2 - R1;
+            fn xTPL(E: &Curve, XP: &mut Fq, ZP: &mut Fq) {
+                let mut X = *XP;
+                let mut Z = *ZP;
+                let XP0 = *XP;
+                let ZP0 = *ZP;
 
-                /*
-                let t4 = &R3 + &R1;
-                R1 = &R3 - &R1;
-                R3 = t4.square();
-                R3 -= &R4;
-                R3 -= &R2;
-                let t5 = &R4 * A24_plus;
-                R4 *= &t5;
-                let t6 = &R2 * A24_minus;
-                R2 *= &t6;
-                R4 = &R2 - &R4;
-                R2 = &t5 - &t6;
-                R3 *= &R2;
-                R2 = &R4 + &R3;
-                R2.set_square();
-                *XP = &R2 * &t4;
-                R3 = &R4 - &R3;
-                R3.set_square();
-                *ZP = &R3 * &R1;
-                */
+                E.xdbl(&mut X, &mut Z);
+                E.xadd(&XP0, &ZP0, &X, &Z, XP, ZP);
             }
             let mut X = P.X;
             let mut Z = P.Z;
             for _ in 0..e {
-                xTPL(&mut X, &mut Z, A24, K1);
+                xTPL(E, &mut X, &mut Z);
             }
             P.X = X;
             P.Z = Z;
-        }
-
-        pub fn triple_e_point_iter(P: &PointX, A24_plus: &Fq, A24_minus: &Fq, e: usize) -> PointX {
-            let mut Q = *P;
-            triple_e_point_iter_into(&mut Q, A24_plus, A24_minus, e);
-            Q
         }
 
         /// Given a point P = (XP : ZP) of order 3, computes the
@@ -1136,26 +1061,6 @@ macro_rules! define_ec_core {
             Q.Z *= &t0;
         }
 
-        /// Given the x-coordinates of P, Q and PQ on an image curve
-        /// compute the A invariant of the Montgomery curve
-        #[inline]
-        pub fn recover_montgomery_coefficient(xP: &Fq, xQ: &Fq, xPQ: &Fq) -> Fq {
-            let mut t1 = xP + xQ;
-            let mut t0 = xP * xQ;
-            let mut A = xPQ * &t1;
-            A += &t0;
-            t0 *= xPQ;
-            A -= &Fq::ONE;
-            t0.set_mul2();
-            t1 += xPQ;
-            t0.set_mul2();
-            A.set_square();
-            t0 = t0.invert();
-            A *= &t0;
-            A -= &t1;
-            A
-        }
-
         /// 3^e isogeny chain using kernel
         /// Compute an isogeny between elliptic products, use an optimised
         /// strategy for all steps assuming doubling is always more expensive
@@ -1181,8 +1086,14 @@ macro_rules! define_ec_core {
             let mut S: PointX;
 
             // For repeated triples we need A24_±
-            let mut A24 = &E.A - Fq::TWO;
-            let mut C24: Fq;
+            // let mut A24 = &E.A - Fq::TWO;
+            // let mut A24 = Fq::ONE;
+            // let mut A24 = (E.A - &Fq::TWO).half().half();
+            // TODO: A24 is computed for the curve already, use that one
+            let mut A24 = (-&Fq::ONE).half();
+            let mut E_curr = *E;
+
+            let mut C24 = Fq::TWO; // TODO
             let mut K1: Fq = &K.X - &K.Z;
             let mut K2: Fq;
 
@@ -1194,6 +1105,13 @@ macro_rules! define_ec_core {
                 prev = level.iter().sum();
                 kernel_len = kernel_pts.len();
 
+                /*
+                println!("=================");
+                println!("k: {}", k);
+                println!("prev: {}", prev);
+                println!("");
+                */
+
                 // Recover the point from the list
                 S = kernel_pts[kernel_len - 1];
 
@@ -1201,8 +1119,18 @@ macro_rules! define_ec_core {
                     // Add the next strategy to the level
                     level.push(strategy[strat_idx]);
 
+                    println!("???");
+                    println!("strat_idx: {}", strategy[strat_idx]);
+                    println!("");
+
+                    println!("{}", S.X / S.Z);
+                    println!("");
+
+                    println!("A24 {}", A24/C24);
+                    println!("");
+
                     // Triple the points according to the strategy
-                    triple_e_point_iter_into(&mut S, &A24, &K1, strategy[strat_idx]);
+                    triple_e_point_iter_into(&E_curr, &mut S, strategy[strat_idx]);
 
                     // Add the point to the image points
                     kernel_pts.push(S);
@@ -1210,14 +1138,31 @@ macro_rules! define_ec_core {
                     // Update the strategy bookkeepping
                     prev += strategy[strat_idx];
                     strat_idx += 1;
+
+                    // println!("prev: {}", prev);
+                    println!("{}", S.X / S.Z);
+                    println!("");
                 }
+
+                println!("===========");
+                println!("");
 
                 // Clear out the used kernel point and update level
                 kernel_pts.pop();
                 level.pop();
 
+                println!("");
+                println!("!!!!!!!!!!!!!!!!!!!!");
+                println!("kernel: {}", S.X / S.Z);
+                println!("");
+
                 // Compute the codomain constants
                 (A24, C24, K1, K2) = three_isogeny_codomain(&S);
+                E_curr = Curve::new_fromA24(&(A24/C24));
+
+                println!("A24[0]/A24[1]:");
+                println!("{}", A24/C24);
+                println!("");
 
                 // Push all kernel points through the isogeny
                 for ker in kernel_pts.iter_mut() {
@@ -1230,7 +1175,6 @@ macro_rules! define_ec_core {
             }
 
             // Recover codomain coefficient
-            // let A = recover_montgomery_coefficient(&xP, &xQ, &xPQ);
             // let A = &(&A24_plus + A24_minus).mul2() / &(&A24_plus - &A24_minus);
             let codomain = Curve::new(&A24); // TODO
 
