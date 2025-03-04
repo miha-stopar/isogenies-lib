@@ -825,10 +825,7 @@ macro_rules! define_ec_core {
                 let mut diff1a = R1;
                 let mut diff1b = R2;
 
-                let sub = self.sub(&R1, &R2);
-                let PQ = sub; // TODO: remove
-
-                self.xadd(&sub.X, &sub.Z, &R1.X, &R1.Z, &mut R2.X, &mut R2.Z);
+                self.xadd(&PQ.X, &PQ.Z, &R1.X, &R1.Z, &mut R2.X, &mut R2.Z);
 
                 let mut diff2a = R2;
                 let mut diff2b = PQ.clone(); // TODO: why clone needed?

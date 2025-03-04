@@ -78,6 +78,7 @@ macro_rules! define_litsigamal {
 
                 let (mut Pc, ok1) = self.curve.complete_pointX(&PcX); // TODO: check ok
                 let (Qc, ok2) = self.curve.complete_pointX(&QcX); // TODO: check ok
+                let (PmQc, ok3) = self.curve.complete_pointX(&PmQcX); // TODO: check ok
  
                 let l_a = 2;
                 let l_b = 3;
@@ -133,7 +134,7 @@ macro_rules! define_litsigamal {
                 let l_digits: Vec<u64> = [1, 0, 0, 0].to_vec(); // TODO: remove, JUST DEBUGGING
 
                 let f: usize = 36; // TODO
-                let Pc = self.curve.xdblmul_bounded(&Pc, &k_digits, &Qc, &l_digits, &Pc, f);
+                let Pc = self.curve.xdblmul_bounded(&Pc, &k_digits, &Qc, &l_digits, &PmQc, f);
                 let Rx = PointX::new_xz(&Pc.X, &Pc.Z);
 
                 // N = (l_a**(2*a) - n**2) * l_b**b
