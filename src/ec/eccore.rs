@@ -745,7 +745,7 @@ macro_rules! define_ec_core {
                 Q: &Point,
                 l: &[u64],
                 PQ: &Point,
-                f: u64,
+                f: usize, // TODO
             ) -> Point {
                 // TODO: we use Point, but we could use PointX (and remove some unnecessary copying
                 // of Y in select_point, swap_points...)

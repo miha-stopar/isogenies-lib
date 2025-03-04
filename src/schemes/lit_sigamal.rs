@@ -5,6 +5,7 @@ macro_rules! define_litsigamal {
         use crate::quaternion::quaternion_order::standard_maximal_extremal_order;
         use crate::util::{generate_random_range};
         use crate::ec_lit;
+        use rug::integer::Order;
 
         pub fn get_params(lam: u32) -> (u32, u32, u32, u32) {
             let a = lam * 3;
@@ -65,12 +66,6 @@ macro_rules! define_litsigamal {
                 let power_a = power_a as u32;
                 let power_b = power_b as u32;
                 let power_c = power_c as u32;
-
-                println!("++++++=================++++++++");
-                println!("{}", PaX.X / PaX.Z);
-                println!("");
-                println!("{}", PaX);
-                println!("");
     
                 let (Pa, ok1) = self.curve.complete_pointX(&PaX); // TODO: check ok
                 assert!(ok1 == 0xFFFFFFFF);
@@ -96,13 +91,13 @@ macro_rules! define_litsigamal {
                 // Randomize Qa
                 // Qa = a1 * Pa + a2 * Qa
                 // TODO: use dblmul
-                /*
-                let mut bytes = big_to_bytes(a1);
+                let mut bytes = big_to_bytes(a1.clone());
                 let a1Pa = self.curve.mul(&Pa, &bytes, bytes.len() * 8);
-                bytes = big_to_bytes(a2);
+                bytes = big_to_bytes(a2.clone());
                 let a2Qa = self.curve.mul(&Qa, &bytes, bytes.len() * 8);
-                let Qa_rand = self.curve.add(&a1Pa, &a2Qa);
-                */
+                Qa = self.curve.add(&a1Pa, &a2Qa);
+
+                let QaX = PointX::new_xz(&Qa.X, &Qa.Z);
 
                 let mut c1: Integer;
                 let mut c2: Integer;
@@ -120,14 +115,26 @@ macro_rules! define_litsigamal {
                     }
                 }
                 // Pc = c1 * Pc + c2 * Qc
-                // TODO: use dblmul
                 /*
-                let mut bytes = big_to_bytes(c1);
+                // TODO: remove
+                let mut bytes = big_to_bytes(c1.clone());
                 let c1Pc = self.curve.mul(&Pc, &bytes, bytes.len() * 8);
-                bytes = big_to_bytes(c2);
+                bytes = big_to_bytes(c2.clone());
                 let c2Qc = self.curve.mul(&Qc, &bytes, bytes.len() * 8);
-                Pc = self.curve.add(&c1Pc, &c2Qc);
+                let Pc_new = self.curve.add(&c1Pc, &c2Qc);
                 */
+
+                // let mut k_digits = c1.to_digits::<u64>(Order::MsfLe);
+                // k_digits.reverse();
+                let k_digits: Vec<u64> = [1, 0, 0, 0].to_vec(); // TODO: remove, JUST DEBUGGING
+
+                // let mut l_digits = c2.to_digits::<u64>(Order::MsfLe);
+                // l_digits.reverse();
+                let l_digits: Vec<u64> = [1, 0, 0, 0].to_vec(); // TODO: remove, JUST DEBUGGING
+
+                let f: usize = 36; // TODO
+                let Pc = self.curve.xdblmul_bounded(&Pc, &k_digits, &Qc, &l_digits, &Pc, f);
+                let Rx = PointX::new_xz(&Pc.X, &Pc.Z);
 
                 // N = (l_a**(2*a) - n**2) * l_b**b
                 let tau = l_a.big().pow(power_a * 2) - self.n * self.n;
@@ -173,6 +180,7 @@ macro_rules! define_litsigamal {
                 let torsion_c = l_c.big().pow(power_c);
                 let (Pc_gamma, Qc_gamma, PmQc_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord, imprim, torsion_c, mat5_2, mat5_3, mat5_4, &Pc, &Qc);
 
+                /*
                 let mut bytes = big_to_bytes(c1);
                 let c1Pc = self.curve.mul(&Pc_gamma, &bytes, bytes.len() * 8);
                 bytes = big_to_bytes(c2);
@@ -180,80 +188,8 @@ macro_rules! define_litsigamal {
                 let R = self.curve.add(&c1Pc, &c2Qc);
 
                 let Rx = PointX::new_xz(&R.X, &R.Z);
-
-                /*
-                println!("Pb X: {}", Pb.X / Pb.Z);
-                println!("");
-                println!("Pb Y: {}", Pb.Y / Pb.Z);
-                println!("");
-                println!("");
-
-                println!("Qb X: {}", Qb.X / Qb.Z);
-                println!("");
-                println!("Qb Y: {}", Qb.Y / Qb.Z);
-                println!("");
-                println!("");
-
-                println!("");
-                println!("");
-
-                println!("Pa X: {}", Pa.X / Pa.Z);
-                println!("");
-                println!("Pa Y: {}", Pa.Y / Pa.Z);
-                println!("");
-                println!("");
-
-                println!("Qa X: {}", Qa.X / Qa.Z);
-                println!("");
-                println!("Qa Y: {}", Qa.Y / Qa.Z);
-                println!("");
-                println!("");
-
-                println!("Pc X: {}", Pc.X / Pc.Z);
-                println!("");
-                println!("Pc Y: {}", Pc.Y / Pc.Z);
-                println!("");
-                println!("");
-
-                println!("Qc X: {}", Qc.X / Qc.Z);
-                println!("");
-                println!("Qc Y: {}", Qc.Y / Qc.Z);
-                println!("");
-                println!("");
-
-                println!("========================");
-
-
-                println!("Pb_gamma X: {}", Pb_gamma.X / Pb_gamma.Z);
-                println!("");
-                println!("Pb_gamma Y: {}", Pb_gamma.Y / Pb_gamma.Z);
-                println!("");
-
-                println!("Qb_gamma X: {}", Qb_gamma.X / Qb_gamma.Z);
-                println!("");
-                println!("Qb_gamma Y: {}", Qb_gamma.Y / Qb_gamma.Z);
-                println!("");
-
-                println!("");
-
-                println!("Pa_gamma X: {}", Pa_gamma.X / Pa_gamma.Z);
-                println!("");
-                println!("Pa_gamma Y: {}", Pa_gamma.Y / Pa_gamma.Z);
-                println!("");
-
-                println!("Qa_rand_gamma X: {}", Qa_rand_gamma.X / Qa_rand_gamma.Z);
-                println!("");
-                println!("Qa_rand_gamma Y: {}", Qa_rand_gamma.Y / Qa_rand_gamma.Z);
-                println!("");
-
-                println!("");
-
-                println!("R X: {}", R.X / R.Z);
-                println!("");
-                println!("R Y: {}", R.Y / R.Z);
-                println!("");
                 */
- 
+
                 let dlog1 = ec_lit::dlog_3(&self.curve, &Pb_gamma, &Qb_gamma, 162);
                 let dlog2 = ec_lit::dlog_3(&self.curve, &Qb_gamma, &Pb_gamma, 162);
  
@@ -297,12 +233,31 @@ macro_rules! define_litsigamal {
                 let eval_points = [PaX, QaX, Rx]; 
                 let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &kernel1x, &eval_points, n, &strategy);
                 // let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &FF, &eval_points, n, &strategy);
+
+                println!("++++++=================++++++++");
+                println!("Qa {}", QaX.X / QaX.Z);
+                println!("");
+                // println!("{}", PaX);
+                // println!("");
+
                
                 println!("");
                 println!("");
                 println!("");
                 println!("codomain: {}", codomain);
                 println!("");
+                println!("Pa");
+                println!("{}", image_points[0].X / image_points[0].Z);
+                println!("");
+
+                println!("Qa");
+                println!("{}", image_points[1].X / image_points[1].Z);
+                println!("");
+
+                println!("R");
+                println!("{}", image_points[2].X / image_points[2].Z);
+                println!("");
+
 
 
                 /*
