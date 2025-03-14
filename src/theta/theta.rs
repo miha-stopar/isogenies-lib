@@ -588,7 +588,7 @@ macro_rules! define_theta_structure {
         }
 
         // ===================================================================
-        // Compting general (2,2)-isogenies between theta structures
+        // Computing general (2,2)-isogenies between theta structures
         //
         // NOTE: For the two steps before a product structure is reached, we
         // need additional symplectic transforms which is controlled by the
