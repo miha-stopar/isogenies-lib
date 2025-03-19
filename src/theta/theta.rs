@@ -1039,6 +1039,54 @@ macro_rules! define_theta_structure {
             (E3E4, couple_points)
         }
 
+        pub fn compute_isogeny(
+            E1E2: &EllipticProduct,
+            P1P2: &CouplePoint,
+            Q1Q2: &CouplePoint,
+            image_points: &[CouplePoint],
+            n: usize,
+        ) {
+            // Compute points of order 8
+            let P1P2_8 = E1E2.double_iter(&P1P2, n - 1);
+            let Q1Q2_8 = E1E2.double_iter(&Q1Q2, n - 1);
+
+            let P1P2_4 = E1E2.double(&P1P2_8);
+            let Q1Q2_4 = E1E2.double(&Q1Q2_8);
+
+            product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4);
+
+        }
+
+        pub fn product_to_theta(
+            E1E2: &EllipticProduct,
+            P1P2_4: &CouplePoint,
+            Q1Q2_4: &CouplePoint,
+        ) {
+            let (E1, E2) = E1E2.curves();
+            // let (P1, P2) = P1P2_4.points();
+            let (Q1, Q2) = Q1Q2_4.points();
+
+            let (g00_1, g01_1, g10_1, g11_1) = get_base_submatrix(&E1, &Q1);
+            let (g00_2, g01_2, g10_2, g11_2) = get_base_submatrix(&E2, &Q2);
+
+            let a = &g00_1 * &g00_2 + &g10_1 * &g10_2 + Fq::ONE;
+            let b = &g00_1 * &g10_2 + &g10_1 * &g00_2;
+
+            println!("========1===========");
+            println!("");
+            println!("Q1: {}", Q1.X / Q1.Z);
+            // println!("a: {}", a);
+            println!("");
+            println!("");
+            println!("Q2: {}", Q2.X / Q2.Z);
+            // println!("b: {}", b);
+            println!("");
+            println!("");
+            println!("");
+            println!("");
+
+        }
+
         // ========================================================
         // Main Method! Compute the isogeny between elliptic
         // products

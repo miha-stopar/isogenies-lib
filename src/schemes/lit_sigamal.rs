@@ -166,16 +166,7 @@ macro_rules! define_litsigamal {
                 println!("imprim: {:?}", imprim);
                 println!("");
                 println!("");
-
-                println!("++++++=================++++++++");
-                println!("Pa {}", Pa.X / Pa.Z);
-                println!("Pa Y {}", Pa.Y / Pa.Z);
-                println!("");
-
-                println!("Qa {}", Qa.X / Qa.Z);
-                println!("Qa Y {}", Qa.Y / Qa.Z);
-                println!("");
-
+ 
                 let torsion_a = l_a.big().pow(power_a);
                 // let (Pa_gamma, _, _) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion_a, mat2_2, mat2_3, mat2_4, &Pa, &Qa);
                 
@@ -193,12 +184,15 @@ macro_rules! define_litsigamal {
                 */
 
 
-                let mut bytes = big_to_bytes(a1);
-                let a1Pa = self.curve.mul(&Pa_gamma, &bytes, bytes.len() * 8);
-                bytes = big_to_bytes(a2);
-                let a2Qa = self.curve.mul(&Qa_gamma, &bytes, bytes.len() * 8);
-                let Qa_rand_gamma = self.curve.add(&a1Pa, &a2Qa);
+                let bytes1 = big_to_bytes(a1);
+                let a1Pa_gamma = self.curve.mul(&Pa_gamma, &bytes1, bytes1.len() * 8);
+                let bytes2 = big_to_bytes(a2);
+                let a2Qa_gamma = self.curve.mul(&Qa_gamma, &bytes2, bytes2.len() * 8);
+                let Qa_rand_gamma = self.curve.add(&a1Pa_gamma, &a2Qa_gamma);
 
+
+                let a1Pa = self.curve.mul(&Pa, &bytes1, bytes1.len() * 8);
+                let a2Qa = self.curve.mul(&Qa, &bytes2, bytes2.len() * 8);
                 let Qa_rand = self.curve.add(&a1Pa, &a2Qa);
                 let Qa_rand_X = PointX::new_xz(&Qa_rand.X, &Qa_rand.Z);
 
@@ -232,7 +226,7 @@ macro_rules! define_litsigamal {
 
                 // TODO: set [2^a]Pa_gamma = (1,*)
 
-                bytes = big_to_bytes(dlog2); // TODO
+                let mut bytes = big_to_bytes(dlog2); // TODO
                 let dlog_Qb = self.curve.mul(&Qb, &bytes, bytes.len() * 8);
                 let kernel1 = self.curve.sub(&Pb, &dlog_Qb); // TODO: PointX directly
 
@@ -264,18 +258,26 @@ macro_rules! define_litsigamal {
                 let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &kernel1x, &eval_points, n, &strategy);
                 // let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &FF, &eval_points, n, &strategy);
 
-                
+                let (Pa_isog3, Qa_isog3, R_isog3) = (image_points[0], image_points[1], image_points[2]);
+
+                println!("++++++=================++++++++");
+                println!("Pa {}", Pa.X / Pa.Z);
+                println!("");
+
+                println!("Qa {}", Qa_rand_X.X / Qa_rand_X.Z);
+                println!("");
+
                
                 println!("");
                 println!("");
                 println!("");
                 println!("codomain: {}", codomain);
                 println!("");
-                println!("Pa");
+                println!("Pa after isog 3");
                 println!("{}", image_points[0].X / image_points[0].Z);
                 println!("");
 
-                println!("Qa");
+                println!("Qa after isog 3");
                 println!("{}", image_points[1].X / image_points[1].Z);
                 println!("");
 
@@ -297,13 +299,9 @@ macro_rules! define_litsigamal {
                 println!("{}", Qb_gamma.X / Qb_gamma.Z);
                 println!("");
 
-
-
                 println!("R");
                 println!("{}", image_points[2].X / image_points[2].Z);
                 println!("");
-
-
 
                 /*
                 println!("{}", Qa_new);
@@ -334,20 +332,27 @@ macro_rules! define_litsigamal {
                 let Pb1 = generate_random_fp(&codomain, torsion_b.clone(), self.scalar_without_b.clone());
                 let Qb1 = generate_random_fq(&codomain, torsion_b, self.scalar_without_b.clone());
 
-                // apply endomorphism [n]:
-                bytes = big_to_bytes(Integer::from(self.n));
-                let torsion8_Pb = self.curve.mul(&Pb1, &bytes, bytes.len() * 8);
-                let torsion8_Qb = self.curve.mul(&Qb1, &bytes, bytes.len() * 8);
-
                 let ell_product = EllipticProduct::new(&codomain, &self.curve);
 
-                let factor = l_a.big().pow(self.a - 1);
-                bytes = big_to_bytes(factor);
-                let torsion8_Pa = self.curve.mul(&Pa_gamma, &bytes, bytes.len() * 8);
-                let torsion8_Qa = self.curve.mul(&Qa_gamma, &bytes, bytes.len() * 8);
+                // apply endomorphism [n]:
+                bytes = big_to_bytes(Integer::from(self.n));
+                // TODO:
+                let Pa_mul3 = self.curve.mul(&Pa_isog3, &bytes, bytes.len() * 8);
+                let Qa_mul3 = self.curve.mul(&Qa_isog3, &bytes, bytes.len() * 8);
 
-                let P1P2 = CouplePoint::new(&torsion8_Pa, &torsion8_Qa);
-                let Q1Q2 = CouplePoint::new(&torsion8_Qa, &torsion8_Qb);
+                println!("????????????????");
+                println!("");
+                // println!("{}", Pa_mul3.X / Pa_mul3.Z);
+                println!("{}", Pa.X / Pa.Z);
+                println!("");
+                // println!("{}", Qa_mul3.X / Qa_mul3.Z);
+                println!("{}", Qa.X / Qa.Z);
+                println!("");
+                println!("");
+                println!("");
+                
+                let P1P2 = CouplePoint::new(&Pa_mul3, &Pa_gamma);
+                let Q1Q2 = CouplePoint::new(&Qa_mul3, &Qa_gamma);
 
                 // TODO:
                 let image_points = vec![
@@ -360,6 +365,15 @@ macro_rules! define_litsigamal {
                 // TODO: derive 383 from self.a
                 let strategy: [usize; 383] = [144, 89, 55, 34, 27, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 6, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
 
+                compute_isogeny(
+                    &ell_product,
+                    &P1P2,
+                    &Q1Q2,
+                    &image_points,
+                    self.a as usize,
+                );
+
+                /*
                 let (product, points) = product_isogeny(
                     &ell_product,
                     &P1P2,
@@ -370,8 +384,11 @@ macro_rules! define_litsigamal {
                 );
 
                 println!("");
-                println!("product: {:?}", product);
+                println!("product E1: {}", product.E1);
                 println!("");
+                println!("product E2: {}", product.E2);
+                println!("");
+                */
 
                 /*
                 for i in 0..6 {
