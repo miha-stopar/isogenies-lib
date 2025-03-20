@@ -334,23 +334,10 @@ macro_rules! define_litsigamal {
 
                 let ell_product = EllipticProduct::new(&codomain, &self.curve);
 
-                // apply endomorphism [n]:
-                bytes = big_to_bytes(Integer::from(self.n));
-
-                // just for checking:
-                let (Pa_isog3, ok1) = self.curve.complete_pointX(&Pa_isog3X);
-                assert!(ok1 == 0xFFFFFFFF);
-
+                // apply endomorphism [n] - we assume n = 3
+                assert!(self.n == 3);
                 self.curve.xtriple(&mut Pa_isog3X.X, &mut Pa_isog3X.Z);
-
-                let Pa_mul3 = self.curve.mul(&Pa_isog3, &bytes, bytes.len() * 8);
-
-                println!("?????????=============");
-                println!("{}", Pa_isog3X.X / Pa_isog3X.Z);
-                println!("");
-                println!("{}", Pa_mul3.X / Pa_mul3.Z);
-                println!("");
-
+                self.curve.xtriple(&mut Qa_isog3X.X, &mut Qa_isog3X.Z);
 
 
 
