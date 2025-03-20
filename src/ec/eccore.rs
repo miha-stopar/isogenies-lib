@@ -536,6 +536,14 @@ macro_rules! define_ec_core {
                 *Z *= &V1;
             }
 
+            #[inline(always)]
+            pub fn xtriple(self, X: &mut Fq, Z: &mut Fq) {
+                let X0 = *X;
+                let Z0 = *Z;
+                self.xdbl(X, Z);
+                self.xadd(&X0, &Z0, &X0, &Z0, X, Z);
+            }
+
             /// P3 <- n*P
             /// Integer n is encoded as unsigned little-endian, with length
             /// nbitlen bits. Bits beyond that length are ignored.

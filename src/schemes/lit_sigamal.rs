@@ -258,7 +258,7 @@ macro_rules! define_litsigamal {
                 let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &kernel1x, &eval_points, n, &strategy);
                 // let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &FF, &eval_points, n, &strategy);
 
-                let (Pa_isog3, Qa_isog3, R_isog3) = (image_points[0], image_points[1], image_points[2]);
+                let (mut Pa_isog3X, mut Qa_isog3X, mut R_isog3X) = (image_points[0], image_points[1], image_points[2]);
 
                 println!("++++++=================++++++++");
                 println!("Pa {}", Pa.X / Pa.Z);
@@ -336,8 +336,27 @@ macro_rules! define_litsigamal {
 
                 // apply endomorphism [n]:
                 bytes = big_to_bytes(Integer::from(self.n));
-                // TODO:
+
+                // just for checking:
+                let (Pa_isog3, ok1) = self.curve.complete_pointX(&Pa_isog3X);
+                assert!(ok1 == 0xFFFFFFFF);
+
+                self.curve.xtriple(&mut Pa_isog3X.X, &mut Pa_isog3X.Z);
+
                 let Pa_mul3 = self.curve.mul(&Pa_isog3, &bytes, bytes.len() * 8);
+
+                println!("?????????=============");
+                println!("{}", Pa_isog3X.X / Pa_isog3X.Z);
+                println!("");
+                println!("{}", Pa_mul3.X / Pa_mul3.Z);
+                println!("");
+
+
+
+
+                // TODO:
+
+                /*
                 let Qa_mul3 = self.curve.mul(&Qa_isog3, &bytes, bytes.len() * 8);
 
                 println!("????????????????");
@@ -372,6 +391,7 @@ macro_rules! define_litsigamal {
                     &image_points,
                     self.a as usize,
                 );
+                */
 
                 /*
                 let (product, points) = product_isogeny(
