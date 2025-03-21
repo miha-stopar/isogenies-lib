@@ -246,6 +246,10 @@ macro_rules! define_theta_structure {
         /// Cost: 14M + 2S + 1I
         fn get_base_submatrix(E: &Curve, T: &Point) -> (Fq, Fq, Fq, Fq) {
             let (x, z) = T.to_xz();
+            get_base_submatrix_x(E, x, z)
+        }
+
+        fn get_base_submatrix_x(E: &Curve, x: Fq, z: Fq) -> (Fq, Fq, Fq, Fq) {
             let (u, w) = E.x_dbl_coords(&x, &z); // Cost 3M 2S
 
             // Precompute some pieces
@@ -1041,17 +1045,17 @@ macro_rules! define_theta_structure {
 
         pub fn compute_isogeny(
             E1E2: &EllipticProduct,
-            P1P2: &CouplePoint,
-            Q1Q2: &CouplePoint,
-            image_points: &[CouplePoint],
+            P1P2: &CouplePointX,
+            Q1Q2: &CouplePointX,
+            // image_points: &[CouplePoint],
             n: usize,
         ) {
             // Compute points of order 8
-            let P1P2_8 = E1E2.double_iter(&P1P2, n - 1);
-            let Q1Q2_8 = E1E2.double_iter(&Q1Q2, n - 1);
+            let P1P2_8 = E1E2.x_double_iter(&P1P2, n - 1);
+            let Q1Q2_8 = E1E2.x_double_iter(&Q1Q2, n - 1);
 
-            let P1P2_4 = E1E2.double(&P1P2_8);
-            let Q1Q2_4 = E1E2.double(&Q1Q2_8);
+            let P1P2_4 = E1E2.x_double(&P1P2_8);
+            let Q1Q2_4 = E1E2.x_double(&Q1Q2_8);
 
             product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4);
 
@@ -1059,15 +1063,15 @@ macro_rules! define_theta_structure {
 
         pub fn product_to_theta(
             E1E2: &EllipticProduct,
-            P1P2_4: &CouplePoint,
-            Q1Q2_4: &CouplePoint,
+            P1P2_4: &CouplePointX,
+            Q1Q2_4: &CouplePointX,
         ) {
             let (E1, E2) = E1E2.curves();
             // let (P1, P2) = P1P2_4.points();
             let (Q1, Q2) = Q1Q2_4.points();
 
-            let (g00_1, g01_1, g10_1, g11_1) = get_base_submatrix(&E1, &Q1);
-            let (g00_2, g01_2, g10_2, g11_2) = get_base_submatrix(&E2, &Q2);
+            let (g00_1, g01_1, g10_1, g11_1) = get_base_submatrix_x(&E1, Q1.X, Q1.Z);
+            let (g00_2, g01_2, g10_2, g11_2) = get_base_submatrix_x(&E2, Q2.X, Q2.Z);
 
             let a = &g00_1 * &g00_2 + &g10_1 * &g10_2 + Fq::ONE;
             let b = &g00_1 * &g10_2 + &g10_1 * &g00_2;

@@ -334,31 +334,48 @@ macro_rules! define_litsigamal {
 
                 let ell_product = EllipticProduct::new(&codomain, &self.curve);
 
-                // apply endomorphism [n] - we assume n = 3
-                assert!(self.n == 3);
-                self.curve.xtriple(&mut Pa_isog3X.X, &mut Pa_isog3X.Z);
-                self.curve.xtriple(&mut Qa_isog3X.X, &mut Qa_isog3X.Z);
-
-
-
-                // TODO:
-
-                /*
-                let Qa_mul3 = self.curve.mul(&Qa_isog3, &bytes, bytes.len() * 8);
-
-                println!("????????????????");
+                println!("??????? 1111 ?????????");
                 println!("");
                 // println!("{}", Pa_mul3.X / Pa_mul3.Z);
-                println!("{}", Pa.X / Pa.Z);
+                println!("{}", Pa_isog3X.X / Pa_isog3X.Z);
                 println!("");
                 // println!("{}", Qa_mul3.X / Qa_mul3.Z);
-                println!("{}", Qa.X / Qa.Z);
+                println!("{}", Qa_isog3X.X / Qa_isog3X.Z);
                 println!("");
                 println!("");
                 println!("");
+
+
+                // apply endomorphism [n] - we assume n = 3
+                assert!(self.n == 3);
+                codomain.xtriple(&mut Pa_isog3X.X, &mut Pa_isog3X.Z);
+                codomain.xtriple(&mut Qa_isog3X.X, &mut Qa_isog3X.Z);
+
+                /*
+                bytes = big_to_bytes(Integer::from(self.n));
+                let (Pa_isog3, ok1) = self.curve.complete_pointX(&Pa_isog3X);
+                let Pa_mul3 = self.curve.mul(&Pa_isog3, &bytes, bytes.len() * 8);
+                println!("=========");
+                println!("{}", Pa_mul3.X / Pa_mul3.Z);
+                */
+
+
+                println!("??????? 2222 ?????????");
+                println!("");
+                // println!("{}", Pa_mul3.X / Pa_mul3.Z);
+                println!("{}", Pa_isog3X.X / Pa_isog3X.Z);
+                println!("");
+                // println!("{}", Qa_mul3.X / Qa_mul3.Z);
+                println!("{}", Qa_isog3X.X / Qa_isog3X.Z);
+                println!("");
+                println!("");
+                println!("");
+
+                let Pa_gammaX = PointX::new_xz(&Pa_gamma.X, &Pa_gamma.Z);
+                let Qa_gammaX = PointX::new_xz(&Qa_gamma.X, &Qa_gamma.Z);
                 
-                let P1P2 = CouplePoint::new(&Pa_mul3, &Pa_gamma);
-                let Q1Q2 = CouplePoint::new(&Qa_mul3, &Qa_gamma);
+                let P1P2 = CouplePointX::new(&Pa_isog3X, &Pa_gammaX);
+                let Q1Q2 = CouplePointX::new(&Qa_isog3X, &Qa_gammaX);
 
                 // TODO:
                 let image_points = vec![
@@ -375,10 +392,9 @@ macro_rules! define_litsigamal {
                     &ell_product,
                     &P1P2,
                     &Q1Q2,
-                    &image_points,
+                    // &image_points,
                     self.a as usize,
                 );
-                */
 
                 /*
                 let (product, points) = product_isogeny(

@@ -536,6 +536,15 @@ macro_rules! define_ec_core {
                 *Z *= &V1;
             }
 
+            /// Return [2^n]*P as a new point
+            pub fn x_double_iter(self, P: &PointX, n: usize) -> PointX {
+                let mut P3 = *P;
+                for _ in 0..n {
+                    self.xdbl(&mut P3.X, &mut P3.Z);
+                }
+                P3
+            }
+
             #[inline(always)]
             pub fn xtriple(self, X: &mut Fq, Z: &mut Fq) {
                 let X0 = *X;
@@ -937,6 +946,24 @@ macro_rules! define_ec_core {
         }
 
         #[derive(Clone, Copy, Debug)]
+        pub struct CouplePointX {
+            P1: PointX,
+            P2: PointX,
+        }
+
+        impl CouplePointX {
+            /// Create a CouplePointX given a pair of points P1, P2 on E1 x E2
+            pub fn new(P1: &PointX, P2: &PointX) -> Self {
+                Self { P1: *P1, P2: *P2 }
+            }
+
+            /// Return the points P1, P2
+            pub fn points(self) -> (PointX, PointX) {
+                (self.P1, self.P2)
+            }
+        }
+
+        #[derive(Clone, Copy, Debug)]
         pub struct EllipticProduct {
             E1: Curve,
             E2: Curve,
@@ -972,12 +999,28 @@ macro_rules! define_ec_core {
                 C3
             }
 
+            pub fn x_double(self, C: &CouplePointX) -> CouplePointX {
+                let mut P1 = C.P1;
+                let mut P2 = C.P2;
+                self.E1.xdbl(&mut P1.X, &mut P1.Z);
+                self.E2.xdbl(&mut P2.X, &mut P2.Z);
+
+                CouplePointX::new(&P1, &P2)
+            }
+
             /// Repeatedly doubles the pair of points (P1, P2) on E1 x E2 to get
             /// ([2^n]P1, [2^n]P2)
             pub fn double_iter(self, C: &CouplePoint, n: usize) -> CouplePoint {
                 let mut C3 = *C;
                 C3.P1 = self.E1.double_iter(&C3.P1, n);
                 C3.P2 = self.E2.double_iter(&C3.P2, n);
+                C3
+            }
+
+            pub fn x_double_iter(self, C: &CouplePointX, n: usize) -> CouplePointX {
+                let mut C3 = *C;
+                C3.P1 = self.E1.x_double_iter(&C3.P1, n);
+                C3.P2 = self.E2.x_double_iter(&C3.P2, n);
                 C3
             }
         }
