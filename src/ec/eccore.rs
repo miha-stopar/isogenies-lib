@@ -191,6 +191,11 @@ macro_rules! define_ec_core {
                 let e = (&self.X * &rhs.Z).equals(&(&rhs.X * &self.Z));
                 (inf1 & inf2) | (!inf1 & !inf2 & e)
             }
+
+            /// Returns the X and Z coordinates of the projective point
+            pub fn to_xz(self) -> (Fq, Fq) {
+                (self.X, self.Z)
+            }
         }
 
         impl fmt::Display for PointX {

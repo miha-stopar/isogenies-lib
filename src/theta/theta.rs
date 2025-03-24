@@ -372,9 +372,21 @@ macro_rules! define_theta_structure {
         /// Cost: 20M
         fn base_change_couple_point(P1P2: &CouplePoint, M: [Fq; 16]) -> ThetaPoint {
             let (P1, P2) = P1P2.points();
-            let (mut X1, mut Z1) = P1.to_xz();
-            let (mut X2, mut Z2) = P2.to_xz();
+            let (X1, Z1) = P1.to_xz();
+            let (X2, Z2) = P2.to_xz();
 
+            base_change(X1, Z1, X2, Z2, M) 
+        }
+
+        fn base_change_couple_point_x(P1P2: &CouplePointX, M: [Fq; 16]) -> ThetaPoint {
+            let (P1, P2) = P1P2.points();
+            let (X1, Z1) = P1.to_xz();
+            let (X2, Z2) = P2.to_xz();
+
+            base_change(X1, Z1, X2, Z2, M) 
+        }
+
+        fn base_change(mut X1: Fq, mut Z1: Fq, mut X2: Fq, mut Z2: Fq, M: [Fq; 16]) -> ThetaPoint {
             // If we have the point (0, 0) swap to (1, 0)
             let P1_check = X1.iszero() & Z1.iszero();
             X1.set_cond(&Fq::ONE, P1_check);
@@ -1057,7 +1069,9 @@ macro_rules! define_theta_structure {
             let P1P2_4 = E1E2.x_double(&P1P2_8);
             let Q1Q2_4 = E1E2.x_double(&Q1Q2_8);
 
-            product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4);
+            let image_points = vec![P1P2_8];
+
+            product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4, image_points.as_slice());
 
         }
 
@@ -1065,29 +1079,43 @@ macro_rules! define_theta_structure {
             E1E2: &EllipticProduct,
             P1P2_4: &CouplePointX,
             Q1Q2_4: &CouplePointX,
+            image_points: &[CouplePointX],
         ) {
             let (E1, E2) = E1E2.curves();
             // let (P1, P2) = P1P2_4.points();
             let (Q1, Q2) = Q1Q2_4.points();
 
-            let (g00_1, g01_1, g10_1, g11_1) = get_base_submatrix_x(&E1, Q1.X, Q1.Z);
-            let (g00_2, g01_2, g10_2, g11_2) = get_base_submatrix_x(&E2, Q2.X, Q2.Z);
+            let (a10, a11, a12, a13) = get_base_submatrix_x(&E1, Q1.X, Q1.Z);
+            let (a20, a21, a22, a23) = get_base_submatrix_x(&E2, Q2.X, Q2.Z);
 
-            let a = &g00_1 * &g00_2 + &g10_1 * &g10_2 + Fq::ONE;
-            let b = &g00_1 * &g10_2 + &g10_1 * &g00_2;
+            let m00 = &a10 * &a20 + &a12 * &a22 + Fq::ONE;
+            let m01 = &a10 * &a22 + &a12 * &a20;
 
             println!("========1===========");
             println!("");
-            println!("Q1: {}", Q1.X / Q1.Z);
-            // println!("a: {}", a);
+            // println!("Q1: {}", Q1.X / Q1.Z);
+            println!("a: {}", m00);
             println!("");
             println!("");
-            println!("Q2: {}", Q2.X / Q2.Z);
-            // println!("b: {}", b);
+            // println!("Q2: {}", Q2.X / Q2.Z);
+            println!("b: {}", m01);
             println!("");
             println!("");
             println!("");
             println!("");
+
+            let (a, b, c, d) = (m00, m01, m01, m00);
+            let (a1, b1, c1, d1) = (m00 * a20 + m01 * a21, m00 * a22 + m01 * a23, m01 * a20 + m00 * a21, m01 * a22 + m00 * a23);
+            let (a2, b2, c2, d2) = (c, d, a, b);
+            let (a3, b3, c3, d3) = (c1, d1, a1, b1);
+
+            let M = [a, b, c, d, a1, b1, c1, d1, a2, b2, c2, d2, a3, b3, c3, d3];
+
+            // theta = [matrix[0][0],matrix[1][0],matrix[2][0],matrix[3][0]]
+            // let theta = 
+            
+            let T1_8 = base_change_couple_point_x(&image_points[0], M);
+
 
         }
 
