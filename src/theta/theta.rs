@@ -383,6 +383,12 @@ macro_rules! define_theta_structure {
             let (X1, Z1) = P1.to_xz();
             let (X2, Z2) = P2.to_xz();
 
+            println!("=========2==========");
+            println!("P1: {}", P1);
+            println!("");
+            println!("P2: {}", P2);
+            println!("");
+
             base_change(X1, Z1, X2, Z2, M) 
         }
 
@@ -1069,18 +1075,52 @@ macro_rules! define_theta_structure {
             let P1P2_4 = E1E2.x_double(&P1P2_8);
             let Q1Q2_4 = E1E2.x_double(&Q1Q2_8);
 
-            let image_points = vec![P1P2_8];
+            let image_points = vec![P1P2_8, Q1Q2_8];
 
-            product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4, image_points.as_slice());
+            let (Pa, Pa1) = P1P2_8.points();
+
+            println!("??????? 33333 ?????????");
+            println!("");
+            println!("{}", Pa.X / Pa.Z);
+            println!("");
+            println!("{}", Pa1.X / Pa1.Z);
+            println!("");
+            println!("");
+            println!("");
+
+
+            let (theta_A, images) = product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4, image_points.as_slice());
+            hat_phi_psi(theta_A, &images);
 
         }
+
+        pub fn hat_phi_psi(theta: ThetaStructure, images: &[ThetaPoint]) {
+           codomain_isogeny(&images[0], &images[1]); 
+        }
+
+        pub fn codomain_isogeny(Ta_8: &ThetaPoint, Tb_8: &ThetaPoint) {
+            let (x1, y1, z1, t1) = Ta_8.squared_theta(); // hadamard already there
+            let (x2, y2, z2, t2) = Tb_8.squared_theta(); // hadamard already there
+
+            println!("11");
+            println!("");
+            println!("{}", Tb_8.X / Tb_8.Y);
+            println!("");
+            println!("{}", x2 / y2);
+            println!("");
+
+            if z1 == Fq::ZERO {
+
+            }
+
+        } 
 
         pub fn product_to_theta(
             E1E2: &EllipticProduct,
             P1P2_4: &CouplePointX,
             Q1Q2_4: &CouplePointX,
             image_points: &[CouplePointX],
-        ) {
+        ) -> (ThetaStructure, Vec<ThetaPoint>) {
             let (E1, E2) = E1E2.curves();
             // let (P1, P2) = P1P2_4.points();
             let (Q1, Q2) = Q1Q2_4.points();
@@ -1112,11 +1152,71 @@ macro_rules! define_theta_structure {
             let M = [a, b, c, d, a1, b1, c1, d1, a2, b2, c2, d2, a3, b3, c3, d3];
 
             // theta = [matrix[0][0],matrix[1][0],matrix[2][0],matrix[3][0]]
-            // let theta = 
+            let theta = ThetaStructure::new_from_coords(&a, &a1, &a2, &a3);
             
-            let T1_8 = base_change_couple_point_x(&image_points[0], M);
+            let mut images = vec![];
+            for i in 0..image_points.len() {
+                images.push(base_change_couple_point_x(&image_points[i], M));
+            }
 
+            let theta_list = [a, a1, a2, a3];
 
+            /*
+            println!("==");
+            println!("");
+            println!("{}", T1_8.X / T1_8.Y);
+            println!("");
+            println!("{}", T2_8.X / T2_8.Y);
+            println!("");
+            */
+            /*
+            let foo = proj_inv(&theta_list);
+            println!("? 111 ????");
+            println!("{}", foo[0]/foo[1]);
+            println!("");
+            println!("{}", foo[0]/foo[2]);
+            println!("");
+            println!("{}", foo[0]/foo[3]);
+            println!("");
+            println!("{}", theta_list[0]/theta_list[1]);
+            println!("");
+            */
+
+            (theta, images)
+        }
+
+        fn proj_inv(theta: &[Fq]) -> Vec<Fq> {
+            let n = theta.len();
+        
+            if n == 1 {
+                return vec![Fq::ONE];
+            }
+        
+            if n == 2 {
+                return vec![theta[1], theta[0]];
+            }
+        
+            if n == 3 {
+                return vec![theta[1] * theta[2], theta[2] * theta[0], theta[0] * theta[1]];
+            }
+        
+            let m = n / 2;
+            let mut result1 = proj_inv(&theta[..m]);
+            let mut result2 = proj_inv(&theta[m..]);
+        
+            let left = result1[0] * theta[0];
+            let right = result2[result2.len() - 1] * theta[n - 1];
+        
+            for val in &mut result1 {
+                *val *= right;
+            }
+        
+            for val in &mut result2 {
+                *val *= left;
+            }
+        
+            result1.extend(result2);
+            result1
         }
 
         // ========================================================

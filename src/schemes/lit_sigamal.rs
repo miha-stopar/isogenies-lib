@@ -334,6 +334,7 @@ macro_rules! define_litsigamal {
 
                 let ell_product = EllipticProduct::new(&codomain, &self.curve);
 
+                /*
                 println!("??????? 1111 ?????????");
                 println!("");
                 // println!("{}", Pa_mul3.X / Pa_mul3.Z);
@@ -344,6 +345,7 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("");
                 println!("");
+                */
 
 
                 // apply endomorphism [n] - we assume n = 3
@@ -359,6 +361,8 @@ macro_rules! define_litsigamal {
                 println!("{}", Pa_mul3.X / Pa_mul3.Z);
                 */
 
+                let Pa_gammaX = PointX::new_xz(&Pa_gamma.X, &Pa_gamma.Z);
+                let Qa_gammaX = PointX::new_xz(&Qa_gamma.X, &Qa_gamma.Z);
 
                 println!("??????? 2222 ?????????");
                 println!("");
@@ -366,13 +370,11 @@ macro_rules! define_litsigamal {
                 println!("{}", Pa_isog3X.X / Pa_isog3X.Z);
                 println!("");
                 // println!("{}", Qa_mul3.X / Qa_mul3.Z);
-                println!("{}", Qa_isog3X.X / Qa_isog3X.Z);
+                // println!("{}", Qa_isog3X.X / Qa_isog3X.Z);
+                println!("{}", Pa_gammaX.X / Pa_gammaX.Z);
                 println!("");
                 println!("");
                 println!("");
-
-                let Pa_gammaX = PointX::new_xz(&Pa_gamma.X, &Pa_gamma.Z);
-                let Qa_gammaX = PointX::new_xz(&Qa_gamma.X, &Qa_gamma.Z);
                 
                 let P1P2 = CouplePointX::new(&Pa_isog3X, &Pa_gammaX);
                 let Q1Q2 = CouplePointX::new(&Qa_isog3X, &Qa_gammaX);
