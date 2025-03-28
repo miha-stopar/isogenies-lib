@@ -911,6 +911,346 @@ macro_rules! define_ec_core {
 
                 S
             }
+
+            // S <- 2*S
+            fn line_double(self, pc: &mut PairingContext, S: &mut Point) {
+                // Line slope is L/T. Special cases:
+                //   S = inf                 -> current value is not changed
+                //   S != inf and 2*S = inf  -> line is vertical
+                // When 2*S = inf, we set the slope to (1,0). To make the
+                // formulas also correct when S = inf, we enforce X != 0 in
+                // that case.
+                let sinf = S.isinfinity();
+                S.X.set_cond(&Fq::ONE, sinf);
+                let XX = S.X.square();
+                let ZZ = S.Z.square();
+                let dXZ = &(&S.X + &S.Z).square() - &XX - &ZZ;
+                let mut L = &XX.mul3() + &(&self.A * &dXZ) + &ZZ;
+                let YY = S.Y.square();
+                let T = &(&S.Y + &S.Z).square() - &YY - &ZZ;
+                let tz = T.iszero();
+                L.set_cond(&Fq::ONE, tz);
+
+                // Apply the line on Q+R2 and R2.
+                let n1 = &(&L * &(&(&pc.xq * &S.Z) - &S.X)) - &(&T * &(&(&pc.yq * &S.Z) - &S.Y));
+                let d3 = &(&L * &(&(&pc.xr * &S.Z) - &S.X)) - &(&T * &(&(&pc.yr * &S.Z) - &S.Y));
+
+                // S' = 2*S
+                // If S' = inf, we enforce X = 1.
+                let V = (&XX - &ZZ).square();
+                let dYY = YY.mul2();
+                let TT = T.square();
+                S.X = &V * &T;
+                S.Y = &(&L * &(&(&dYY * &dXZ) - &V)) - &(&dYY * &TT);
+                S.Z = &T * &TT;
+                S.X.set_cond(&Fq::ONE, tz);
+
+                // Apply the vertical line going through S'. If S' = inf,
+                // this should be a no-operation; since we enforced X = 1
+                // in that case, the formulas still work.
+                let n2 = &(&pc.xr * &S.Z) - &S.X;
+                let d4 = &(&pc.xq * &S.Z) - &S.X;
+
+                // Update vn/vd.
+                pc.vn.set_square();
+                pc.vn *= &(&n1 * &n2);
+                pc.vd.set_square();
+                pc.vd *= &(&d3 * &d4);
+            }
+
+            fn weil_pairing_2exp(self, e: usize, P: &Point, Q: &Point) -> (Fq, u32) {
+                // For order n = 2^e, we use R1 = P-Q and R2 = P+Q. Thus,
+                // P+R1 = 2*P-Q, and Q+R2 = P+2*Q.
+                // All Miller steps in f_P(A_Q) after the first iteration use
+                // two line functions:
+                //   - line from (2^k)*P to -(2^(k+1))*P, for k >= 1
+                //   - line from -(2^(k+1))*P to +(2^(k+1))*P, for k >= 1
+                // If one of these lines goes through R2 or Q+R2 (thus
+                // triggering a zero), then this means that (2^k+1)*P or
+                // (2^k-1)*P (for some integer k >= 1) is equal to either
+                // +Q or -Q. P has order n = 2^e; 2^k+1 and 2^k-1 are odd,
+                // thus invertible modulo n, which means that P and Q are
+                // colinear and the Weil pairing should ultimately be 1. We
+                // thus handle these cases properly by normalizing zeros to
+                // a final result of 1. The same reasoning goes for f_Q(A_P).
+                //
+                // Remaining cases are for the computation of f1_P(A_Q) and
+                // f1_Q(A_P), and the first iteration of the Miller loop.
+                // We potentially get a zero when some point is on a given
+                // line; here is the list of all cases to account for (for
+                // f_P(A_Q) and f_Q(A_P)):
+                //
+                //    P = R2             Q = inf
+                //    P = Q+R2           2*Q = inf
+                //    R1 = R2            2*Q = inf
+                //    R1 = Q+R2          3*Q = inf (impossible)
+                //    -(P+R1) = R2       3*P = inf (impossible)
+                //    -(P+R1) = Q+R2     Q = -3*P (colinear)
+                //    P+R1 = R2          P = 2*Q (colinear)
+                //    P+R1 = Q+R2        3*P = 3*Q (colinear)
+                //
+                //    Q = R1             P = 2*Q (colinear)
+                //    Q = P+R1           2*P = 2*Q
+                //    R2 = R1            2*Q = inf
+                //    R2 = P+R1          P = -2*Q (colinear)
+                //    -(Q+R2) = R1       2*P = -3*Q (colinear)
+                //    -(Q+R2) = P+R1     Q = 3*P (colinear)
+                //    Q+R2 = R1          2*P = 3*Q (colinear)
+                //    Q+R2 = P+R1        P = 3*Q (colinear)
+                //
+                // The left column lists cases that trigger a zero in the
+                // accumulator; the right column gives the corresponding
+                // conditions on points P and Q, using R1 = P-Q and R2 = P+Q.
+                // Those marked "impossible" cannot happen for points of
+                // n-torsion (and the algorithm explicitly verifies that
+                // both points are n-torsion). "Colinear" means that one of
+                // the point is expressed as an integer multiple of the other,
+                // leading to a Weil pairing of 1, and the normalization step
+                // of zeros to 1 correctly handles these. The only remaining
+                // cases that must be handled as corrective steps are the
+                // following:
+                //
+                //    P = inf
+                //    Q = inf
+                //    2*P = inf
+                //    2*Q = inf
+                //    2*(P-Q) = inf
+                //
+                // When P = inf or Q = inf, w(P,Q) = 1.
+                //
+                // For the order-2 cases: let (U,V) be a basis of the
+                // n-torsion group, so that any n-torsion point P can be
+                // uniquely written as P = a*U + b*V, for two integers
+                // (a,b) taken modulo n. The points of 2-torsion then
+                // correspond to (0,0) (the point-at-infinity), (n/2,0),
+                // (0,n/2) and (n/2,n/2). Then, if Q = a'*U + b'*V, we
+                // have:
+                //    w(P,Q) = g^(a*b'-a'*b)
+                // for g = w(U,V) (which is a generator of the n-th roots of
+                // unity in GF(p^2)). In particular, if 2*P = inf, then
+                // both a and b are in {0,n/2}, and we have:
+                //
+                //    w(P,Q) = w((a/(n/2),b/(n/2)), (n/2)*Q)
+                //
+                // with (n/2)*Q being itself a point of 2-torsion. This yields
+                // either 1 or -1:
+                //
+                //    If (n/2)*Q != inf and (n/2)*Q != P, then w(P,Q) = -1
+                //    Otherwise, w(P,Q) = 1.
+                //
+                // We compute (n/2)*P and (n/2)*Q as part of Miller's algorithm,
+                // so we can handle these cases with negligible overhead.
+                //
+                // For the final case of 2*(P-Q) = 0, we can remark that:
+                //
+                //    w(P,Q) = w(P-Q,Q)*w(Q,Q) = w(P-Q,Q)
+                //
+                // so that we can handle that case similarly to that of points
+                // of order 2. The point P-Q is R1, we compute it explicitly;
+                // testing whether it has order 2 is then simply checking whether
+                // is Y coordinate is zero.
+
+                let R1 = self.sub(P, Q);
+                let R2 = self.add(P, Q);
+                let PR1 = self.add(P, &R1);
+                let QR2 = self.add(Q, &R2);
+
+                // Get the slopes for the lines that double P and Q, respectively.
+                let dA = self.A.mul2();
+                let Lp = &P.X.square().mul3() + &(&(&(&dA * &P.X) + &P.Z) * &P.Z);
+                let Tp = &P.Y.mul2() * &P.Z;
+                let Lq = &Q.X.square().mul3() + &(&(&(&dA * &Q.X) + &Q.Z) * &Q.Z);
+                let Tq = &Q.Y.mul2() * &Q.Z;
+
+                // f1_P(A_Q)
+                let n1 = &(&QR2.X * &PR1.Z) - &(&PR1.X * &QR2.Z);
+                let d2 = &(&R2.X * &PR1.Z) - &(&PR1.X * &R2.Z);
+                let L = &(&R1.Y * &P.Z) - &(&P.Y * &R1.Z);
+                let T = &(&R1.X * &P.Z) - &(&P.X * &R1.Z);
+                let n3 = &(&T * &(&(&R2.Y * &P.Z) - &(&P.Y * &R2.Z)))
+                    - &(&L * &(&(&R2.X * &P.Z) - &(&P.X * &R2.Z)));
+                let d4 = &(&T * &(&(&QR2.Y * &P.Z) - &(&P.Y * &QR2.Z)))
+                    - &(&L * &(&(&QR2.X * &P.Z) - &(&P.X * &QR2.Z)));
+                let f1pn = &n1 * &n3;
+                let f1pd = &d2 * &d4;
+
+                // f1_Q(A_P)
+                let n1 = -&n1;
+                let d2 = &(&R1.X * &QR2.Z) - &(&QR2.X * &R1.Z);
+                let L = &(&R2.Y * &Q.Z) - &(&Q.Y * &R2.Z);
+                let T = &(&R2.X * &Q.Z) - &(&Q.X * &R2.Z);
+                let n3 = &(&T * &(&(&R1.Y * &Q.Z) - &(&Q.Y * &R1.Z)))
+                    - &(&L * &(&(&R1.X * &Q.Z) - &(&Q.X * &R1.Z)));
+                let d4 = &(&T * &(&(&PR1.Y * &Q.Z) - &(&Q.Y * &PR1.Z)))
+                    - &(&L * &(&(&PR1.X * &Q.Z) - &(&Q.X * &PR1.Z)));
+                let f1qn = &n1 * &n3;
+                let f1qd = &d2 * &d4;
+
+                // Get the affine coordinates for P, Q, R1, R2, P+R1 and Q+R2,
+                // and also normalize lamb2p, lamb2q, f1p and f1q; this makes
+                // everything else faster.
+                let g1 = &P.Z * &Q.Z;
+                let g2 = &g1 * &R1.Z;
+                let g3 = &g2 * &R2.Z;
+                let g4 = &g3 * &PR1.Z;
+                let g5 = &g4 * &QR2.Z;
+                let g6 = &g5 * &Tp;
+                let g7 = &g6 * &Tq;
+                let g8 = &g7 * &f1pd;
+                let mut gg = (&g8 * &f1qd).invert();
+                let if1qd = &gg * &g8;
+                gg *= &f1qd;
+                let if1pd = &gg * &g7;
+                gg *= &f1pd;
+                let iTq = &gg * &g6;
+                gg *= &Tq;
+                let iTp = &gg * &g5;
+                gg *= &Tp;
+                let iZqr2 = &gg * &g4;
+                gg *= &QR2.Z;
+                let iZpr1 = &gg * &g3;
+                gg *= &PR1.Z;
+                let iZr2 = &gg * &g2;
+                gg *= &R2.Z;
+                let iZr1 = &gg * &g1;
+                gg *= &R1.Z;
+                let iZq = &gg * &P.Z;
+                let iZp = &gg * &Q.Z;
+
+                let (xp, yp) = (&P.X * &iZp, &P.Y * &iZp);
+                let (xq, yq) = (&Q.X * &iZq, &Q.Y * &iZq);
+                let (xr1, yr1) = (&R1.X * &iZr1, &R1.Y * &iZr1);
+                let (xr2, yr2) = (&R2.X * &iZr2, &R2.Y * &iZr2);
+                let (xpr1, ypr1) = (&PR1.X * &iZpr1, &PR1.Y * &iZpr1);
+                let (xqr2, yqr2) = (&QR2.X * &iZqr2, &QR2.Y * &iZqr2);
+                let lamb2p = &Lp * &iTp;
+                let lamb2q = &Lq * &iTq;
+                let f1p = &f1pn * &if1pd;
+                let f1q = &f1qn * &if1qd;
+
+                // Set the pairing context for f_P(A_Q). In that context,
+                // (xq,yq) is Q+R2, and (xr,yr) is R2.
+                let mut pc = PairingContext {
+                    xp: xp,
+                    yp: yp,
+                    xq: xqr2,
+                    yq: yqr2,
+                    xr: xr2,
+                    yr: yr2,
+                    f1: f1p,
+                    lamb2: lamb2p,
+                    xq_xp: &xqr2 - &xp,
+                    yq_yp: &yqr2 - &yp,
+                    xr_xp: &xr2 - &xp,
+                    yr_yp: &yr2 - &yp,
+                    xp_A: &xp + &self.A,
+                    vn: f1p,
+                    vd: Fq::ONE,
+                };
+
+                // Compute f_P(A_Q).
+                // We keep the x coordinate of (n/2)*P in hnpX/hnpZ.
+                let mut S = *P;
+                for _ in 1..e {
+                    self.line_double(&mut pc, &mut S);
+                }
+                let hnpX = S.X;
+                let hnpZ = S.Z;
+                self.line_double(&mut pc, &mut S);
+                let okp = S.isinfinity();
+                let vn1 = pc.vn;
+                let vd1 = pc.vd;
+
+                // Prepare the pairing context for f_Q(A_P).
+                let mut pc = PairingContext {
+                    xp: xq,
+                    yp: yq,
+                    xq: xpr1,
+                    yq: ypr1,
+                    xr: xr1,
+                    yr: yr1,
+                    f1: f1q,
+                    lamb2: lamb2q,
+                    xq_xp: &xpr1 - &xq,
+                    yq_yp: &ypr1 - &yq,
+                    xr_xp: &xr1 - &xq,
+                    yr_yp: &yr1 - &yq,
+                    xp_A: &xq + &self.A,
+                    vn: f1q,
+                    vd: Fq::ONE,
+                };
+
+                // Compute f_Q(A_P).
+                // We keep the x coordinate of (n/2)*Q in hnqX/hnqZ.
+                let mut S = *Q;
+                for _ in 1..e {
+                    self.line_double(&mut pc, &mut S);
+                }
+                let hnqX = S.X;
+                let hnqZ = S.Z;
+                self.line_double(&mut pc, &mut S);
+                let okq = S.isinfinity();
+                let vn2 = pc.vn;
+                let vd2 = pc.vd;
+
+                // w = wn/wd = f_P(A_Q) / f_Q(A_P)
+                let wn = &vn1 * &vd2;
+                let wd = &vd1 * &vn2;
+
+                // Handling of points of order 1:
+                //  - If P = inf or Q = inf, value is 1.
+                //  - If P-Q = inf or P+Q = inf, value is 1.
+                //  - If 2*P-Q = inf or P+2*Q = inf, value is 1.
+                let p_z = P.Z.iszero();
+                let q_z = Q.Z.iszero();
+                let r1_z = R1.Z.iszero();
+                let r2_z = R2.Z.iszero();
+                let pr1_z = PR1.Z.iszero();
+                let qr2_z = QR2.Z.iszero();
+                let mut set1 = p_z | q_z | r1_z | r2_z | pr1_z | qr2_z;
+
+                // Handling of points of order 2:
+                //  - If P != inf and 2*P = inf, value is:
+                //       -1 if (n/2)*Q != inf and (n/2)*Q != P
+                //       1 otherwise
+                //  - If Q != inf and 2*Q = inf, value is:
+                //       -1 if (n/2)*P != inf and (n/2)*P != Q
+                //       1 otherwise
+                //  - If P-Q != inf and 2*(P-Q) = inf, value is:
+                //       -1 if (n/2)*Q != inf and (n/2)*Q != P-Q
+                //       1 otherwise
+                let p_t = P.Y.iszero() & !p_z;
+                let q_t = Q.Y.iszero() & !q_z;
+                let r1_t = R1.Y.iszero() & !r1_z;
+                let hnP_z = hnpZ.iszero();
+                let hnQ_z = hnqZ.iszero();
+                let hnQeqP =
+                    (hnQ_z & p_z) | ((&hnqX * &P.Z).equals(&(&P.X * &hnqZ)) & p_t & !hnQ_z);
+                let hnPeqQ =
+                    (hnP_z & q_z) | ((&hnpX * &Q.Z).equals(&(&Q.X * &hnpZ)) & q_t & !hnP_z);
+                let hnQeqR1 =
+                    (hnQ_z & r1_z) | ((&hnqX * &R1.Z).equals(&(&R1.X * &hnqZ)) & r1_t & !hnQ_z);
+                let mut neg1 = !set1
+                    & ((p_t & !hnQ_z & !hnQeqP)
+                        | (q_t & !hnP_z & !hnPeqQ)
+                        | (r1_t & !hnQ_z & !hnQeqR1));
+                set1 |= p_t | q_t | r1_t;
+
+                // Handling of zeros:
+                //  - If none of the cases above was encountered, a zero in
+                //    either wn or wd implies colinearity, and the result is 1.
+                set1 |= !set1 & (wn.iszero() | wd.iszero());
+
+                // An error is reported if P or Q was not n-torsion. On error,
+                // we force the result to 1.
+                let ok = okp & okq;
+                set1 |= !ok;
+                neg1 &= ok;
+                let mut w = &wn / &wd;
+                w.set_cond(&Fq::ONE, set1);
+                w.set_condneg(set1 & neg1);
+                (w, ok)
+            }
         }
 
         impl fmt::Display for Curve {
@@ -1169,6 +1509,51 @@ macro_rules! define_ec_core {
 
             (E_curr, image_points)
         }
+
+        /// Weil pairing
+        
+        // Context for a pairing computation. We are computing f_P(A_Q)
+        // with A_Q = <Q+R2> - <R2>, and f_P being the rational function
+        // of divisor n*<P+R1> - n*<R1>.
+        //
+        // Contents:
+        //    xp, yp      affine coordinates of P
+        //    xq, yq      affine coordinates of Q+R2
+        //    xr, yr      affine coordinates of R2
+        //    f1          f1_P(A_Q)
+        //    lamb2       slope of tangent on P
+        //    xq_xp       xq - xp
+        //    yq_yp       yq - yp
+        //    xr_xp       xr - xp
+        //    yr_yp       yr - yp
+        //    xp_A        xp + A
+        //    vn, vd      current value (fraction vn/vd)
+        //
+        // The context assumes that the following special cases are handled
+        // elsewhere by the caller:
+        //    P = inf
+        //    Q+R2 = inf
+        //    R2 = inf
+        //    2*P = inf
+        struct PairingContext {
+            xp: Fq,
+            yp: Fq,
+            xq: Fq,
+            yq: Fq,
+            xr: Fq,
+            yr: Fq,
+            f1: Fq,
+            lamb2: Fq,
+            xq_xp: Fq,
+            yq_yp: Fq,
+            xr_xp: Fq,
+            yr_yp: Fq,
+            xp_A: Fq,
+            vn: Fq,
+            vd: Fq,
+        } 
+        
+        
     };
 } // End of macro: define_ec_core
 
