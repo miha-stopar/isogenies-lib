@@ -1088,31 +1088,73 @@ macro_rules! define_theta_structure {
             println!("");
             println!("");
 
-
             let (theta_A, images) = product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4, image_points.as_slice());
             hat_phi_psi(theta_A, &images);
 
         }
 
         pub fn hat_phi_psi(theta: ThetaStructure, images: &[ThetaPoint]) {
-           codomain_isogeny(&images[0], &images[1]); 
+            // theta_B is theta null point on the variety B,
+            // theta_dual is its dual (hadamard operator applied on theta_B)
+            let (theta_dual, theta_dual_inv, theta_B) = codomain_isogeny(&images[0], &images[1]); 
         }
 
-        pub fn codomain_isogeny(Ta_8: &ThetaPoint, Tb_8: &ThetaPoint) {
+        pub fn codomain_isogeny(Ta_8: &ThetaPoint, Tb_8: &ThetaPoint) -> (ThetaPoint, ThetaPoint, ThetaPoint) {
             let (x1, y1, z1, t1) = Ta_8.squared_theta(); // hadamard already there
             let (x2, y2, z2, t2) = Tb_8.squared_theta(); // hadamard already there
 
-            println!("11");
-            println!("");
-            println!("{}", Tb_8.X / Tb_8.Y);
-            println!("");
-            println!("{}", x2 / y2);
-            println!("");
+            let theta_dual: ThetaPoint;
+            let theta_dual_inv: ThetaPoint;
 
-            if z1 == Fq::ZERO {
+            if t1 == Fq::ZERO {
+                let alpha = x1 * x2;
+                let beta = y1 * x2;
+                let gamma = z2 * x1;
 
+                theta_dual = ThetaPoint::new(&alpha, &beta, &gamma, &Fq::ZERO);
+                let mut theta_dual_inv_list = proj_inv(&[alpha, beta, gamma]);
+                theta_dual_inv_list.push(Fq::ZERO);
+                theta_dual_inv = ThetaPoint::new(
+                    &theta_dual_inv_list[0],
+                    &theta_dual_inv_list[1],
+                    &theta_dual_inv_list[2],
+                    &theta_dual_inv_list[3],
+                ); 
+            } else {
+                println!("222");
+
+                let inv_list = proj_inv(&[x1, x2, y2]);
+                let mut alpha = x1 * inv_list[0];
+                let mut beta = y1 * inv_list[0];
+                let gamma = z2 * inv_list[1] * alpha;
+                let delta = t1 * inv_list[2] * beta;
+                beta *= alpha;
+                alpha = alpha * alpha;
+
+                theta_dual = ThetaPoint::new(&alpha, &beta, &gamma, &delta);
+                
+                let theta_dual_inv_list = proj_inv(&[alpha, beta, gamma, delta]);
+                theta_dual_inv = ThetaPoint::new(
+                    &theta_dual_inv_list[0],
+                    &theta_dual_inv_list[1],
+                    &theta_dual_inv_list[2],
+                    &theta_dual_inv_list[3],
+                );
             }
 
+            let (x, y, z, t) = theta_dual.hadamard();
+            let theta = ThetaPoint::new(&x, &y, &z, &t);
+
+            println!("");
+            println!("alpha");
+            println!("{}", theta.X / theta.Y);
+            println!("");
+            println!("{}", theta_dual.X / theta_dual.Y);
+            println!("");
+            println!("{}", theta_dual_inv.X / theta_dual_inv.Y);
+            println!("");
+
+            (theta_dual, theta_dual_inv, theta)
         } 
 
         pub fn product_to_theta(
