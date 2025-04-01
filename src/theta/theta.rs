@@ -1077,7 +1077,8 @@ macro_rules! define_theta_structure {
 
             let image_points = vec![P1P2_8, Q1Q2_8];
 
-            let (Pa, Pa1) = P1P2_8.points();
+            let (Pa, Pa1) = P1P2.points();
+
 
             println!("??????? 33333 ?????????");
             println!("");

@@ -228,7 +228,7 @@ macro_rules! define_ec_core {
 
             pub fn new_fromA24(A24: &Fq) -> Self {
                 Self {
-                    A: Fq::ONE, // TODO, but not used
+                    A: A24.mul4() - &Fq::TWO,
                     A24: *A24,
                 }
             }
