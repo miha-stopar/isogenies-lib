@@ -258,59 +258,12 @@ macro_rules! define_litsigamal {
                 let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &kernel1x, &eval_points, n, &strategy);
                 // let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &FF, &eval_points, n, &strategy);
 
-                let (mut Pa_isog3X, mut Qa_isog3X, mut R_isog3X) = (image_points[0], image_points[1], image_points[2]);
+                let (mut Pa_isog3X, mut Qa_rand_isog3X, mut R_isog3X) = (image_points[0], image_points[1], image_points[2]);
 
                 let (Pa, ok1) = codomain.complete_pointX(&Pa_isog3X);
-                let (mut Qa, ok1) = codomain.complete_pointX(&Qa_isog3X);
+                let (mut Qa_rand, ok1) = codomain.complete_pointX(&Qa_rand_isog3X);
 
-                let (Pa_shift, Pa_shift1) = self.get_PQb_and_shift(&codomain, &self.curve, &Pa, &mut Qa, &Pa_gamma, &Qa_rand_gamma, torsion_b, tau);
-
-                println!("++++++=================++++++++");
-                println!("Pa {}", Pa.X / Pa.Z);
-                println!("");
-
-                println!("Qa {}", Qa_rand_X.X / Qa_rand_X.Z);
-                println!("");
-               
-                println!("");
-                println!("");
-                println!("");
-                println!("codomain: {}", codomain);
-                println!("");
-                println!("Pa after isog 3");
-                println!("{}", image_points[0].X / image_points[0].Z);
-                println!("");
-
-                println!("Qa after isog 3");
-                println!("{}", image_points[1].X / image_points[1].Z);
-                println!("");
-
-                println!("");
-                println!("Pa1");
-                println!("{}", Pa_gamma.X / Pa_gamma.Z);
-                println!("");
-
-                println!("Qa1");
-                println!("{}", Qa_rand_gamma.X / Qa_rand_gamma.Z);
-                println!("");
-
-                println!("");
-                println!("Pb_gamma");
-                println!("{}", Pb_gamma.X / Pb_gamma.Z);
-                println!("");
-
-                println!("Qb_gamma");
-                println!("{}", Qb_gamma.X / Qb_gamma.Z);
-                println!("");
-
-                println!("R");
-                println!("{}", image_points[2].X / image_points[2].Z);
-                println!("");
-
-                /*
-                println!("{}", Qa_new);
-                println!("");
-                */
+                let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift) = self.get_PQb_and_shift(&codomain, &self.curve, &Pa, &mut Qa_rand, &Pa_gamma, &Qa_rand_gamma, torsion_b, tau);
 
                 // TODO: compute the discrete logarithm s such that Qa_new = s * Pa_new
                 // K := Qa_new - s * Pa_new
@@ -333,43 +286,20 @@ macro_rules! define_litsigamal {
                 E1                                                            E
                 */
 
-
                 let ell_product = EllipticProduct::new(&codomain, &self.curve);
-
-                // apply endomorphism [n] - we assume n = 3
-                assert!(self.n == 3);
-                codomain.xtriple(&mut Pa_isog3X.X, &mut Pa_isog3X.Z);
-                codomain.xtriple(&mut Qa_isog3X.X, &mut Qa_isog3X.Z);
-
-                /*
-                bytes = big_to_bytes(Integer::from(self.n));
-                let (Pa_isog3, ok1) = self.curve.complete_pointX(&Pa_isog3X);
-                let Pa_mul3 = self.curve.mul(&Pa_isog3, &bytes, bytes.len() * 8);
-                println!("=========");
-                println!("{}", Pa_mul3.X / Pa_mul3.Z);
-                */
-
+ 
                 let Pa_gammaX = PointX::new_xz(&Pa_gamma.X, &Pa_gamma.Z);
                 let Qa_gammaX = PointX::new_xz(&Qa_gamma.X, &Qa_gamma.Z);
 
-                println!("??????? 2222 ?????????");
-                println!("");
-                // println!("{}", Pa_mul3.X / Pa_mul3.Z);
-                println!("{}", Pa_isog3X.X / Pa_isog3X.Z);
-                println!("");
-                // println!("{}", Qa_mul3.X / Qa_mul3.Z);
-                // println!("{}", Qa_isog3X.X / Qa_isog3X.Z);
-                println!("{}", Pa_gammaX.X / Pa_gammaX.Z);
-                println!("");
-                println!("");
-                println!("");
-                
-                let P1P2 = CouplePointX::new(&Pa_isog3X, &Pa_gammaX);
-                let Q1Q2 = CouplePointX::new(&Qa_isog3X, &Qa_gammaX);
+                let mut Pa_shiftX = PointX::new_xz(&Pa_shift.X, &Pa_shift.Z);
+                let mut Qa_shiftX = PointX::new_xz(&Qa_shift.X, &Qa_shift.Z);
+
+                let Pa1_shiftX = PointX::new_xz(&Pa1_shift.X, &Pa1_shift.Z);
+                let Qa1_shiftX = PointX::new_xz(&Qa1_shift.X, &Qa1_shift.Z);
 
                 // TODO:
-                let image_points = vec![
-                    P1P2
+                let image_points: Vec<CouplePoint> = vec![
+                    // P1P2
                     // CouplePoint::new(&self.two_dim.P, &self.two_dim.Q),
                     // CouplePoint::new(&self.two_dim.omegaP, &self.two_dim.omegaQ),
                 ];
@@ -380,8 +310,16 @@ macro_rules! define_litsigamal {
 
                 compute_isogeny(
                     &ell_product,
-                    &P1P2,
-                    &Q1Q2,
+                    &mut Pa_isog3X,
+                    &mut Qa_rand_isog3X,
+                    &Pa_gammaX,
+                    &Qa_gammaX,
+                    &mut Pa_shiftX,
+                    &mut Qa_shiftX,
+                    &Pa1_shiftX,
+                    &Qa1_shiftX,
+                    // &P1P2,
+                    // &Q1Q2,
                     // &image_points,
                     self.a as usize,
                 );
@@ -419,7 +357,7 @@ macro_rules! define_litsigamal {
             }
 
             fn get_PQb_and_shift(&self, curve_1: &Curve, curve_2: &Curve, Pa: &Point, Qa: &mut Point,
-                    Pa1: &Point, Qa1: &Point, torsion_b: Integer, tau: Integer) -> (Point, Point) {
+                    Pa1: &Point, Qa1: &Point, torsion_b: Integer, tau: Integer) -> (Point, Point, Point, Point) {
                 let Pb1 = generate_random_fq(curve_1, torsion_b.clone(), self.scalar_without_b.clone());
                 let Qb1 = generate_random_fq(curve_1, torsion_b, self.scalar_without_b.clone());
 
@@ -460,7 +398,10 @@ macro_rules! define_litsigamal {
                 let shift_2 = curve_2.double_iter(Pa1, self.a as usize);
 
                 let Pa_shift = curve_1.add(Pa, &shift_1);
+                let Qa_shift = curve_1.add(Qa, &shift_1);
+
                 let Pa1_shift = curve_2.add(Pa1, &shift_2);
+                let Qa1_shift = curve_2.add(Qa1, &shift_2);
 
                 println!("??????? 1111 ?????????");
                 println!("");
@@ -473,7 +414,7 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("");
 
-                (Pa_shift, Pa1_shift)
+                (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift)
             }
 
             fn generate_gamma(&self, N: Integer) -> QuatAlgEl { 

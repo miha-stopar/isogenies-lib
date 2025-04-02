@@ -1063,22 +1063,54 @@ macro_rules! define_theta_structure {
 
         pub fn compute_isogeny(
             E1E2: &EllipticProduct,
-            P1P2: &CouplePointX,
-            Q1Q2: &CouplePointX,
+            Pa: &mut PointX,
+            Qa: &mut PointX,
+            Pa1: &PointX,
+            Qa1: &PointX,
+            Pa_shift: &mut PointX,
+            Qa_shift: &mut PointX,
+            Pa1_shift: &PointX,
+            Qa1_shift: &PointX,
+            // P1P2: &CouplePointX,
+            // Q1Q2: &CouplePointX,
             // image_points: &[CouplePoint],
             n: usize,
         ) {
+            // apply endomorphism [n] - we assume n = 3
+            E1E2.E1.xtriple(&mut Pa.X, &mut Pa.Z);
+            E1E2.E1.xtriple(&mut Qa.X, &mut Qa.Z);
+
+            E1E2.E1.xtriple(&mut Pa_shift.X, &mut Pa_shift.Z);
+            E1E2.E1.xtriple(&mut Qa_shift.X, &mut Qa_shift.Z);
+
+            let P1P2 = CouplePointX::new(&Pa, &Pa1);
+            let Q1Q2 = CouplePointX::new(&Qa, &Qa1);
+
+            let P1P2_shift = CouplePointX::new(&Pa_shift, &Pa1_shift);
+            let Q1Q2_shift = CouplePointX::new(&Qa_shift, &Qa1_shift);
+
             // Compute points of order 8
+            /*
+            let Pa_8 = E1E2.E1.double_iter(Pa, n - 1); // TODO: use x_double_iter
+            let Qa_8 = E1E2.E1.double_iter(Qa, n - 1);
+            let Pa1_8 = E1E2.E2.double_iter(Pa1, n - 1);
+            let Qa1_8 = E1E2.E2.double_iter(Qa1, n - 1);
+            */
+
             let P1P2_8 = E1E2.x_double_iter(&P1P2, n - 1);
             let Q1Q2_8 = E1E2.x_double_iter(&Q1Q2, n - 1);
+
+            /*
+            let Pa_4 = E1E2.E1.double(&Pa_8);
+            let Qa_4 = E1E2.E1.double(&Qa_8);
+            let Pa1_4 = E1E2.E2.double(&Pa1_8);
+            let Qa1_4 = E1E2.E2.double(&Qa1_8);
+            */
 
             let P1P2_4 = E1E2.x_double(&P1P2_8);
             let Q1Q2_4 = E1E2.x_double(&Q1Q2_8);
 
-            let image_points = vec![P1P2_8, Q1Q2_8];
-
-            let (Pa, Pa1) = P1P2.points();
-
+            let image_points = vec![P1P2_8, Q1Q2_8, P1P2, Q1Q2, P1P2_shift, Q1Q2_shift];
 
             println!("??????? 33333 ?????????");
             println!("");
@@ -1204,14 +1236,13 @@ macro_rules! define_theta_structure {
 
             let theta_list = [a, a1, a2, a3];
 
-            /*
-            println!("==");
+            println!("======== 77777777777 ==========");
+            let P = images[3];
             println!("");
-            println!("{}", T1_8.X / T1_8.Y);
+            println!("{}", P.X / P.Y);
             println!("");
-            println!("{}", T2_8.X / T2_8.Y);
+            println!("{}", P.X / P.Z);
             println!("");
-            */
             /*
             let foo = proj_inv(&theta_list);
             println!("? 111 ????");
