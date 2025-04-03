@@ -289,7 +289,7 @@ macro_rules! define_litsigamal {
                 let ell_product = EllipticProduct::new(&codomain, &self.curve);
  
                 let Pa_gammaX = PointX::new_xz(&Pa_gamma.X, &Pa_gamma.Z);
-                let Qa_gammaX = PointX::new_xz(&Qa_gamma.X, &Qa_gamma.Z);
+                let Qa_rand_gammaX = PointX::new_xz(&Qa_rand_gamma.X, &Qa_rand_gamma.Z);
 
                 let mut Pa_shiftX = PointX::new_xz(&Pa_shift.X, &Pa_shift.Z);
                 let mut Qa_shiftX = PointX::new_xz(&Qa_shift.X, &Qa_shift.Z);
@@ -313,7 +313,7 @@ macro_rules! define_litsigamal {
                     &mut Pa_isog3X,
                     &mut Qa_rand_isog3X,
                     &Pa_gammaX,
-                    &Qa_gammaX,
+                    &Qa_rand_gammaX,
                     &mut Pa_shiftX,
                     &mut Qa_shiftX,
                     &Pa1_shiftX,

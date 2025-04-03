@@ -383,12 +383,6 @@ macro_rules! define_theta_structure {
             let (X1, Z1) = P1.to_xz();
             let (X2, Z2) = P2.to_xz();
 
-            println!("=========2==========");
-            println!("P1: {}", P1);
-            println!("");
-            println!("P2: {}", P2);
-            println!("");
-
             base_change(X1, Z1, X2, Z2, M) 
         }
 
@@ -1076,6 +1070,11 @@ macro_rules! define_theta_structure {
             // image_points: &[CouplePoint],
             n: usize,
         ) {
+            println!("??????? 555555 ?????????");
+            println!("");
+            println!("{}", Qa1.X / Qa1.Z);
+            println!("");
+
             // apply endomorphism [n] - we assume n = 3
             E1E2.E1.xtriple(&mut Pa.X, &mut Pa.Z);
             E1E2.E1.xtriple(&mut Qa.X, &mut Qa.Z);
@@ -1089,23 +1088,8 @@ macro_rules! define_theta_structure {
             let P1P2_shift = CouplePointX::new(&Pa_shift, &Pa1_shift);
             let Q1Q2_shift = CouplePointX::new(&Qa_shift, &Qa1_shift);
 
-            // Compute points of order 8
-            /*
-            let Pa_8 = E1E2.E1.double_iter(Pa, n - 1); // TODO: use x_double_iter
-            let Qa_8 = E1E2.E1.double_iter(Qa, n - 1);
-            let Pa1_8 = E1E2.E2.double_iter(Pa1, n - 1);
-            let Qa1_8 = E1E2.E2.double_iter(Qa1, n - 1);
-            */
-
             let P1P2_8 = E1E2.x_double_iter(&P1P2, n - 1);
             let Q1Q2_8 = E1E2.x_double_iter(&Q1Q2, n - 1);
-
-            /*
-            let Pa_4 = E1E2.E1.double(&Pa_8);
-            let Qa_4 = E1E2.E1.double(&Qa_8);
-            let Pa1_4 = E1E2.E2.double(&Pa1_8);
-            let Qa1_4 = E1E2.E2.double(&Qa1_8);
-            */
 
             let P1P2_4 = E1E2.x_double(&P1P2_8);
             let Q1Q2_4 = E1E2.x_double(&Q1Q2_8);
@@ -1130,6 +1114,32 @@ macro_rules! define_theta_structure {
             // theta_B is theta null point on the variety B,
             // theta_dual is its dual (hadamard operator applied on theta_B)
             let (theta_dual, theta_dual_inv, theta_B) = codomain_isogeny(&images[0], &images[1]); 
+
+            println!("========== 888888 ==========");
+            println!("{}", theta_dual.X / theta_dual.Y);
+            println!("");
+            println!("{}", theta_dual_inv.X / theta_dual_inv.Y);
+            println!("");
+            println!("{}", theta_B.X / theta_B.Y);
+            println!("");
+            println!("");
+
+            eval_isogeny_special(theta_dual_inv, &images[2..4], &images[4..6]);
+        }
+
+        pub fn eval_isogeny_special(theta_dual_inv: ThetaPoint, points: &[ThetaPoint], points_shift: &[ThetaPoint]) {
+            for (P, P_shift) in points.into_iter().zip(points_shift) {
+                let (x1, y1, z1, t1) = P.squared_theta();
+                let (x2, y2, z2, t2) = P_shift.squared_theta();
+
+                println!("========== 99999 ==========");
+                println!("{}", x1 / y1);
+                println!("");
+                println!("{}", x2 / y2);
+                println!("");
+
+            }
+
         }
 
         pub fn codomain_isogeny(Ta_8: &ThetaPoint, Tb_8: &ThetaPoint) -> (ThetaPoint, ThetaPoint, ThetaPoint) {
@@ -1237,7 +1247,7 @@ macro_rules! define_theta_structure {
             let theta_list = [a, a1, a2, a3];
 
             println!("======== 77777777777 ==========");
-            let P = images[3];
+            let P = images[5];
             println!("");
             println!("{}", P.X / P.Y);
             println!("");
