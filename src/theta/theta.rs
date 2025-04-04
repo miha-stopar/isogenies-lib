@@ -1127,19 +1127,41 @@ macro_rules! define_theta_structure {
             eval_isogeny_special(theta_dual_inv, &images[2..4], &images[4..6]);
         }
 
-        pub fn eval_isogeny_special(theta_dual_inv: ThetaPoint, points: &[ThetaPoint], points_shift: &[ThetaPoint]) {
+        pub fn eval_isogeny_special(theta_dual_inv: ThetaPoint, points: &[ThetaPoint], points_shift: &[ThetaPoint]) -> Vec<ThetaPoint> {
+            let mut points_result = vec![];
             for (P, P_shift) in points.into_iter().zip(points_shift) {
-                let (x1, y1, z1, t1) = P.squared_theta();
-                let (x2, y2, z2, t2) = P_shift.squared_theta();
+                let (x1, y1, z1, _) = P.squared_theta();
+                let (x2, y2, z2, _) = P_shift.squared_theta();
+ 
+                let x = x1 * theta_dual_inv.X;
+                let y = y1 * theta_dual_inv.Y;
+                let z = z1 * theta_dual_inv.Z;
 
-                println!("========== 99999 ==========");
-                println!("{}", x1 / y1);
-                println!("");
-                println!("{}", x2 / y2);
-                println!("");
+                // TODO: constant time
+                let lambda_inv;
+                if y.equals(&Fq::ZERO) != 0xFFFFFFFF {
+                    lambda_inv = y / (theta_dual_inv.X * x2);
+                } else {
+                    lambda_inv = x / (theta_dual_inv.Y * y2);
+                }
 
+                let t = lambda_inv * theta_dual_inv.Z * z2;
+
+                let (X, Y, Z, T) = to_hadamard(&x, &y, &z, &t);
+                points_result.push(ThetaPoint::new(&X, &Y, &Z, &T));
             }
 
+            /*
+            TODO
+            println!("========== 99999 ==========");
+            println!("{}", points_result[0].X / points_result[0].Y);
+            println!("");
+
+            println!("{}", points_result[1].X / points_result[1].Y);
+            println!("");
+            */
+
+            points_result
         }
 
         pub fn codomain_isogeny(Ta_8: &ThetaPoint, Tb_8: &ThetaPoint) -> (ThetaPoint, ThetaPoint, ThetaPoint) {

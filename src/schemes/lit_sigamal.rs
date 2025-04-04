@@ -379,7 +379,7 @@ macro_rules! define_litsigamal {
                 println!("ok: {}", ok);
                 println!("");
 
-                if w1.equals(&w2) == 0xFFFFFFFF{
+                if w1.equals(&w2) == 0xFFFFFFFF {
                     println!("========= ========= ======== ===========");
                     println!("========= ========= ======== ===========");
                     println!("========= ========= ======== ===========");
