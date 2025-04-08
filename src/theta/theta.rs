@@ -472,6 +472,18 @@ macro_rules! define_theta_structure {
             let (A, B, C, D) = to_hadamard(&ABCD[0], &ABCD[1], &ABCD[2], &ABCD[3]);
             let codomain = ThetaStructure::new_from_coords(&A, &B, &C, &D);
 
+            println!("");
+            println!("beta");
+            println!("{}", codomain.null_point.X / codomain.null_point.Y);
+            println!("");
+            /*
+            println!("{}", theta_dual.X / theta_dual.Y);
+            println!("");
+            println!("{}", theta_dual_inv.X / theta_dual_inv.Y);
+            println!("");
+            */
+
+
             (codomain, (a_inverse, b_inverse), z_idx)
         }
 
@@ -1069,6 +1081,7 @@ macro_rules! define_theta_structure {
             // Q1Q2: &CouplePointX,
             // image_points: &[CouplePoint],
             n: usize,
+            strategy: &[usize],
         ) {
             println!("??????? 555555 ?????????");
             println!("");
@@ -1106,25 +1119,92 @@ macro_rules! define_theta_structure {
             println!("");
 
             let (theta_A, images) = product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4, image_points.as_slice());
-            hat_phi_psi(theta_A, &images);
+            hat_phi_psi(theta_A, &images, n, strategy);
 
         }
 
-        pub fn hat_phi_psi(theta: ThetaStructure, images: &[ThetaPoint]) {
+        pub fn hat_phi_psi(theta: ThetaStructure, images: &[ThetaPoint], n: usize, strategy: &[usize]) {
             // theta_B is theta null point on the variety B,
             // theta_dual is its dual (hadamard operator applied on theta_B)
             let (theta_dual, theta_dual_inv, theta_B) = codomain_isogeny(&images[0], &images[1]); 
 
-            println!("========== 888888 ==========");
-            println!("{}", theta_dual.X / theta_dual.Y);
-            println!("");
-            println!("{}", theta_dual_inv.X / theta_dual_inv.Y);
-            println!("");
-            println!("{}", theta_B.X / theta_B.Y);
-            println!("");
-            println!("");
+            // TODO: either use codomain_isogeny or gluing_codomain (gluing_isogeny)
+            // domain.null_point = theta_B
+            let (domain, (a_inv, b_inv), z_idx) = gluing_codomain(&images[0], &images[1]);
+            
+            let mut kernel_pts = eval_isogeny_special(theta_dual_inv, &images[2..4], &images[4..6]);
+            // no_product_isogeny(theta_dual_inv, theta_B, kernel1, strategy);
 
-            eval_isogeny_special(theta_dual_inv, &images[2..4], &images[4..6]);
+            let mut strat_idx = 0;
+            let mut level: Vec<usize> = vec![0];
+            let mut prev: usize = level.iter().sum();
+
+            let mut Tp1: ThetaPoint;
+            let mut Tp2: ThetaPoint;
+            let mut kernel_len: usize;
+
+            for k in 1..n {
+                prev = level.iter().sum();
+                kernel_len = kernel_pts.len();
+
+                Tp1 = kernel_pts[kernel_len - 2];
+                Tp2 = kernel_pts[kernel_len - 1];
+                
+                println!("+++++++");
+                println!("{}", n);
+                println!("{}", strategy[strat_idx]);
+                println!("");
+                println!("{}", Tp1.X / Tp1.Y);
+                println!("");
+                println!("{}", Tp2.X / Tp2.Y);
+                println!("");
+
+                while prev != (n - 1 - k) {
+                    // Add the next strategy to the level
+                    level.push(strategy[strat_idx]);
+
+                    // Double the points according to the strategy
+                    Tp1 = domain.double_iter(&Tp1, strategy[strat_idx]);
+                    Tp2 = domain.double_iter(&Tp2, strategy[strat_idx]);
+
+                    println!("+++++++");
+                    println!("");
+                    println!("{}", Tp1.X / Tp1.Y);
+                    println!("");
+                    println!("{}", Tp2.X / Tp2.Y);
+                    println!("");
+
+                    // Add these points to the image points
+                    kernel_pts.push(Tp1);
+                    kernel_pts.push(Tp2);
+
+                    // Update the strategy bookkeepping
+                    prev += strategy[strat_idx];
+                    strat_idx += 1;
+                }
+
+                // Clear out the used kernel point and update level
+                kernel_pts.pop();
+                kernel_pts.pop();
+                level.pop();
+
+                /*
+                if k == (n - 2) {
+                    domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, false])
+                } else if k == (n - 1) {
+                    domain = two_isogeny_to_product(&Tp1, &Tp2, &mut kernel_pts)
+                } else {
+                    domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, true])
+                }
+                */
+            }
+            
+
+        }
+
+        /// Compute a (2^a,2^a)-isogeny from a non-product of elliptic curves.
+        pub fn no_product_isogeny(theta_dual_inv: ThetaPoint, theta_B: ThetaPoint, kernel1: Vec<ThetaPoint>, strategy: &[usize]) {
+
         }
 
         pub fn eval_isogeny_special(theta_dual_inv: ThetaPoint, points: &[ThetaPoint], points_shift: &[ThetaPoint]) -> Vec<ThetaPoint> {
