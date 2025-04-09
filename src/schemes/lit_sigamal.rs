@@ -323,7 +323,7 @@ macro_rules! define_litsigamal {
                     // &P1P2,
                     // &Q1Q2,
                     // &image_points,
-                    self.a as usize,
+                    self.a as usize, // 384
                     &strategy,
                 );
 

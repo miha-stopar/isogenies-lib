@@ -1130,7 +1130,7 @@ macro_rules! define_theta_structure {
 
             // TODO: either use codomain_isogeny or gluing_codomain (gluing_isogeny)
             // domain.null_point = theta_B
-            let (domain, (a_inv, b_inv), z_idx) = gluing_codomain(&images[0], &images[1]);
+            let (mut domain, (a_inv, b_inv), z_idx) = gluing_codomain(&images[0], &images[1]);
             
             let mut kernel_pts = eval_isogeny_special(theta_dual_inv, &images[2..4], &images[4..6]);
             // no_product_isogeny(theta_dual_inv, theta_B, kernel1, strategy);
@@ -1150,24 +1150,26 @@ macro_rules! define_theta_structure {
                 Tp1 = kernel_pts[kernel_len - 2];
                 Tp2 = kernel_pts[kernel_len - 1];
                 
-                println!("+++++++");
-                println!("{}", n);
-                println!("{}", strategy[strat_idx]);
-                println!("");
-                println!("{}", Tp1.X / Tp1.Y);
-                println!("");
-                println!("{}", Tp2.X / Tp2.Y);
-                println!("");
-
                 while prev != (n - 1 - k) {
                     // Add the next strategy to the level
                     level.push(strategy[strat_idx]);
+                
+                    /*
+                    println!("++++++++++++++++++++++++++");
+                    println!("{}", n);
+                    println!("");
+                    println!("{}", Tp1.X / Tp1.Y);
+                    println!("");
+                    println!("{}", Tp2.X / Tp2.Y);
+                    println!("");
+                    */
 
                     // Double the points according to the strategy
                     Tp1 = domain.double_iter(&Tp1, strategy[strat_idx]);
                     Tp2 = domain.double_iter(&Tp2, strategy[strat_idx]);
 
                     println!("+++++++");
+                    println!("{}", strategy[strat_idx]);
                     println!("");
                     println!("{}", Tp1.X / Tp1.Y);
                     println!("");
@@ -1183,6 +1185,14 @@ macro_rules! define_theta_structure {
                     strat_idx += 1;
                 }
 
+                println!("=========== h = 1 ==================================================");
+                println!("");
+                println!("k: {}", k);
+                println!("");
+                println!("");
+                println!("n: {}", n);
+                println!("");
+
                 // Clear out the used kernel point and update level
                 kernel_pts.pop();
                 kernel_pts.pop();
@@ -1190,13 +1200,36 @@ macro_rules! define_theta_structure {
 
                 /*
                 if k == (n - 2) {
-                    domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, false])
+                    println!("11111");
+                    println!("");
+                    domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, false]);
                 } else if k == (n - 1) {
+                    println!("22222");
+                    println!("");
                     domain = two_isogeny_to_product(&Tp1, &Tp2, &mut kernel_pts)
                 } else {
-                    domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, true])
+                    println!("33333");
+                    println!("");
+                    domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, true]);
                 }
                 */
+                domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, true]);
+
+                println!("{}", kernel_pts.len());
+                println!("");
+                println!("{:?}", kernel_pts);
+                println!("");
+
+                println!("");
+                println!("theta:");
+                println!("{}", domain.null_point.X / domain.null_point.Y);
+
+                /*
+                let P = kernel_pts[0];
+                println!("{}", P.X / P.Y);
+                println!("");
+                */
+
             }
             
 
