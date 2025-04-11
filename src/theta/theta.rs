@@ -1077,6 +1077,12 @@ macro_rules! define_theta_structure {
             Qa_shift: &mut PointX,
             Pa1_shift: &PointX,
             Qa1_shift: &PointX,
+            PbX: &PointX,
+            QbX: &PointX,
+            PQbX: &PointX,
+            Pb_shiftX: &PointX,
+            Qb_shiftX: &PointX,
+            PQb_shiftX: &PointX,
             // P1P2: &CouplePointX,
             // Q1Q2: &CouplePointX,
             // image_points: &[CouplePoint],
@@ -1107,18 +1113,36 @@ macro_rules! define_theta_structure {
             let P1P2_4 = E1E2.x_double(&P1P2_8);
             let Q1Q2_4 = E1E2.x_double(&Q1Q2_8);
 
-            let image_points = vec![P1P2_8, Q1Q2_8, P1P2, Q1Q2, P1P2_shift, Q1Q2_shift];
+            let zero = PointX::new_xz(&Fq::ONE, &Fq::ZERO);
+            let shift = PointX::new_xz(&Fq::ONE, &Fq::ONE);
+            let Pb = CouplePointX::new(&PbX, &zero);
+            let Qb = CouplePointX::new(&QbX, &zero);
+            let PQb = CouplePointX::new(&PQbX, &zero);
 
+            let Pb_shift = CouplePointX::new(&Pb_shiftX, &shift);
+            let Qb_shift = CouplePointX::new(&Qb_shiftX, &shift);
+            let PQb_shift = CouplePointX::new(&PQb_shiftX, &shift);
+
+            let image_points = vec![P1P2_8, Q1Q2_8, P1P2, Q1Q2, P1P2_shift, Q1Q2_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift];
+ 
+            let (theta_A, images) = product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4, image_points.as_slice());
+
+            /*
+            TODO
+            let C6 = images[9];
+            let C7 = images[10];
+            let C8 = images[11];
             println!("??????? 33333 ?????????");
             println!("");
-            println!("{}", Pa.X / Pa.Z);
+            println!("C6: {}", C6.X / C6.Y);
             println!("");
-            println!("{}", Pa1.X / Pa1.Z);
+            println!("C7: {}", C7.X / C7.Y);
+            println!("");
+            println!("C8: {}", C8.X / C8.Y);
             println!("");
             println!("");
-            println!("");
+            */
 
-            let (theta_A, images) = product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4, image_points.as_slice());
             hat_phi_psi(theta_A, &images, n, strategy);
 
         }
@@ -1134,6 +1158,13 @@ macro_rules! define_theta_structure {
             
             let mut kernel_pts = eval_isogeny_special(theta_dual_inv, &images[2..4], &images[4..6]);
             // no_product_isogeny(theta_dual_inv, theta_B, kernel1, strategy);
+
+            let imgs = eval_isogeny_special(theta_dual_inv, &images[6..9], &images[9..12]);
+            
+ 
+
+            kernel_pts = imgs.into_iter().chain(kernel_pts).collect();
+
 
             let mut strat_idx = 0;
             let mut level: Vec<usize> = vec![0];
@@ -1168,6 +1199,7 @@ macro_rules! define_theta_structure {
                     Tp1 = domain.double_iter(&Tp1, strategy[strat_idx]);
                     Tp2 = domain.double_iter(&Tp2, strategy[strat_idx]);
 
+                    /*
                     println!("+++++++");
                     println!("{}", strategy[strat_idx]);
                     println!("");
@@ -1175,6 +1207,7 @@ macro_rules! define_theta_structure {
                     println!("");
                     println!("{}", Tp2.X / Tp2.Y);
                     println!("");
+                    */
 
                     // Add these points to the image points
                     kernel_pts.push(Tp1);
@@ -1185,6 +1218,7 @@ macro_rules! define_theta_structure {
                     strat_idx += 1;
                 }
 
+                /*
                 println!("=========== h = 1 ==================================================");
                 println!("");
                 println!("k: {}", k);
@@ -1192,6 +1226,7 @@ macro_rules! define_theta_structure {
                 println!("");
                 println!("n: {}", n);
                 println!("");
+                */
 
                 // Clear out the used kernel point and update level
                 kernel_pts.pop();
@@ -1215,6 +1250,7 @@ macro_rules! define_theta_structure {
                 */
                 domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, true]);
 
+                /*
                 println!("{}", kernel_pts.len());
                 println!("");
                 println!("{:?}", kernel_pts);
@@ -1223,6 +1259,7 @@ macro_rules! define_theta_structure {
                 println!("");
                 println!("theta:");
                 println!("{}", domain.null_point.X / domain.null_point.Y);
+                */
 
                 /*
                 let P = kernel_pts[0];
@@ -1231,6 +1268,12 @@ macro_rules! define_theta_structure {
                 */
 
             }
+
+            println!("??????? 33333 ?????????");
+            println!("");
+            let P = kernel_pts[0];
+            println!("P: {}", P.X / P.Y);
+            println!("");
             
 
         }

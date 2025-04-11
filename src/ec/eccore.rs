@@ -542,6 +542,7 @@ macro_rules! define_ec_core {
             }
 
             /// Return [2^n]*P as a new point
+            #[inline(always)]
             pub fn x_double_iter(self, P: &PointX, n: usize) -> PointX {
                 let mut P3 = *P;
                 for _ in 0..n {
