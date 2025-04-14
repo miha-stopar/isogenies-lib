@@ -1155,16 +1155,21 @@ macro_rules! define_theta_structure {
             // TODO: either use codomain_isogeny or gluing_codomain (gluing_isogeny)
             // domain.null_point = theta_B
             let (mut domain, (a_inv, b_inv), z_idx) = gluing_codomain(&images[0], &images[1]);
+
+            let theta_null = theta.null_point();
+            let theta_inv = proj_inv(&[theta_null.X, theta_null.Y, theta_null.Z, theta_null.T]);
+            let theta_i = ThetaPoint::new(&theta_inv[0], &theta_inv[1], &theta_inv[2], &theta_inv[3]);
+
+            let theta_B_inv = proj_inv(&[theta_B.X, theta_B.Y, theta_B.Z, theta_B.T]);
+ 
+            let mut isogeny_chain_dual_list = vec![theta_i, ThetaPoint::new(&theta_B_inv[0], &theta_B_inv[1], &theta_B_inv[2], &theta_B_inv[3])];
             
             let mut kernel_pts = eval_isogeny_special(theta_dual_inv, &images[2..4], &images[4..6]);
             // no_product_isogeny(theta_dual_inv, theta_B, kernel1, strategy);
 
             let imgs = eval_isogeny_special(theta_dual_inv, &images[6..9], &images[9..12]);
             
- 
-
             kernel_pts = imgs.into_iter().chain(kernel_pts).collect();
-
 
             let mut strat_idx = 0;
             let mut level: Vec<usize> = vec![0];
@@ -1185,16 +1190,6 @@ macro_rules! define_theta_structure {
                     // Add the next strategy to the level
                     level.push(strategy[strat_idx]);
                 
-                    /*
-                    println!("++++++++++++++++++++++++++");
-                    println!("{}", n);
-                    println!("");
-                    println!("{}", Tp1.X / Tp1.Y);
-                    println!("");
-                    println!("{}", Tp2.X / Tp2.Y);
-                    println!("");
-                    */
-
                     // Double the points according to the strategy
                     Tp1 = domain.double_iter(&Tp1, strategy[strat_idx]);
                     Tp2 = domain.double_iter(&Tp2, strategy[strat_idx]);
@@ -1250,6 +1245,13 @@ macro_rules! define_theta_structure {
                 */
                 domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, true]);
 
+                let theta_null = domain.null_point();
+                let theta_inv = proj_inv(&[theta_null.X, theta_null.Y, theta_null.Z, theta_null.T]);
+                let theta_i = ThetaPoint::new(&theta_inv[0], &theta_inv[1], &theta_inv[2], &theta_inv[3]);
+                isogeny_chain_dual_list.push(theta_i);
+
+
+
                 /*
                 println!("{}", kernel_pts.len());
                 println!("");
@@ -1269,12 +1271,35 @@ macro_rules! define_theta_structure {
 
             }
 
-            println!("??????? 33333 ?????????");
+            println!("++++++++++++++++++++++++++");
+            println!("{}", n);
+            println!("");
+            // println!("{}", theta_B_inv[0] / theta_B_inv[1]);
+            println!("{}", isogeny_chain_dual_list[384].X / isogeny_chain_dual_list[384].Y);
+            println!("");
+            println!("");
+
+
+            println!("??????? 33333 11 ?????????");
             println!("");
             let P = kernel_pts[0];
             println!("P: {}", P.X / P.Y);
             println!("");
-            
+
+ 
+            let M = [Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ONE];
+
+            let mut images = vec![];
+            for i in 0..kernel_pts.len() {
+                images.push(base_change(kernel_pts[i].X, kernel_pts[i].Z, kernel_pts[i].Y, kernel_pts[i].T, M));
+            }
+
+            println!("??????? 33333 ?????????");
+            println!("");
+            let P = images[0];
+            println!("P: {}", P.X / P.Y);
+            println!("");
+
 
         }
 
