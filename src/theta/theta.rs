@@ -1285,19 +1285,35 @@ macro_rules! define_theta_structure {
             let P = kernel_pts[0];
             println!("P: {}", P.X / P.Y);
             println!("");
-
  
             let M = [Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ONE];
 
-            let mut images = vec![];
             for i in 0..kernel_pts.len() {
-                images.push(base_change(kernel_pts[i].X, kernel_pts[i].Z, kernel_pts[i].Y, kernel_pts[i].T, M));
+                // images.push(base_change(kernel_pts[i].X, kernel_pts[i].Z, kernel_pts[i].Y, kernel_pts[i].T, M));
+                apply_base_change(&mut kernel_pts[i], M);
+            }
+
+            println!("??????? aaabbb ?????????");
+            println!("");
+
+            // let mut images = vec![];
+            for i in 1..isogeny_chain_dual_list.len() {
+                kernel_pts = eval_isogeny(isogeny_chain_dual_list[isogeny_chain_dual_list.len() - i - 1], &kernel_pts);
+            }
+
+            for i in 0..kernel_pts.len() {
+                let (x, y, z, t) = kernel_pts[i].hadamard();
+                kernel_pts[i] = ThetaPoint::new(&x, &y, &z, &t);
             }
 
             println!("??????? 33333 ?????????");
             println!("");
-            let P = images[0];
+            let P = kernel_pts[0];
             println!("P: {}", P.X / P.Y);
+            println!("");
+            println!("P: {}", P.X / P.Z);
+            println!("");
+            println!("P: {}", P.X / P.T);
             println!("");
 
 
@@ -1306,6 +1322,23 @@ macro_rules! define_theta_structure {
         /// Compute a (2^a,2^a)-isogeny from a non-product of elliptic curves.
         pub fn no_product_isogeny(theta_dual_inv: ThetaPoint, theta_B: ThetaPoint, kernel1: Vec<ThetaPoint>, strategy: &[usize]) {
 
+        }
+
+        pub fn eval_isogeny(theta_dual_inv: ThetaPoint, points: &[ThetaPoint]) -> Vec<ThetaPoint> {
+            let mut points_result = vec![];
+
+            for P in points {
+                let (mut x, mut y, mut z, mut t) = P.squared_theta();
+                x = x * theta_dual_inv.X;
+                y = y * theta_dual_inv.Y;
+                z = z * theta_dual_inv.Z;
+                t = t * theta_dual_inv.T;
+                let (X, Y, Z, T) = to_hadamard(&x, &y, &z, &t);
+
+                points_result.push(ThetaPoint::new(&X, &Y, &Z, &T));
+            }
+
+            points_result
         }
 
         pub fn eval_isogeny_special(theta_dual_inv: ThetaPoint, points: &[ThetaPoint], points_shift: &[ThetaPoint]) -> Vec<ThetaPoint> {
