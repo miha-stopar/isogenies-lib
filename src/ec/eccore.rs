@@ -21,6 +21,7 @@ macro_rules! define_ec_core {
         use core::ops::Neg;
         use rand_core::{CryptoRng, RngCore};
         use std::fmt;
+        use rug::integer::{Order, Integer};
         use crate::ec::mp::{mp_sub, select_ct, select_ct_arr, swap_ct, mp_shiftr};
 
         /// Curve point.
@@ -557,6 +558,121 @@ macro_rules! define_ec_core {
                 let Z0 = *Z;
                 self.xdbl(X, Z);
                 self.xadd(&X0, &Z0, &X0, &Z0, X, Z);
+            }
+
+            /*
+            #[inline(always)]
+            pub fn xmul(self, s: Integer, X: &mut Fq, Z: &mut Fq) {
+                let mut bits = s.to_digits::<u8>(Order::LsfLe)
+                        .iter()
+                        .flat_map(|byte| (0..8).map(move |i| (byte >> i) & 1))
+                        .collect::<Vec<u8>>();
+                let actual_length = s.significant_bits() as usize;
+                bits.truncate(actual_length);
+                println!("{:?}", bits);
+
+                let mut P0X = X.clone();
+                let mut P0Z = Z.clone();
+
+                let mut QX = X.clone();
+                let mut QZ = Z.clone();
+
+                self.xdbl(&mut QX, &mut QZ);
+
+                let mut i = 0;
+                for b in bits.into_iter().rev() {
+                    if (s >> i) & 1 == 1 {
+                        let (new_Q, new_P) = self.double_add(Q, P, P0);
+                        Q = new_Q;
+                        P0 = new_P;
+                    } else {
+                        let (new_P, new_Q) = self.double_add(P, Q, P0);
+                        P0 = new_P;
+                        Q = new_Q;
+                    }
+                    i += 1;
+                }
+            }
+            */
+
+            pub fn double_add(
+                &self,
+                P: &PointX,
+                Q: &PointX,
+                PQ: &PointX,
+            ) -> (PointX, PointX) {
+                let mut Sum = PointX::new_xz(&Fq::ZERO, &Fq::ZERO);
+                let mut Db = PointX::new_xz(&Fq::ZERO, &Fq::ZERO);
+
+                let mut t0 = &P.X + &P.Z;
+                let mut t1 = &P.X - &P.Z;
+                let mut t2 = &Q.X + &Q.Z;
+                let t3 = &Q.X - &Q.Z;
+
+                Db.X = t0.square();
+                Db.Z = t1.square();
+
+                t0 *= &t3;
+                t1 *= &t2;
+
+                t2 = &Db.X - &Db.Z;
+                Db.Z *= self.A24;
+                Db.X *= &Db.Z;
+
+                Sum.X = self.A24 * &t2;
+                Sum.Z = &t0 - &t1;
+
+                Db.Z += &Sum.X;
+                Sum.X = &t0 + &t1;
+
+                Db.Z *= &t2;
+                Sum.X = Sum.X.square() * &PQ.Z;
+                Sum.Z = Sum.Z.square() * &PQ.X;
+
+                (Db, Sum)
+            }
+
+            pub fn ladder_3pt( 
+                &self,
+                P: &PointX,
+                Q: &PointX,
+                PQ: &PointX,
+                n_bits: Vec<u8>, // TODO: compute bits in the function
+            ) -> PointX {
+                let mut R0 = *P;
+                let mut R1 = *Q;
+                let mut R2 = *PQ;
+
+                for b in n_bits.iter().take(n_bits.len() - 1) {
+                    // TODO: constant time
+                    if *b == 1 {
+                        self.xadd(&R2.X, &R2.Z, &R0.X, &R0.Z, &mut R1.X, &mut R1.Z);
+                        /*
+                        println!("----1");
+                        println!("");
+                        println!("{}", R1.X / R1.Z);
+                        println!("");
+                        */
+
+                    } else {
+                        self.xadd(&R1.X, &R1.Z, &R0.X, &R0.Z, &mut R2.X, &mut R2.Z);
+                    }
+                    self.xdbl(&mut R0.X, &mut R0.Z);
+                    /*
+                    println!("??");
+                    println!("");
+                    println!("{}", R0.X / R0.Z);
+                    */
+                }
+                self.xadd(&R2.X, &R2.Z, &R0.X, &R0.Z, &mut R1.X, &mut R1.Z);
+
+                /*
+                println!("??------");
+                println!("");
+                println!("{}", R1.X / R1.Z);
+                */
+
+                R1 
             }
 
             /// P3 <- n*P
@@ -1373,6 +1489,7 @@ macro_rules! define_ec_core {
 
         // Implementation of 3-isogenies
 
+        // TODO: there already exists a function for this
         fn triple_e_point_iter_into(E: &Curve, P: &mut PointX, e: usize) {
             #[inline(always)]
             fn xTPL(E: &Curve, XP: &mut Fq, ZP: &mut Fq) {

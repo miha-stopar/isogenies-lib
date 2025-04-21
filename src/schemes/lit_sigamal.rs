@@ -5,7 +5,6 @@ macro_rules! define_litsigamal {
         use crate::quaternion::quaternion_order::standard_maximal_extremal_order;
         use crate::util::{generate_random_range};
         use crate::ec_lit;
-        use rug::integer::Order;
 
         pub fn get_params(lam: u32) -> (u32, u32, u32, u32) {
             let a = lam * 3;
@@ -305,20 +304,13 @@ macro_rules! define_litsigamal {
                 let Qb_shiftX = PointX::new_xz(&Qb_shift.X, &Qb_shift.Z);
                 let PQb_shiftX = PointX::new_xz(&PQb_shift.X, &PQb_shift.Z);
 
-                // TODO:
-                let image_points: Vec<CouplePoint> = vec![
-                    // P1P2
-                    // CouplePoint::new(&self.two_dim.P, &self.two_dim.Q),
-                    // CouplePoint::new(&self.two_dim.omegaP, &self.two_dim.omegaQ),
-                ];
-
                 // Precomputed with strategy.py
                 // TODO: derive 383 from self.a
                 // let n = 383;
                 // let strategy: [usize; 383] = [144, 89, 55, 34, 27, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 6, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
                 let strategy: [usize; 382] = [154, 93, 55, 33, 20, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 38, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 65, 37, 21, 12, 7, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 28, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1];
 
-                compute_isogeny(
+                let points = compute_isogeny(
                     &ell_product,
                     &mut Pa_isog3X,
                     &mut Qa_rand_isog3X,
@@ -334,29 +326,57 @@ macro_rules! define_litsigamal {
                     &Pb_shiftX,
                     &Qb_shiftX,
                     &PQb_shiftX,
-                    // &P1P2,
-                    // &Q1Q2,
-                    // &image_points,
                     self.a as usize, // 384
                     &strategy,
                 );
 
-                /*
-                let (product, points) = product_isogeny(
-                    &ell_product,
-                    &P1P2,
-                    &Q1Q2,
-                    &image_points,
-                    self.a as usize,
-                    &strategy,
-                );
+                println!("");
+                println!("========== Pb, Qb ================");
+                println!("{}", Pb.X / Pb.Z);
+                println!("");
+                println!("{}", Qb.X / Qb.Z);
+                println!("");
+                println!("{}", PQb.X / PQb.Z);
+                println!("");
 
-                println!("");
-                println!("product E1: {}", product.E1);
-                println!("");
-                println!("product E2: {}", product.E2);
-                println!("");
-                */
+                for _ in 0..6 {
+
+                    let mut no_backtracking = false;
+                    while !no_backtracking {
+
+                        let s = "162307329723362133395571159112650387183912143360127828921238645571247691996225".big();
+                        let s = "7".big();
+
+                        let mut s_bits = s.to_digits::<u8>(Order::LsfLe)
+                            .iter()
+                            .flat_map(|byte| (0..8).map(move |i| (byte >> i) & 1))
+                            .collect::<Vec<u8>>();
+                        let actual_length = s.significant_bits() as usize;
+                        s_bits.truncate(actual_length);
+                        println!("{:?}", s_bits);
+                        let foo = codomain.ladder_3pt(&PbX, &QbX, &PQbX, s_bits);
+
+
+                        // self.xadd(&PQ.X, &PQ.Z, &R1.X, &R1.Z, &mut R2.X, &mut R2.Z);
+                        let mut PP = PbX.clone(); // Declare and initialize Pb1
+                        self.curve.xadd(&PQbX.X, &PQbX.Z, &QbX.X, &QbX.Z, &mut PP.X, &mut PP.Z);
+
+
+                        println!("");
+                        println!("");
+
+                        // println!("");
+                        // println!("{}", PP.X / PP.Z);
+
+                        println!("__---__");
+                        println!("");
+                        println!("{}", foo.X / foo.Z);
+
+                        no_backtracking = true; // TODO
+                    }
+                }
+
+
 
                 /*
                 for i in 0..6 {
@@ -480,6 +500,7 @@ macro_rules! define_litsigamal {
 
                 // TODO: output in some different form
                 (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb1, Qb1, PQb1, Pb1_shift, Qb1_shift, PQb1_shift)
+        
             }
 
             fn generate_gamma(&self, N: Integer) -> QuatAlgEl { 

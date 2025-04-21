@@ -1088,7 +1088,7 @@ macro_rules! define_theta_structure {
             // image_points: &[CouplePoint],
             n: usize,
             strategy: &[usize],
-        ) {
+        ) -> Vec<PointX>{
             println!("??????? 555555 ?????????");
             println!("");
             println!("{}", Qa1.X / Qa1.Z);
@@ -1189,7 +1189,8 @@ macro_rules! define_theta_structure {
                 println!("{}", Q.X / Q.Z);
                 println!("");
             }
-            
+
+            mont_points
         }
 
         pub fn hat_phi_psi(theta: ThetaStructure, images: &[ThetaPoint], n: usize, strategy: &[usize]) -> Vec<ThetaPoint> {
