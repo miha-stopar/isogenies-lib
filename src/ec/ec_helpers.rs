@@ -4,7 +4,6 @@ macro_rules! define_ec_helpers {
     () => {
         use std::fs;
         use crate::linalg::matrix::Matrix;
-        use rug::Integer;
         // use std::ops::Div;
         use crate::util::{big_to_bytes, bytes_from_str, Big};
         use num_traits::Pow;

@@ -21,7 +21,8 @@ macro_rules! define_ec_core {
         use core::ops::Neg;
         use rand_core::{CryptoRng, RngCore};
         use std::fmt;
-        use rug::integer::{Order, Integer};
+        use rug::Integer;
+        use rug::integer::Order;
         use crate::ec::mp::{mp_sub, select_ct, select_ct_arr, swap_ct, mp_shiftr};
 
         /// Curve point.
@@ -562,7 +563,7 @@ macro_rules! define_ec_core {
 
             /*
             #[inline(always)]
-            pub fn xmul(self, s: Integer, X: &mut Fq, Z: &mut Fq) {
+            pub fn xmul(self, s: Integer, P: &mut PointX) {
                 let mut bits = s.to_digits::<u8>(Order::LsfLe)
                         .iter()
                         .flat_map(|byte| (0..8).map(move |i| (byte >> i) & 1))
@@ -571,24 +572,17 @@ macro_rules! define_ec_core {
                 bits.truncate(actual_length);
                 println!("{:?}", bits);
 
-                let mut P0X = X.clone();
-                let mut P0Z = Z.clone();
-
-                let mut QX = X.clone();
-                let mut QZ = Z.clone();
-
-                self.xdbl(&mut QX, &mut QZ);
+                let P0 = *P;
+                let mut Q = *P;
+                self.xdbl(&mut Q.X, &mut Q.Z);
 
                 let mut i = 0;
                 for b in bits.into_iter().rev() {
-                    if (s >> i) & 1 == 1 {
-                        let (new_Q, new_P) = self.double_add(Q, P, P0);
-                        Q = new_Q;
-                        P0 = new_P;
+                    // TODO: constant time
+                    if (s.clone() >> i) & 1 == 1 {
+                        (Q, *P) = self.double_add(&Q, P, &P0);
                     } else {
-                        let (new_P, new_Q) = self.double_add(P, Q, P0);
-                        P0 = new_P;
-                        Q = new_Q;
+                        (*P, Q) = self.double_add(P, &Q, &P0);
                     }
                     i += 1;
                 }
