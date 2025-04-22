@@ -22,7 +22,7 @@ macro_rules! define_ec_core {
         use rand_core::{CryptoRng, RngCore};
         use std::fmt;
         use rug::Integer;
-        use rug::integer::Order;
+        use crate::util::bits_from_big;
         use crate::ec::mp::{mp_sub, select_ct, select_ct_arr, swap_ct, mp_shiftr};
 
         /// Curve point.
@@ -212,6 +212,8 @@ macro_rules! define_ec_core {
         pub struct Curve {
             pub A: Fq, // curve parameter
             pub A24: Fq,   // (A+2)/4
+            pub A24_num: Fq,
+            pub A24_denom: Fq,
         }
 
         impl Curve {
@@ -225,13 +227,18 @@ macro_rules! define_ec_core {
                 Self {
                     A: *A,
                     A24: (A + &Fq::TWO).half().half(),
+                    A24_num: A + &Fq::TWO,
+                    A24_denom: Fq::TWO + Fq::TWO,
                 }
             }
 
-            pub fn new_fromA24(A24: &Fq) -> Self {
+            pub fn new_fromA24(A24_num: &Fq, A24_denom: &Fq) -> Self {
+                let A24 = A24_num / A24_denom;
                 Self {
                     A: A24.mul4() - &Fq::TWO,
-                    A24: *A24,
+                    A24: A24,
+                    A24_num: *A24_num,
+                    A24_denom: *A24_denom,
                 }
             }
 
@@ -561,33 +568,23 @@ macro_rules! define_ec_core {
                 self.xadd(&X0, &Z0, &X0, &Z0, X, Z);
             }
 
-            /*
             #[inline(always)]
-            pub fn xmul(self, s: Integer, P: &mut PointX) {
-                let mut bits = s.to_digits::<u8>(Order::LsfLe)
-                        .iter()
-                        .flat_map(|byte| (0..8).map(move |i| (byte >> i) & 1))
-                        .collect::<Vec<u8>>();
-                let actual_length = s.significant_bits() as usize;
-                bits.truncate(actual_length);
-                println!("{:?}", bits);
+            pub fn xmul(self, P: &mut PointX, s: Integer) {
+                let bits = bits_from_big(s);
 
                 let P0 = *P;
                 let mut Q = *P;
                 self.xdbl(&mut Q.X, &mut Q.Z);
 
-                let mut i = 0;
-                for b in bits.into_iter().rev() {
+                for b in bits.into_iter().rev().skip(1) {
                     // TODO: constant time
-                    if (s.clone() >> i) & 1 == 1 {
+                    if b == 1 {
                         (Q, *P) = self.double_add(&Q, P, &P0);
                     } else {
                         (*P, Q) = self.double_add(P, &Q, &P0);
                     }
-                    i += 1;
                 }
             }
-            */
 
             pub fn double_add(
                 &self,
@@ -610,10 +607,10 @@ macro_rules! define_ec_core {
                 t1 *= &t2;
 
                 t2 = &Db.X - &Db.Z;
-                Db.Z *= self.A24;
+                Db.Z *= self.A24_denom;
                 Db.X *= &Db.Z;
 
-                Sum.X = self.A24 * &t2;
+                Sum.X = self.A24_num * &t2;
                 Sum.Z = &t0 - &t1;
 
                 Db.Z += &Sum.X;
@@ -631,8 +628,10 @@ macro_rules! define_ec_core {
                 P: &PointX,
                 Q: &PointX,
                 PQ: &PointX,
-                n_bits: Vec<u8>, // TODO: compute bits in the function
+                s: Integer,
             ) -> PointX {
+                let n_bits = bits_from_big(s);
+                
                 let mut R0 = *P;
                 let mut R1 = *Q;
                 let mut R2 = *PQ;
@@ -1607,7 +1606,7 @@ macro_rules! define_ec_core {
 
                 // Compute the codomain constants
                 (A24_num, A24_denom, K1, K2) = three_isogeny_codomain(&S);
-                E_curr = Curve::new_fromA24(&(A24_num/A24_denom));
+                E_curr = Curve::new_fromA24(&A24_num, &A24_denom);
 
                 // Push all kernel points through the isogeny
                 for ker in kernel_pts.iter_mut() {

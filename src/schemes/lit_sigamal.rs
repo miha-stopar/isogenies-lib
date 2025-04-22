@@ -339,7 +339,7 @@ macro_rules! define_litsigamal {
                 println!("{}", PQb.X / PQb.Z);
                 println!("");
 
-                for _ in 0..6 {
+                for _ in 0..1 {
 
                     let mut no_backtracking = false;
                     while !no_backtracking {
@@ -347,28 +347,18 @@ macro_rules! define_litsigamal {
                         let s = "162307329723362133395571159112650387183912143360127828921238645571247691996225".big();
                         let s = "7".big();
 
-                        let mut s_bits = s.to_digits::<u8>(Order::LsfLe)
-                            .iter()
-                            .flat_map(|byte| (0..8).map(move |i| (byte >> i) & 1))
-                            .collect::<Vec<u8>>();
-                        let actual_length = s.significant_bits() as usize;
-                        s_bits.truncate(actual_length);
-                        println!("{:?}", s_bits);
-                        let foo = codomain.ladder_3pt(&PbX, &QbX, &PQbX, s_bits);
-
-
-                        // self.xadd(&PQ.X, &PQ.Z, &R1.X, &R1.Z, &mut R2.X, &mut R2.Z);
-                        let mut PP = PbX.clone(); // Declare and initialize Pb1
-                        self.curve.xadd(&PQbX.X, &PQbX.Z, &QbX.X, &QbX.Z, &mut PP.X, &mut PP.Z);
-
+                        let mut foo = codomain.ladder_3pt(&PbX, &QbX, &PQbX, s);
 
                         println!("");
                         println!("");
-
-                        // println!("");
-                        // println!("{}", PP.X / PP.Z);
 
                         println!("__---__");
+                        println!("");
+                        println!("{}", foo.X / foo.Z);
+
+                        let s1 = "117788".big();
+                        codomain.xmul(&mut foo, s1);
+
                         println!("");
                         println!("{}", foo.X / foo.Z);
 

@@ -159,6 +159,17 @@ pub fn bytes_from_str(a: &str) -> Vec<u8> {
     bs.1
 }
 
+pub fn bits_from_big(s: Integer) -> Vec<u8> {
+    let mut n_bits = s.to_digits::<u8>(Order::LsfLe)
+        .iter()
+        .flat_map(|byte| (0..8).map(move |i| (byte >> i) & 1))
+        .collect::<Vec<u8>>();
+    let actual_length = s.significant_bits() as usize;
+    n_bits.truncate(actual_length);
+
+    n_bits
+}
+
 pub fn binary_from_num(a: u32) -> Vec<u32> {
     let s = format!("{a:b}");
     let char_vec: Vec<char> = s.chars().collect();
