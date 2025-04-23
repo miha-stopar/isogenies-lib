@@ -65,19 +65,21 @@ macro_rules! define_litsigamal {
                 let power_a = power_a as u32;
                 let power_b = power_b as u32;
                 let power_c = power_c as u32;
+
+                let mut curve = self.curve.clone();
     
-                let (Pa, ok1) = self.curve.complete_pointX(&PaX); // TODO: check ok
+                let (Pa, ok1) = curve.complete_pointX(&PaX); // TODO: check ok
                 assert!(ok1 == 0xFFFFFFFF);
 
-                let (mut Qa, ok2) = self.curve.complete_pointX(&QaX); // TODO: check ok
+                let (mut Qa, ok2) = curve.complete_pointX(&QaX); // TODO: check ok
 
-                let (Pb, ok1) = self.curve.complete_pointX(&PbX); // TODO: check ok
+                let (Pb, ok1) = curve.complete_pointX(&PbX); // TODO: check ok
                 assert!(ok1 == 0xFFFFFFFF);
-                let (Qb, ok2) = self.curve.complete_pointX(&QbX); // TODO: check ok
+                let (Qb, ok2) = curve.complete_pointX(&QbX); // TODO: check ok
 
-                let (mut Pc, ok1) = self.curve.complete_pointX(&PcX); // TODO: check ok
-                let (Qc, ok2) = self.curve.complete_pointX(&QcX); // TODO: check ok
-                let (PmQc, ok3) = self.curve.complete_pointX(&PmQcX); // TODO: check ok
+                let (mut Pc, ok1) = curve.complete_pointX(&PcX); // TODO: check ok
+                let (Qc, ok2) = curve.complete_pointX(&QcX); // TODO: check ok
+                let (PmQc, ok3) = curve.complete_pointX(&PmQcX); // TODO: check ok
  
                 let l_a = 2;
                 let l_b = 3;
@@ -169,7 +171,7 @@ macro_rules! define_litsigamal {
                 let torsion_a = l_a.big().pow(power_a);
                 // let (Pa_gamma, _, _) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion_a, mat2_2, mat2_3, mat2_4, &Pa, &Qa);
                 
-                let (Pa_gamma, Qa_gamma, _) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion_a, mat2_2, mat2_3, mat2_4, &Pa, &Qa);
+                let (Pa_gamma, Qa_gamma, _) = apply_endomorphism_on_torsion_group(&curve, coord.clone(), imprim.clone(), torsion_a, mat2_2, mat2_3, mat2_4, &Pa, &Qa);
 
                 println!("");
                 println!("Pa_gamma");
@@ -184,23 +186,23 @@ macro_rules! define_litsigamal {
 
 
                 let bytes1 = big_to_bytes(a1);
-                let a1Pa_gamma = self.curve.mul(&Pa_gamma, &bytes1, bytes1.len() * 8);
+                let a1Pa_gamma = curve.mul(&Pa_gamma, &bytes1, bytes1.len() * 8);
                 let bytes2 = big_to_bytes(a2);
-                let a2Qa_gamma = self.curve.mul(&Qa_gamma, &bytes2, bytes2.len() * 8);
-                let Qa_rand_gamma = self.curve.add(&a1Pa_gamma, &a2Qa_gamma);
+                let a2Qa_gamma = curve.mul(&Qa_gamma, &bytes2, bytes2.len() * 8);
+                let Qa_rand_gamma = curve.add(&a1Pa_gamma, &a2Qa_gamma);
 
 
-                let a1Pa = self.curve.mul(&Pa, &bytes1, bytes1.len() * 8);
-                let a2Qa = self.curve.mul(&Qa, &bytes2, bytes2.len() * 8);
-                let Qa_rand = self.curve.add(&a1Pa, &a2Qa);
+                let a1Pa = curve.mul(&Pa, &bytes1, bytes1.len() * 8);
+                let a2Qa = curve.mul(&Qa, &bytes2, bytes2.len() * 8);
+                let Qa_rand = curve.add(&a1Pa, &a2Qa);
                 let Qa_rand_X = PointX::new_xz(&Qa_rand.X, &Qa_rand.Z);
 
 
                 let torsion_b = l_b.big().pow(power_b);
-                let (Pb_gamma, Qb_gamma, PmQb_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion_b.clone(), mat3_2, mat3_3, mat3_4, &Pb, &Qb);
+                let (Pb_gamma, Qb_gamma, PmQb_gamma) = apply_endomorphism_on_torsion_group(&curve, coord.clone(), imprim.clone(), torsion_b.clone(), mat3_2, mat3_3, mat3_4, &Pb, &Qb);
 
                 let torsion_c = l_c.big().pow(power_c);
-                let (Pc_gamma, Qc_gamma, PmQc_gamma) = apply_endomorphism_on_torsion_group(&self.curve, coord, imprim, torsion_c, mat5_2, mat5_3, mat5_4, &Pc, &Qc);
+                let (Pc_gamma, Qc_gamma, PmQc_gamma) = apply_endomorphism_on_torsion_group(&curve, coord, imprim, torsion_c, mat5_2, mat5_3, mat5_4, &Pc, &Qc);
 
                 /*
                 let mut bytes = big_to_bytes(c1);
@@ -212,8 +214,8 @@ macro_rules! define_litsigamal {
                 let Rx = PointX::new_xz(&R.X, &R.Z);
                 */
 
-                let dlog1 = ec_lit::dlog_3(&self.curve, &Pb_gamma, &Qb_gamma, 162);
-                let dlog2 = ec_lit::dlog_3(&self.curve, &Qb_gamma, &Pb_gamma, 162);
+                let dlog1 = ec_lit::dlog_3(&curve, &Pb_gamma, &Qb_gamma, 162);
+                let dlog2 = ec_lit::dlog_3(&curve, &Qb_gamma, &Pb_gamma, 162);
  
                 println!("dlog1: {}", dlog1);
                 println!("");
@@ -226,8 +228,8 @@ macro_rules! define_litsigamal {
                 // TODO: set [2^a]Pa_gamma = (1,*)
 
                 let mut bytes = big_to_bytes(dlog2); // TODO
-                let dlog_Qb = self.curve.mul(&Qb, &bytes, bytes.len() * 8);
-                let kernel1 = self.curve.sub(&Pb, &dlog_Qb); // TODO: PointX directly
+                let dlog_Qb = curve.mul(&Qb, &bytes, bytes.len() * 8);
+                let kernel1 = curve.sub(&Pb, &dlog_Qb); // TODO: PointX directly
 
                 let kernel1x = PointX::new_xz(&kernel1.X, &kernel1.Z);
 
@@ -254,15 +256,20 @@ macro_rules! define_litsigamal {
                 // TODO: remove, just for testing, instead use the kernel of 
                 // TODO: fix QaX above
                 let eval_points = [PaX, Qa_rand_X, Rx]; 
-                let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &kernel1x, &eval_points, n, &strategy);
-                // let (codomain, image_points) = ec_lit::three_isogeny_chain(&self.curve, &FF, &eval_points, n, &strategy);
+                let (mut codomain, mut image_points) = ec_lit::three_isogeny_chain(&curve, &kernel1x, &eval_points, n, &strategy);
+                // let (codomain, image_points) = ec_lit::three_isogeny_chain(&curve, &FF, &eval_points, n, &strategy);
 
                 let (mut Pa_isog3X, mut Qa_rand_isog3X, mut R_isog3X) = (image_points[0], image_points[1], image_points[2]);
+
+                // TODO
+                let Paa = Pa_isog3X.clone();
+                let Qaa = Qa_rand_isog3X.clone();
+                let Ra = R_isog3X.clone();
 
                 let (Pa, ok1) = codomain.complete_pointX(&Pa_isog3X);
                 let (mut Qa_rand, ok1) = codomain.complete_pointX(&Qa_rand_isog3X);
 
-                let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) = self.get_PQb_and_shift(&codomain, &self.curve, &Pa, &mut Qa_rand, &Pa_gamma, &Qa_rand_gamma, torsion_b, tau);
+                let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) = self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa_rand, &Pa_gamma, &Qa_rand_gamma, torsion_b, tau);
 
                 // TODO: compute the discrete logarithm s such that Qa_new = s * Pa_new
                 // K := Qa_new - s * Pa_new
@@ -285,7 +292,7 @@ macro_rules! define_litsigamal {
                 E1                                                            E
                 */
 
-                let ell_product = EllipticProduct::new(&codomain, &self.curve);
+                let ell_product = EllipticProduct::new(&codomain, &curve);
  
                 let Pa_gammaX = PointX::new_xz(&Pa_gamma.X, &Pa_gamma.Z);
                 let Qa_rand_gammaX = PointX::new_xz(&Qa_rand_gamma.X, &Qa_rand_gamma.Z);
@@ -308,7 +315,7 @@ macro_rules! define_litsigamal {
                 // TODO: derive 383 from self.a
                 // let n = 383;
                 // let strategy: [usize; 383] = [144, 89, 55, 34, 27, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 6, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
-                let strategy: [usize; 382] = [154, 93, 55, 33, 20, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 38, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 65, 37, 21, 12, 7, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 28, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1];
+                let strategy_2: [usize; 382] = [154, 93, 55, 33, 20, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 38, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 65, 37, 21, 12, 7, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 28, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1];
 
                 let points = compute_isogeny(
                     &ell_product,
@@ -327,8 +334,14 @@ macro_rules! define_litsigamal {
                     &Qb_shiftX,
                     &PQb_shiftX,
                     self.a as usize, // 384
-                    &strategy,
+                    &strategy_2,
                 );
+
+                println!("+++++");
+                println!("{}", points.len());
+                let Pb1 = points[0];
+                let Qb1 = points[1];
+                let PQb1 = points[2];
 
                 println!("");
                 println!("========== Pb, Qb ================");
@@ -338,35 +351,106 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("{}", PQb.X / PQb.Z);
                 println!("");
+                println!("");
+
+                println!("Pb1");
+                println!("{}", Pb1.X / Pb1.Z);
+                println!("");
+                println!("Qb1");
+                println!("{}", Qb1.X / Qb1.Z);
+                println!("");
+                println!("PQb1");
+                println!("{}", PQb1.X / PQb1.Z);
+                println!("");
+
+                let f_mul = l_b.big().pow(power_b - 1);
+                let backtracking_check = PointX::INFINITY;
 
                 for _ in 0..1 {
 
                     let mut no_backtracking = false;
+                    let mut s = 0.big();
+                    let mut kernel = PointX::INFINITY;
                     while !no_backtracking {
 
-                        let s = "162307329723362133395571159112650387183912143360127828921238645571247691996225".big();
-                        let s = "7".big();
+                        s = "162307329723362133395571159112650387183912143360127828921238645571247691996225".big();
+                        s = "7".big();
 
-                        let mut foo = codomain.ladder_3pt(&PbX, &QbX, &PQbX, s);
+                        kernel = codomain.ladder_3pt(&PbX, &QbX, &PQbX, s.clone());
 
                         println!("");
                         println!("");
 
                         println!("__---__");
                         println!("");
-                        println!("{}", foo.X / foo.Z);
+                        println!("{}", kernel.X / kernel.Z);
 
                         let s1 = "117788".big();
-                        codomain.xmul(&mut foo, s1);
+                        codomain.xmul(&mut kernel, s1);
 
                         println!("");
-                        println!("{}", foo.X / foo.Z);
+                        println!("{}", kernel.X / kernel.Z);
 
-                        no_backtracking = true; // TODO
+                        let mut check = kernel.clone();
+
+                        codomain.xmul(&mut check, f_mul.clone());
+
+                        /*
+                        println!("");
+                        println!("check: {}", check.X / check.Z);
+                        println!("check: {}", check.equals(&backtracking_check) == 0xFFFFFFFF);
+                        */
+
+                        if check.equals(&backtracking_check) != 0xFFFFFFFF {
+                            no_backtracking = true;
+                        }
                     }
+                    println!("?????????////     ???");
+
+                    // TODO: self.curve replace with new curve
+                    let mut kernel1 = curve.ladder_3pt(&Pb1, &Qb1, &PQb1, s);
+                    // kernel1x = Ladder_3pt31(Pb1,Qb1,PQb1,A1,s)
+
+                    println!("");
+                    println!("kernel1");
+                    println!("{}", kernel1.X / kernel1.Z);
+
+                    println!("");
+                    println!("=======");
+                    println!("");
+                    println!("Pa");
+                    println!("{}", Paa.X / Paa.Z);
+                    println!("");
+                    println!("Qa");
+                    println!("{}", Qaa.X / Qaa.Z);
+                    println!("");
+                    println!("R");
+                    println!("{}", Ra.X / Ra.Z);
+                    println!("");
+
+                    println!("A");
+                    println!("{}", codomain.A24);
+                    println!("");
+
+
+                    let eval_points = [Paa, Qaa, Ra]; 
+                    // TODO: replace with new curve
+                    (codomain, image_points) = ec_lit::three_isogeny_chain(&codomain, &kernel, &eval_points, n, &strategy);
+                    // AP = isog_3_strategy(b,A,[Pa,Qa,R,Qb],kernelx,strategy)
+                    let (PaX, mut QaX, mut RX) = (image_points[0], image_points[1], image_points[2]);
+                    // TODO: Qback
+
+                    let eval_points = [Paa, Qaa, Ra]; 
+                    (curve, image_points) = ec_lit::three_isogeny_chain(&curve, &kernel1, &eval_points, n, &strategy);
+
+                    // AP1 = isog_3_strategy(b,A1,[Pa1,Qa1,R1],kernel1x,strategy)
+
+                    println!("");
+                    println!("Pa");
+                    println!("{}", PaX.X / PaX.Z);
+                    println!("");
+
                 }
-
-
 
                 /*
                 for i in 0..6 {
