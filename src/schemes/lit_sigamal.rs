@@ -56,7 +56,7 @@ macro_rules! define_litsigamal {
                 }
             }
 
-            pub fn generate_pub_key(&self) { 
+            pub fn generate_pub_key(&self) {
                 let fileName = "src/schemes/precomputed.json";
                 let (PaX, QaX, PmQaX, mat2_2, mat2_3, mat2_4, power_a) = load_torsion_info(fileName, "lit-sigamal-128", 2);
                 let (PbX, QbX, PmQbX, mat3_2, mat3_3, mat3_4, power_b) = load_torsion_info(fileName, "lit-sigamal-128", 3);
@@ -171,19 +171,11 @@ macro_rules! define_litsigamal {
                 let torsion_a = l_a.big().pow(power_a);
                 // let (Pa_gamma, _, _) = apply_endomorphism_on_torsion_group(&self.curve, coord.clone(), imprim.clone(), torsion_a, mat2_2, mat2_3, mat2_4, &Pa, &Qa);
                 
-                let (Pa_gamma, Qa_gamma, _) = apply_endomorphism_on_torsion_group(&curve, coord.clone(), imprim.clone(), torsion_a, mat2_2, mat2_3, mat2_4, &Pa, &Qa);
+                let (Pa_gamma, Qa_gamma, R_gamma) = apply_endomorphism_on_torsion_group(&curve, coord.clone(), imprim.clone(), torsion_a, mat2_2, mat2_3, mat2_4, &Pa, &Qa);
 
-                println!("");
-                println!("Pa_gamma");
-                println!("{}", Pa_gamma.X / Pa_gamma.Z);
-                println!("");
-
-                /*
-                println!("Qa_gamma");
-                println!("{}", Qa_gamma.X / Qa_gamma.Z);
-                println!("");
-                */
-
+                let mut Pa1_to_be_mapped = PointX::new_xz(&Pa_gamma.X, &Pa_gamma.Z);
+                let mut Qa1_to_be_mapped = PointX::new_xz(&Qa_gamma.X, &Qa_gamma.Z);
+                let mut Ra1_to_be_mapped = PointX::new_xz(&R_gamma.X, &R_gamma.Z);
 
                 let bytes1 = big_to_bytes(a1);
                 let a1Pa_gamma = curve.mul(&Pa_gamma, &bytes1, bytes1.len() * 8);
@@ -257,14 +249,13 @@ macro_rules! define_litsigamal {
                 // TODO: fix QaX above
                 let eval_points = [PaX, Qa_rand_X, Rx]; 
                 let (mut codomain, mut image_points) = ec_lit::three_isogeny_chain(&curve, &kernel1x, &eval_points, n, &strategy);
-                // let (codomain, image_points) = ec_lit::three_isogeny_chain(&curve, &FF, &eval_points, n, &strategy);
 
-                let (mut Pa_isog3X, mut Qa_rand_isog3X, mut R_isog3X) = (image_points[0], image_points[1], image_points[2]);
+                let (mut Pa_isog3X, mut Qa_rand_isog3X, R_isog3X) = (image_points[0], image_points[1], image_points[2]);
 
                 // TODO
-                let Paa = Pa_isog3X.clone();
-                let Qaa = Qa_rand_isog3X.clone();
-                let Ra = R_isog3X.clone();
+                let mut Pa_to_be_mapped = Pa_isog3X.clone(); // to be mapped by 3-isogeny chain
+                let mut Qa_to_be_mapped = Qa_rand_isog3X.clone();
+                let mut Ra_to_be_mapped = R_isog3X.clone();
 
                 let (Pa, ok1) = codomain.complete_pointX(&Pa_isog3X);
                 let (mut Qa_rand, ok1) = codomain.complete_pointX(&Qa_rand_isog3X);
@@ -303,9 +294,9 @@ macro_rules! define_litsigamal {
                 let Pa1_shiftX = PointX::new_xz(&Pa1_shift.X, &Pa1_shift.Z);
                 let Qa1_shiftX = PointX::new_xz(&Qa1_shift.X, &Qa1_shift.Z);
 
-                let PbX = PointX::new_xz(&Pb.X, &Pb.Z);
-                let QbX = PointX::new_xz(&Qb.X, &Qb.Z);
-                let PQbX = PointX::new_xz(&PQb.X, &PQb.Z);
+                let mut Pb_to_be_mapped = PointX::new_xz(&Pb.X, &Pb.Z);
+                let mut Qb_to_be_mapped = PointX::new_xz(&Qb.X, &Qb.Z);
+                let mut PQb_to_be_mapped = PointX::new_xz(&PQb.X, &PQb.Z);
 
                 let Pb_shiftX = PointX::new_xz(&Pb_shift.X, &Pb_shift.Z);
                 let Qb_shiftX = PointX::new_xz(&Qb_shift.X, &Qb_shift.Z);
@@ -327,9 +318,9 @@ macro_rules! define_litsigamal {
                     &mut Qa_shiftX,
                     &Pa1_shiftX,
                     &Qa1_shiftX,
-                    &PbX,
-                    &QbX,
-                    &PQbX,
+                    &Pb_to_be_mapped,
+                    &Qb_to_be_mapped,
+                    &PQb_to_be_mapped,
                     &Pb_shiftX,
                     &Qb_shiftX,
                     &PQb_shiftX,
@@ -339,29 +330,9 @@ macro_rules! define_litsigamal {
 
                 println!("+++++");
                 println!("{}", points.len());
-                let Pb1 = points[0];
-                let Qb1 = points[1];
-                let PQb1 = points[2];
-
-                println!("");
-                println!("========== Pb, Qb ================");
-                println!("{}", Pb.X / Pb.Z);
-                println!("");
-                println!("{}", Qb.X / Qb.Z);
-                println!("");
-                println!("{}", PQb.X / PQb.Z);
-                println!("");
-                println!("");
-
-                println!("Pb1");
-                println!("{}", Pb1.X / Pb1.Z);
-                println!("");
-                println!("Qb1");
-                println!("{}", Qb1.X / Qb1.Z);
-                println!("");
-                println!("PQb1");
-                println!("{}", PQb1.X / PQb1.Z);
-                println!("");
+                let mut Pb1_to_be_mapped = points[0];
+                let mut Qb1_to_be_mapped = points[1];
+                let mut PQb1_to_be_mapped = points[2];
 
                 let f_mul = l_b.big().pow(power_b - 1);
                 let backtracking_check = PointX::INFINITY;
@@ -376,14 +347,7 @@ macro_rules! define_litsigamal {
                         s = "162307329723362133395571159112650387183912143360127828921238645571247691996225".big();
                         s = "7".big();
 
-                        kernel = codomain.ladder_3pt(&PbX, &QbX, &PQbX, s.clone());
-
-                        println!("");
-                        println!("");
-
-                        println!("__---__");
-                        println!("");
-                        println!("{}", kernel.X / kernel.Z);
+                        kernel = codomain.ladder_3pt(&Pb_to_be_mapped, &Qb_to_be_mapped, &PQb_to_be_mapped, s.clone());
 
                         let s1 = "117788".big();
                         codomain.xmul(&mut kernel, s1);
@@ -405,65 +369,26 @@ macro_rules! define_litsigamal {
                             no_backtracking = true;
                         }
                     }
-                    println!("?????????////     ???");
 
-                    // TODO: self.curve replace with new curve
-                    let mut kernel1 = curve.ladder_3pt(&Pb1, &Qb1, &PQb1, s);
-                    // kernel1x = Ladder_3pt31(Pb1,Qb1,PQb1,A1,s)
+                    let mut kernel1 = curve.ladder_3pt(&Pb1_to_be_mapped, &Qb1_to_be_mapped, &PQb1_to_be_mapped, s);
 
-                    println!("");
-                    println!("kernel1");
-                    println!("{}", kernel1.X / kernel1.Z);
-
-                    println!("");
-                    println!("=======");
-                    println!("");
-                    println!("Pa");
-                    println!("{}", Paa.X / Paa.Z);
-                    println!("");
-                    println!("Qa");
-                    println!("{}", Qaa.X / Qaa.Z);
-                    println!("");
-                    println!("R");
-                    println!("{}", Ra.X / Ra.Z);
-                    println!("");
-
-                    println!("A");
-                    println!("{}", codomain.A24);
-                    println!("");
-
-
-                    let eval_points = [Paa, Qaa, Ra]; 
-                    // TODO: replace with new curve
+                    let eval_points = [Pa_to_be_mapped, Qa_to_be_mapped, Ra_to_be_mapped]; // Qb_to_be_mapped 
                     (codomain, image_points) = ec_lit::three_isogeny_chain(&codomain, &kernel, &eval_points, n, &strategy);
                     // AP = isog_3_strategy(b,A,[Pa,Qa,R,Qb],kernelx,strategy)
-                    let (PaX, mut QaX, mut RX) = (image_points[0], image_points[1], image_points[2]);
+                    (Pa_to_be_mapped, Qa_to_be_mapped, Ra_to_be_mapped) = (image_points[0], image_points[1], image_points[2]);
                     // TODO: Qback
 
-                    let eval_points = [Paa, Qaa, Ra]; 
+                    let eval_points = [Pa1_to_be_mapped, Qa1_to_be_mapped, Ra1_to_be_mapped]; 
                     (curve, image_points) = ec_lit::three_isogeny_chain(&curve, &kernel1, &eval_points, n, &strategy);
-
                     // AP1 = isog_3_strategy(b,A1,[Pa1,Qa1,R1],kernel1x,strategy)
+                    (Pa1_to_be_mapped, Qa1_to_be_mapped, Ra1_to_be_mapped) = (image_points[0], image_points[1], image_points[2]);
 
                     println!("");
                     println!("Pa");
-                    println!("{}", PaX.X / PaX.Z);
+                    println!("{}", Pa1_to_be_mapped.X / Pa1_to_be_mapped.Z);
                     println!("");
 
                 }
-
-                /*
-                for i in 0..6 {
-                    let (product, points) = product_isogeny(
-                        &ell_product,
-                        &P1P2,
-                        &Q1Q2,
-                        &image_points,
-                        self.a as usize,
-                        &strategy,
-                    );
-                }
-                */
 
             }
 
