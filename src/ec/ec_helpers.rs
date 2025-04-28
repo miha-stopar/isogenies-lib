@@ -6,6 +6,7 @@ macro_rules! define_ec_helpers {
         use crate::linalg::matrix::Matrix;
         // use std::ops::Div;
         use crate::util::{big_to_bytes, bytes_from_str, Big};
+        use rug::integer::Order;
         use num_traits::Pow;
         use rand::prelude::*;
         use rand_chacha::ChaCha20Rng;
@@ -55,6 +56,21 @@ macro_rules! define_ec_helpers {
             vec![mat00, mat01, mat10, mat11, mat00mat01, mat10mat11]
         }
 
+        pub fn endomorphism_matrix_to_digits(mat: Matrix<Integer>, torsion: Integer) -> Vec<Integer> {
+            // TODO
+            let mat00 = mat[(0, 0)].clone();
+            let mat10 = mat[(1, 0)].clone();
+            let mat01 = mat[(0, 1)].clone();
+            let mat11 = mat[(1, 1)].clone();
+
+            let mut mat00mat01 = mat[(0, 0)].clone() - mat[(0, 1)].clone();
+            mat00mat01 = mat00mat01.clone() % torsion.clone();
+            let mut mat10mat11 = mat[(1, 0)].clone() - mat[(1, 1)].clone();
+            mat10mat11 = mat10mat11.clone() % torsion.clone();
+
+            vec![mat00, mat01, mat10, mat11, mat00mat01, mat10mat11]
+        }
+
         pub fn load_torsion_info(fileName: &str, scheme: &str, torsion: u8) -> (PointX, PointX, PointX, Matrix<Integer>, Matrix<Integer>, Matrix<Integer>, u64) {
             let file = fs::File::open(fileName)
                 .expect("file should open read only");
@@ -62,11 +78,7 @@ macro_rules! define_ec_helpers {
                 serde_json::from_reader(file).expect("JSON was not well-formatted");
 
             let torsion_name = format!("torsion_{}", torsion);
-
-            println!("");
-            println!("");
             let j = json[scheme][torsion_name].clone();
-
             let power = j["power"].as_u64().unwrap();
 
             let Px = Fq::new(
@@ -133,7 +145,7 @@ macro_rules! define_ec_helpers {
         /// we can construct a 2x2 matrix that corresponds to the endomorphism on E[m].
         /// This function applies the endomorphism gamma to the points P = k * P0, Q = l * Q0.
         /// It returns gamma(P), gamma(Q), gamma(P - Q).
-        pub fn apply_endomorphism_on_torsion_group(curve: &Curve, coord: Matrix<Integer>, imprim: Integer, torsion: Integer, mat2: Matrix<Integer>, mat3: Matrix<Integer>, mat4: Matrix<Integer>, P: &Point, Q: &Point) -> (Point, Point, Point) {
+        pub fn apply_endomorphism_on_torsion_group(curve: &Curve, coord: Matrix<Integer>, imprim: Integer, torsion: Integer, mat2: Matrix<Integer>, mat3: Matrix<Integer>, mat4: Matrix<Integer>, P: &Point, Q: &Point, PmQ: &Point) -> (Point, Point, Point) {
             /*
             M = |mat00 mat10|
                 |mat01 mat11|
@@ -143,7 +155,9 @@ macro_rules! define_ec_helpers {
             */
 
             let mat = from_endomorphism_to_matrix(coord, imprim, torsion.clone(), mat2, mat3, mat4);
-            let mat_bytes = endomorphism_matrix_to_bytes(mat, torsion.clone());
+            // TODO
+            let mat_bytes = endomorphism_matrix_to_bytes(mat.clone(), torsion.clone());
+            let mat_bytes1 = endomorphism_matrix_to_digits(mat, torsion.clone());
 
             let mat00 = &mat_bytes[0];
             let mat01 = &mat_bytes[1];
@@ -152,10 +166,31 @@ macro_rules! define_ec_helpers {
             let mat00mat01 = &mat_bytes[4];
             let mat10mat11 = &mat_bytes[5];
 
+            let amat00 = &mat_bytes1[0];
+            let amat01 = &mat_bytes1[1];
+            let amat10 = &mat_bytes1[2];
+            let amat11 = &mat_bytes1[3];
+            let amat00mat01 = &mat_bytes1[4];
+            let amat10mat11 = &mat_bytes1[5];
+
+
             let P_new1 = curve.mul(P, &mat00, mat00.len() * 8);
             let P_new2 = curve.mul(Q, &mat10, mat10.len() * 8);
             // mat00 * P + mat10 * Q
             let P_new = curve.add(&P_new1, &P_new2);
+
+            /*
+            let mut k_digits = amat00.to_digits::<u64>(Order::MsfLe);
+            k_digits.reverse();
+            let mut l_digits = amat10.to_digits::<u64>(Order::MsfLe);
+            l_digits.reverse();
+            let f: usize = 36; // TODO
+            let aP_new = curve.xdblmul_bounded(&P, &k_digits, &Q, &l_digits, &PmQ, f);
+            */
+
+            // assert!(P_new.equals(&aP_new) == 0xFFFFFFFF);
+
+
 
             let Q_new1 = curve.mul(&P, &mat01, mat01.len() * 8);
             let Q_new2 = curve.mul(&Q, &mat11, mat11.len() * 8);

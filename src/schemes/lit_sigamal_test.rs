@@ -20,6 +20,7 @@ mod tests {
         let A = ec_lit::Fq::ZERO;
         let curve = ec_lit::Curve::new(&A);
         let lit_sigamal = ec_lit::LITSiGamal::new(curve, p, 2, 3, 5, a, b, c, f, 3);
-        lit_sigamal.generate_pub_key();
+        let pub_key= lit_sigamal.generate_pub_key();
+
     }
 }

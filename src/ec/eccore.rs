@@ -640,30 +640,12 @@ macro_rules! define_ec_core {
                     // TODO: constant time
                     if *b == 1 {
                         self.xadd(&R2.X, &R2.Z, &R0.X, &R0.Z, &mut R1.X, &mut R1.Z);
-                        /*
-                        println!("----1");
-                        println!("");
-                        println!("{}", R1.X / R1.Z);
-                        println!("");
-                        */
-
                     } else {
                         self.xadd(&R1.X, &R1.Z, &R0.X, &R0.Z, &mut R2.X, &mut R2.Z);
                     }
                     self.xdbl(&mut R0.X, &mut R0.Z);
-                    /*
-                    println!("??");
-                    println!("");
-                    println!("{}", R0.X / R0.Z);
-                    */
                 }
                 self.xadd(&R2.X, &R2.Z, &R0.X, &R0.Z, &mut R1.X, &mut R1.Z);
-
-                /*
-                println!("??------");
-                println!("");
-                println!("{}", R1.X / R1.Z);
-                */
 
                 R1 
             }

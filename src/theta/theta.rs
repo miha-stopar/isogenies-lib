@@ -472,18 +472,6 @@ macro_rules! define_theta_structure {
             let (A, B, C, D) = to_hadamard(&ABCD[0], &ABCD[1], &ABCD[2], &ABCD[3]);
             let codomain = ThetaStructure::new_from_coords(&A, &B, &C, &D);
 
-            println!("");
-            println!("beta");
-            println!("{}", codomain.null_point.X / codomain.null_point.Y);
-            println!("");
-            /*
-            println!("{}", theta_dual.X / theta_dual.Y);
-            println!("");
-            println!("{}", theta_dual_inv.X / theta_dual_inv.Y);
-            println!("");
-            */
-
-
             (codomain, (a_inverse, b_inverse), z_idx)
         }
 
@@ -1083,18 +1071,9 @@ macro_rules! define_theta_structure {
             Pb_shiftX: &PointX,
             Qb_shiftX: &PointX,
             PQb_shiftX: &PointX,
-            // P1P2: &CouplePointX,
-            // Q1Q2: &CouplePointX,
-            // image_points: &[CouplePoint],
             n: usize,
             strategy: &[usize],
         ) -> Vec<PointX>{
-            /*
-            println!("??????? 555555 ?????????");
-            println!("");
-            println!("{}", Qa1.X / Qa1.Z);
-            println!("");
-            */
 
             // apply endomorphism [n] - we assume n = 3
             E1E2.E1.xtriple(&mut Pa.X, &mut Pa.Z);
@@ -1180,16 +1159,6 @@ macro_rules! define_theta_structure {
 
                 let Q = PointX::new_xz(&X, &Z);
                 mont_points.push(Q);
-                println!("55");
-                println!("");
-                /*
-                println!("{}", theta_A1.0 / theta_A1.1);
-                println!("");
-                println!("{}", theta1.0 / theta1.1);
-                println!("");
-                */
-                println!("{}", Q.X / Q.Z);
-                println!("");
             }
 
             mont_points
@@ -1242,16 +1211,6 @@ macro_rules! define_theta_structure {
                     Tp1 = domain.double_iter(&Tp1, strategy[strat_idx]);
                     Tp2 = domain.double_iter(&Tp2, strategy[strat_idx]);
 
-                    /*
-                    println!("+++++++");
-                    println!("{}", strategy[strat_idx]);
-                    println!("");
-                    println!("{}", Tp1.X / Tp1.Y);
-                    println!("");
-                    println!("{}", Tp2.X / Tp2.Y);
-                    println!("");
-                    */
-
                     // Add these points to the image points
                     kernel_pts.push(Tp1);
                     kernel_pts.push(Tp2);
@@ -1261,62 +1220,17 @@ macro_rules! define_theta_structure {
                     strat_idx += 1;
                 }
 
-                /*
-                println!("=========== h = 1 ==================================================");
-                println!("");
-                println!("k: {}", k);
-                println!("");
-                println!("");
-                println!("n: {}", n);
-                println!("");
-                */
-
                 // Clear out the used kernel point and update level
                 kernel_pts.pop();
                 kernel_pts.pop();
                 level.pop();
 
-                /*
-                if k == (n - 2) {
-                    println!("11111");
-                    println!("");
-                    domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, false]);
-                } else if k == (n - 1) {
-                    println!("22222");
-                    println!("");
-                    domain = two_isogeny_to_product(&Tp1, &Tp2, &mut kernel_pts)
-                } else {
-                    println!("33333");
-                    println!("");
-                    domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, true]);
-                }
-                */
                 domain = two_isogeny(&domain, &Tp1, &Tp2, &mut kernel_pts, [false, true]);
 
                 let theta_null = domain.null_point();
                 let theta_inv = proj_inv(&[theta_null.X, theta_null.Y, theta_null.Z, theta_null.T]);
                 let theta_i = ThetaPoint::new(&theta_inv[0], &theta_inv[1], &theta_inv[2], &theta_inv[3]);
                 isogeny_chain_dual_list.push(theta_i);
-
-
-
-                /*
-                println!("{}", kernel_pts.len());
-                println!("");
-                println!("{:?}", kernel_pts);
-                println!("");
-
-                println!("");
-                println!("theta:");
-                println!("{}", domain.null_point.X / domain.null_point.Y);
-                */
-
-                /*
-                let P = kernel_pts[0];
-                println!("{}", P.X / P.Y);
-                println!("");
-                */
-
             }
  
             let M = [Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ONE];
@@ -1337,11 +1251,6 @@ macro_rules! define_theta_structure {
             }
 
             kernel_pts
-        }
-
-        /// Compute a (2^a,2^a)-isogeny from a non-product of elliptic curves.
-        pub fn no_product_isogeny(theta_dual_inv: ThetaPoint, theta_B: ThetaPoint, kernel1: Vec<ThetaPoint>, strategy: &[usize]) {
-
         }
 
         pub fn eval_isogeny(theta_dual_inv: ThetaPoint, points: &[ThetaPoint]) -> Vec<ThetaPoint> {
@@ -1385,16 +1294,6 @@ macro_rules! define_theta_structure {
                 points_result.push(ThetaPoint::new(&X, &Y, &Z, &T));
             }
 
-            /*
-            TODO
-            println!("========== 99999 ==========");
-            println!("{}", points_result[0].X / points_result[0].Y);
-            println!("");
-
-            println!("{}", points_result[1].X / points_result[1].Y);
-            println!("");
-            */
-
             points_result
         }
 
@@ -1420,8 +1319,6 @@ macro_rules! define_theta_structure {
                     &theta_dual_inv_list[3],
                 ); 
             } else {
-                println!("222");
-
                 let inv_list = proj_inv(&[x1, x2, y2]);
                 let mut alpha = x1 * inv_list[0];
                 let mut beta = y1 * inv_list[0];
@@ -1443,17 +1340,6 @@ macro_rules! define_theta_structure {
 
             let (x, y, z, t) = theta_dual.hadamard();
             let theta = ThetaPoint::new(&x, &y, &z, &t);
-
-            /*
-            println!("");
-            println!("alpha");
-            println!("{}", theta.X / theta.Y);
-            println!("");
-            println!("{}", theta_dual.X / theta_dual.Y);
-            println!("");
-            println!("{}", theta_dual_inv.X / theta_dual_inv.Y);
-            println!("");
-            */
 
             (theta_dual, theta_dual_inv, theta)
         } 
