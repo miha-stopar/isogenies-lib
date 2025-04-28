@@ -1554,15 +1554,15 @@ macro_rules! define_ec_core {
         /// Compute an isogeny between elliptic products, use an optimised
         /// strategy for all steps assuming doubling is always more expensive
         /// that images, which is not true for gluing.
-        pub fn three_isogeny_chain<const N: usize>(
+        pub fn three_isogeny_chain(
             E: &Curve,
             K: &PointX,
-            eval_points: &[PointX; N],
+            eval_points: Vec<PointX>,
             n: usize,
             strategy: &[usize],
-        ) -> (Curve, [PointX; N]) {
+        ) -> (Curve, Vec<PointX>) {
             let mut kernel_pts = vec![*K];
-            let mut image_points = *eval_points;
+            let mut image_points = eval_points.to_vec();
 
             let mut strat_idx = 0;
             let mut level: Vec<usize> = vec![0];

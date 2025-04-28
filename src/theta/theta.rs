@@ -1089,10 +1089,12 @@ macro_rules! define_theta_structure {
             n: usize,
             strategy: &[usize],
         ) -> Vec<PointX>{
+            /*
             println!("??????? 555555 ?????????");
             println!("");
             println!("{}", Qa1.X / Qa1.Z);
             println!("");
+            */
 
             // apply endomorphism [n] - we assume n = 3
             E1E2.E1.xtriple(&mut Pa.X, &mut Pa.Z);
@@ -1442,6 +1444,7 @@ macro_rules! define_theta_structure {
             let (x, y, z, t) = theta_dual.hadamard();
             let theta = ThetaPoint::new(&x, &y, &z, &t);
 
+            /*
             println!("");
             println!("alpha");
             println!("{}", theta.X / theta.Y);
@@ -1450,6 +1453,7 @@ macro_rules! define_theta_structure {
             println!("");
             println!("{}", theta_dual_inv.X / theta_dual_inv.Y);
             println!("");
+            */
 
             (theta_dual, theta_dual_inv, theta)
         } 
