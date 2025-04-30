@@ -282,7 +282,7 @@ macro_rules! define_litsigamal {
                 let order = standard_maximal_extremal_order().order;
                 let (mut coord, imprim) = gamma.factor_in_order(order.lattice.clone());
 
-                println!("1: {:?}", start.elapsed());
+                println!("1 (before apply endomorphism): {:?}", start.elapsed());
                 let second_part = Instant::now();
 
                 let torsion_a = l_a.big().pow(power_a);
@@ -323,15 +323,18 @@ macro_rules! define_litsigamal {
                 let Rx = PointX::new_xz(&R.X, &R.Z);
                 */
 
-                println!("2: {:?}", second_part.elapsed());
+                println!("2 (after apply endomorphism): {:?}", second_part.elapsed());
                 let third_part = Instant::now();
 
-                let dlog1 = ec_lit::dlog_3(&curve, &Pb_gamma, &Qb_gamma, 162);
-                let dlog2 = ec_lit::dlog_3(&curve, &Qb_gamma, &Pb_gamma, 162);
+                let dlog1 = ec_lit::dlog_3(&curve, &Pb_gamma, &Qb_gamma, self.b.try_into().unwrap());
+                let dlog2 = ec_lit::dlog_3(&curve, &Qb_gamma, &Pb_gamma, self.b.try_into().unwrap());
+
+                println!("3 (after dlog): {:?}", third_part.elapsed());
+                let fourth_part = Instant::now();
  
                 // TODO: set [2^a]Pa_gamma = (1,*)
 
-                let mut bytes = big_to_bytes(dlog2); // TODO
+                let bytes = big_to_bytes(dlog2); // TODO
                 let dlog_Qb = curve.mul(&Qb, &bytes, bytes.len() * 8);
                 let kernel1 = curve.sub(&Pb, &dlog_Qb); // TODO: PointX directly
 
@@ -408,14 +411,17 @@ macro_rules! define_litsigamal {
                 let Qb_shiftX = PointX::new_xz(&Qb_shift.X, &Qb_shift.Z);
                 let PQb_shiftX = PointX::new_xz(&PQb_shift.X, &PQb_shift.Z);
 
-                println!("3: {:?}", third_part.elapsed());
-                let fourth_part = Instant::now();
+                println!("4 (after 3-isogeny): {:?}", fourth_part.elapsed());
+                let fifth_part = Instant::now();
 
                 // Precomputed with strategy.py
                 // TODO: derive 383 from self.a
                 // let n = 383;
                 // let strategy: [usize; 383] = [144, 89, 55, 34, 27, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 6, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
                 let strategy_2: [usize; 382] = [154, 93, 55, 33, 20, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 38, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 65, 37, 21, 12, 7, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 28, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1];
+
+                let b_points = [Pb_to_be_mapped, Qb_to_be_mapped, PQb_to_be_mapped];
+                let b_shift_points = [Pb_shiftX, Qb_shiftX, PQb_shiftX];
 
                 let points = compute_isogeny(
                     &ell_product,
@@ -427,12 +433,8 @@ macro_rules! define_litsigamal {
                     &mut Qa_shiftX,
                     &Pa1_shiftX,
                     &Qa1_shiftX,
-                    &Pb_to_be_mapped,
-                    &Qb_to_be_mapped,
-                    &PQb_to_be_mapped,
-                    &Pb_shiftX,
-                    &Qb_shiftX,
-                    &PQb_shiftX,
+                    b_points.to_vec(),
+                    b_shift_points.to_vec(),
                     self.a as usize, // 384
                     &strategy_2,
                 );
@@ -444,8 +446,8 @@ macro_rules! define_litsigamal {
                 let f_mul = l_b.big().pow(power_b - 1);
                 let mut backtracking_check = PointX::INFINITY;
 
-                println!("4: {:?}", fourth_part.elapsed());
-                let fifth_part = Instant::now();
+                println!("5 (after (2,2)-isogeny): {:?}", fifth_part.elapsed());
+                let sixth_part = Instant::now();
 
                 for _ in 0..1 { // TODO: 0..6
                     let mut no_backtracking = false;
@@ -501,6 +503,9 @@ macro_rules! define_litsigamal {
 
                     let ell_product = EllipticProduct::new(&codomain, &curve);
 
+                    let b_points = [Pb_to_be_mapped, Qb_to_be_mapped, PQb_to_be_mapped];
+                    let b_shift_points = [Pb_shiftX, Qb_shiftX, PQb_shiftX];
+
                     let points = compute_isogeny(
                         &ell_product,
                         &mut Pa_to_be_mapped,
@@ -511,12 +516,8 @@ macro_rules! define_litsigamal {
                         &mut Qa_shiftX,
                         &Pa1_shiftX,
                         &Qa1_shiftX,
-                        &Pb_to_be_mapped,
-                        &Qb_to_be_mapped,
-                        &PQb_to_be_mapped,
-                        &Pb_shiftX,
-                        &Qb_shiftX,
-                        &PQb_shiftX,
+                        b_points.to_vec(),
+                        b_shift_points.to_vec(),
                         self.a as usize,
                         &strategy_2,
                     );
@@ -526,7 +527,7 @@ macro_rules! define_litsigamal {
                     PQb1_to_be_mapped = points[2];
                 }
 
-                println!("5: {:?}", fifth_part.elapsed());
+                println!("6 (after a series of (2,2)-isogenies): {:?}", sixth_part.elapsed());
 
 
                 let alpha: Integer = generate_random_range(0.big(), l_c.big().pow(power_b - 1)) * l_c + 
@@ -651,21 +652,23 @@ macro_rules! define_litsigamal {
                 curve.xmul(&mut Pa, alice_secret.0);
                 curve.xmul(&mut Qa, alice_secret.1);
 
-                let (Pa_complete, _) = curve.complete_pointX(&Pa); // S[0]
-                let (Qa_complete, _) = curve.complete_pointX(&Qa); // S[1]
-                let (R_complete, _) = curve.complete_pointX(&R); // S[2]
+                let (Pa_complete, _) = curve.complete_pointX(&Pa);
+                let (Qa_complete, _) = curve.complete_pointX(&Qa);
+                let (R_complete, _) = curve.complete_pointX(&R);
 
-                let (Pa1_complete, _) = curve1.complete_pointX(&Pa1); // S1[0]
+                let (Pa1_complete, _) = curve1.complete_pointX(&Pa1);
                 let (Qa1_complete, _) = curve1.complete_pointX(&Qa1);
+                let (R1_complete, _) = curve1.complete_pointX(&R1);
 
                 let t = self.l_a.big().pow(self.a);
-                let mut bytes = big_to_bytes(t);
+                let bytes = big_to_bytes(t);
                 let T1_0 = curve.mul(&Pa_complete, &bytes, bytes.len() * 8);
                 let T1_1 = curve.mul(&Pa_complete, &bytes, bytes.len() * 8);
 
                 // TODO: pairing check
 
-                let Rs = curve.add(&R_complete, &T1_0);
+                let R_shift = curve.add(&R_complete, &T1_0);
+                let R_shiftX = PointX::new_xz(&R_shift.X, &R_shift.Z);
 
                 let Pa_shift = curve.add(&Pa_complete, &T1_0);
                 let Qa_shift = curve.add(&Qa_complete, &T1_0);
@@ -673,37 +676,19 @@ macro_rules! define_litsigamal {
                 let Pa1_shift = curve.add(&Pa1_complete, &T1_1);
                 let Qa1_shift = curve.add(&Qa1_complete, &T1_1);
 
-                let Pa_shiftX = PointX::new_xz(&Pa_shift.X, &Pa_shift.Z);
-                let Qa_shiftX = PointX::new_xz(&Qa_shift.X, &Qa_shift.Z);
+                let mut Pa_shiftX = PointX::new_xz(&Pa_shift.X, &Pa_shift.Z);
+                let mut Qa_shiftX = PointX::new_xz(&Qa_shift.X, &Qa_shift.Z);
 
                 let Pa1_shiftX = PointX::new_xz(&Pa1_shift.X, &Pa1_shift.Z);
                 let Qa1_shiftX = PointX::new_xz(&Qa1_shift.X, &Qa1_shift.Z);
 
-                /*
-                Rs = S[2] + T1_0
-                R_shift = [Rs[0],Rs[2]]
-                Pas = S[0] + T1_0
-                Qas = S[1] + T1_0
-                Pas1 = S1[0] + T1_1
-                Qas1 = S1[1] + T1_1
-                
-                Pa_shift = [Pas[0],Pas[2]]
-                Pa1_shift = [Pas1[0],Pas1[2]]
-                Qa_shift = [Qas[0],Qas[2]]
-                Qa1_shift = [Qas1[0],Qas1[2]]
-                PQa_shift = [Pa_shift,Qa_shift,Pa1_shift,Qa1_shift]
-
-                R_ = [R]
-                R_shift_ = [R_shift]
-
-                pointsR = compute_image_gamma0(PQa,PQa1,PQa_shift,R_,R_shift_,a,tau,sqrtminus,strategy_for_2dim)
-                */
-
                 let ell_product = EllipticProduct::new(&curve, &curve1);
 
                 let strategy_2: [usize; 382] = [154, 93, 55, 33, 20, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 38, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 65, 37, 21, 12, 7, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 28, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1];
-                /*
-                let points = compute_isogeny(
+
+                let b_points = [R];
+                let b_shift_points = [R_shiftX];
+                let points_R = compute_isogeny(
                         &ell_product,
                         &mut Pa,
                         &mut Qa,
@@ -713,18 +698,27 @@ macro_rules! define_litsigamal {
                         &mut Qa_shiftX,
                         &Pa1_shiftX,
                         &Qa1_shiftX,
-                        &Pb_to_be_mapped,
-                        &Qb_to_be_mapped,
-                        &PQb_to_be_mapped,
-                        &Pb_shiftX,
-                        &Qb_shiftX,
-                        &PQb_shiftX,
+                        b_points.to_vec(),
+                        b_shift_points.to_vec(),
                         self.a as usize,
                         &strategy_2,
                     );
-                */
+
+                let R1_2 = points_R[0];
+
+                let (R1_2_complete, _) = curve1.complete_pointX(&R1_2);
+
+                let mu1 = ec_lit::dlog_5(&curve, &R1_complete, &R1_2_complete, self.c.try_into().unwrap());
+                let mu2 = ec_lit::dlog_5(&curve, &R1_2_complete, &R1_complete, self.c.try_into().unwrap());
+
+                println!("");
+                println!("mu1: {:?}", mu1);
+                println!("");
+                println!("mu2: {:?}", mu2);
+                println!("");
 
                 println!("decrypt: {:?}", start.elapsed());
+                println!("");
             }
 
             fn get_PQb_and_shift(&self, curve_1: &Curve, curve_2: &Curve, Pa: &Point, Qa: &mut Point,

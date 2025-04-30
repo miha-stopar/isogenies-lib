@@ -1065,12 +1065,8 @@ macro_rules! define_theta_structure {
             Qa_shift: &mut PointX,
             Pa1_shift: &PointX,
             Qa1_shift: &PointX,
-            PbX: &PointX,
-            QbX: &PointX,
-            PQbX: &PointX,
-            Pb_shiftX: &PointX,
-            Qb_shiftX: &PointX,
-            PQb_shiftX: &PointX,
+            b_points: Vec<PointX>,
+            b_shift_points: Vec<PointX>,
             n: usize,
             strategy: &[usize],
         ) -> Vec<PointX>{
@@ -1096,19 +1092,26 @@ macro_rules! define_theta_structure {
 
             let zero = PointX::new_xz(&Fq::ONE, &Fq::ZERO);
             let shift = PointX::new_xz(&Fq::ONE, &Fq::ONE);
-            let Pb = CouplePointX::new(&PbX, &zero);
-            let Qb = CouplePointX::new(&QbX, &zero);
-            let PQb = CouplePointX::new(&PQbX, &zero);
 
-            let Pb_shift = CouplePointX::new(&Pb_shiftX, &shift);
-            let Qb_shift = CouplePointX::new(&Qb_shiftX, &shift);
-            let PQb_shift = CouplePointX::new(&PQb_shiftX, &shift);
+            let mut b_couple_points = vec![];
+            let mut b_shift_couple_points = vec![];
 
-            let image_points = vec![P1P2_8, Q1Q2_8, P1P2, Q1Q2, P1P2_shift, Q1Q2_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift];
+            for i in 0..b_points.len() {
+                let b = &b_points[i];
+                let b_shift = &b_shift_points[i];
+
+                let Pb = CouplePointX::new(&b, &zero);
+                let Pb_shift = CouplePointX::new(&b_shift, &shift);
+
+                b_couple_points.push(Pb);
+                b_shift_couple_points.push(Pb_shift);
+            }
+
+            let image_points = vec![P1P2_8, Q1Q2_8, P1P2, Q1Q2, P1P2_shift, Q1Q2_shift];
  
-            let (theta_A, images) = product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4, image_points.as_slice());
+            let (theta_A, images, b_theta, b_shift_theta) = product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4, image_points.as_slice(), &b_couple_points, &b_shift_couple_points);
 
-            let mut points = hat_phi_psi(theta_A, &images, n, strategy);
+            let points = hat_phi_psi(theta_A, &images, &b_theta, &b_shift_theta, n, strategy);
 
             // Theta to Montgomery product:
 
@@ -1164,7 +1167,7 @@ macro_rules! define_theta_structure {
             mont_points
         }
 
-        pub fn hat_phi_psi(theta: ThetaStructure, images: &[ThetaPoint], n: usize, strategy: &[usize]) -> Vec<ThetaPoint> {
+        pub fn hat_phi_psi(theta: ThetaStructure, images: &[ThetaPoint], b_theta: &[ThetaPoint], b_shift_theta: &[ThetaPoint], n: usize, strategy: &[usize]) -> Vec<ThetaPoint> {
             // theta_B is theta null point on the variety B,
             // theta_dual is its dual (hadamard operator applied on theta_B)
             let (theta_dual, theta_dual_inv, theta_B) = codomain_isogeny(&images[0], &images[1]); 
@@ -1182,9 +1185,8 @@ macro_rules! define_theta_structure {
             let mut isogeny_chain_dual_list = vec![theta_i, ThetaPoint::new(&theta_B_inv[0], &theta_B_inv[1], &theta_B_inv[2], &theta_B_inv[3])];
             
             let mut kernel_pts = eval_isogeny_special(theta_dual_inv, &images[2..4], &images[4..6]);
-            // no_product_isogeny(theta_dual_inv, theta_B, kernel1, strategy);
 
-            let imgs = eval_isogeny_special(theta_dual_inv, &images[6..9], &images[9..12]);
+            let imgs = eval_isogeny_special(theta_dual_inv, &b_theta, &b_shift_theta);
             
             kernel_pts = imgs.into_iter().chain(kernel_pts).collect();
 
@@ -1349,7 +1351,9 @@ macro_rules! define_theta_structure {
             P1P2_4: &CouplePointX,
             Q1Q2_4: &CouplePointX,
             image_points: &[CouplePointX],
-        ) -> (ThetaStructure, Vec<ThetaPoint>) {
+            b_points: &[CouplePointX],
+            b_shift_points: &[CouplePointX],
+        ) -> (ThetaStructure, Vec<ThetaPoint>, Vec<ThetaPoint>, Vec<ThetaPoint>) {
             let (E1, E2) = E1E2.curves();
             // let (P1, P2) = P1P2_4.points();
             let (Q1, Q2) = Q1Q2_4.points();
@@ -1374,7 +1378,17 @@ macro_rules! define_theta_structure {
                 images.push(base_change_couple_point_x(&image_points[i], M));
             }
 
-            (theta, images)
+            let mut b_theta = vec![];
+            for i in 0..b_points.len() {
+                b_theta.push(base_change_couple_point_x(&b_points[i], M));
+            }
+
+            let mut b_shift_theta = vec![];
+            for i in 0..b_shift_points.len() {
+                b_shift_theta.push(base_change_couple_point_x(&b_shift_points[i], M));
+            }
+
+            (theta, images, b_theta, b_shift_theta)
         }
 
         fn proj_inv(theta: &[Fq]) -> Vec<Fq> {

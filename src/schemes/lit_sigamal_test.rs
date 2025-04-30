@@ -29,7 +29,10 @@ mod tests {
 
         let mu = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) +
                     generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
-        // mu = randint(0,5**(c-1)-1) * 5 + randint(1,4)
+
+        println!("");
+        println!("mu: {:?}", mu);
+        println!("");
         let cipher = lit_sigamal.encrypt(&pub_key, mu);
         lit_sigamal.decrypt(&pub_key, &cipher, alice_secret);
     }
