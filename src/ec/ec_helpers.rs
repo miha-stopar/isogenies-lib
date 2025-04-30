@@ -40,6 +40,20 @@ macro_rules! define_ec_helpers {
             mat
         }
 
+        pub fn get_montgomery_A24(P: &PointX, Q: &PointX, PmQ: &PointX) -> (Fq, Fq) {
+            let xP = &P.X / &P.Z;
+            let xQ = &Q.X / &Q.Z;
+            let xR = &PmQ.X / &PmQ.Z;
+            let two_fp = Fp::from_u32(2);
+            let four_fp = Fp::from_u32(4);
+            let two = Fq::new(&two_fp, &Fp::ZERO);
+            let four = Fq::new(&four_fp, &Fp::ZERO);
+            let mut A = (&xR * &xP + &xR * &xQ + &xP * &xQ - Fq::ONE).square() / (four.clone() * &xP * &xQ * &xR);
+            A += -(&xP + &xQ + &xR);
+
+            (A + two, four)
+        }
+
         pub fn endomorphism_matrix_to_bytes(mat: Matrix<Integer>, torsion: Integer) -> Vec<Vec<u8>> {
             let mat00 = big_to_bytes(mat[(0, 0)].clone());
             let mat10 = big_to_bytes(mat[(1, 0)].clone());

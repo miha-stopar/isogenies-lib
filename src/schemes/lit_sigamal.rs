@@ -41,16 +41,79 @@ macro_rules! define_litsigamal {
         pub struct PubKey {
             pub points: PubKeyPoints,
             pub points1: PubKeyPoints,
+            pub power_a: u32,
+            pub power_b: u32,
+            pub power_c: u32,
+            pub tau: Integer,
         }
 
         impl PubKey {
             pub fn new(
                 points: PubKeyPoints,
                 points1: PubKeyPoints,
+                power_a: u32,
+                power_b: u32,
+                power_c: u32,
+                tau: Integer,
             ) -> Self {
                 Self {
                     points,
                     points1,
+                    power_a,
+                    power_b,
+                    power_c,
+                    tau,
+                }
+            }
+        }
+
+        #[derive(Clone, Debug)]
+        pub struct Cipher {
+            pub points: CipherPoints,
+            pub points1: CipherPoints,
+            pub A24_num: Fq,
+            pub A24_denom: Fq,
+            pub A24_1_num: Fq,
+            pub A24_1_denom: Fq,
+        }
+
+        impl Cipher {
+            pub fn new(
+                points: CipherPoints,
+                points1: CipherPoints,
+                A24_num: Fq,
+                A24_denom: Fq,
+                A24_1_num: Fq,
+                A24_1_denom: Fq,
+            ) -> Self {
+                Self {
+                    points,
+                    points1,
+                    A24_num,
+                    A24_denom,
+                    A24_1_num,
+                    A24_1_denom,
+                }
+            }
+        }
+
+        #[derive(Clone, Debug)]
+        pub struct CipherPoints {
+            pub Pa: PointX,
+            pub Qa: PointX,
+            pub R: PointX,
+        }
+
+        impl CipherPoints {
+            pub fn new(
+                Pa: PointX,
+                Qa: PointX,
+                R: PointX,
+            ) -> Self {
+                Self {
+                    Pa,
+                    Qa,
+                    R,
                 }
             }
         }
@@ -105,7 +168,7 @@ macro_rules! define_litsigamal {
                 }
             }
 
-            pub fn generate_pub_key(&self) -> PubKey {
+            pub fn generate_pub_key(&self) -> (PubKey, (Integer, Integer, Integer)) {
                 let start = Instant::now();
 
                 let fileName = "src/schemes/precomputed.json";
@@ -293,7 +356,6 @@ macro_rules! define_litsigamal {
                 // TODO: fix QaX above
                 let eval_points = [PaX, Qa_rand_X, Rx]; 
                 let (mut codomain, mut image_points) = ec_lit::three_isogeny_chain(&curve, &kernel1x, eval_points.to_vec(), n, &strategy);
-
                 let (mut Pa_isog3X, mut Qa_rand_isog3X, R_isog3X) = (image_points[0], image_points[1], image_points[2]);
 
                 // TODO
@@ -385,7 +447,7 @@ macro_rules! define_litsigamal {
                 println!("4: {:?}", fourth_part.elapsed());
                 let fifth_part = Instant::now();
 
-                for _ in 0..6 {
+                for _ in 0..1 { // TODO: 0..6
                     let mut no_backtracking = false;
                     let mut s = 0.big();
                     let mut kernel = PointX::INFINITY;
@@ -437,6 +499,8 @@ macro_rules! define_litsigamal {
                     let Qb_shiftX = PointX::new_xz(&Qb_shift.X, &Qb_shift.Z);
                     let PQb_shiftX = PointX::new_xz(&PQb_shift.X, &PQb_shift.Z);
 
+                    let ell_product = EllipticProduct::new(&codomain, &curve);
+
                     let points = compute_isogeny(
                         &ell_product,
                         &mut Pa_to_be_mapped,
@@ -465,17 +529,16 @@ macro_rules! define_litsigamal {
                 println!("5: {:?}", fifth_part.elapsed());
 
 
-                let alpha = generate_random_range(0.big(), l_c.big().pow(power_b - 1)) * l_c + 
+                let alpha: Integer = generate_random_range(0.big(), l_c.big().pow(power_b - 1)) * l_c + 
                     generate_random_range(1.big(), 4.big()); // TODO: check if this is 1 or 4
-                curve.xmul(&mut Ra1_to_be_mapped, alpha);
+                curve.xmul(&mut Ra1_to_be_mapped, alpha.clone());
 
-                let alice_secret0 = generate_random_range(0.big(), l_a.big().pow(power_a + 2) - 1) * l_a + 1;
-                let alice_secret1 = generate_random_range(0.big(), l_a.big().pow(power_a + 2) - 1) * l_a + 1;
+                let alice_secret0: Integer = generate_random_range(0.big(), l_a.big().pow(power_a + 2) - 1) * l_a + 1;
+                let alice_secret1: Integer = generate_random_range(0.big(), l_a.big().pow(power_a + 2) - 1) * l_a + 1;
 
-                curve.xmul(&mut Pa1_to_be_mapped, alice_secret0);
-                curve.xmul(&mut Qa1_to_be_mapped, alice_secret1);
+                curve.xmul(&mut Pa1_to_be_mapped, alice_secret0.clone());
+                curve.xmul(&mut Qa1_to_be_mapped, alice_secret1.clone());
 
-                // pubkey = [[Pa,Qa,Pb,Qb,PQb,R],[Pa1,Qa1,Pb1,Qb1,PQb1,R1]]
                 let pubkey_points = PubKeyPoints::new(
                     Pa_to_be_mapped,
                     Qa_to_be_mapped,
@@ -494,10 +557,174 @@ macro_rules! define_litsigamal {
                     Ra1_to_be_mapped
                 );
 
-                PubKey::new(
+                (PubKey::new(
                     pubkey_points,
                     pubkey_points1,
+                    power_a,
+                    power_b,
+                    power_c,
+                    tau,
+                ), (alice_secret0, alice_secret1, alpha))
+            }
+
+            pub fn encrypt(&self, pub_key: &PubKey, mu: Integer) -> Cipher {
+                let start = Instant::now();
+
+                let (points, points1) = (&pub_key.points, &pub_key.points1);
+                let (mut Pa, mut Qa, Pb, Qb, PQb, mut R) = (points.Pa, points.Qa, points.Pb, points.Qb, points.PQb, points.R);
+                let (mut Pa1, mut Qa1, Pb1, Qb1, PQb1, mut R1) = (points1.Pa, points1.Qa, points1.Pb, points1.Qb, points1.PQb, points1.R);
+
+                let A24 = get_montgomery_A24(&Pb, &Qb, &PQb);
+                let A24_1 = get_montgomery_A24(&Pb1, &Qb1, &PQb1);
+
+                let s = self.l_b * generate_random_range(0.big(), self.l_b.big().pow(pub_key.power_b) - 1) +
+                            generate_random_range(1.big(), 2.big()); // TODO: check if this is 1 or 2
+
+                let curve = Curve::new_fromA24(&A24.0, &A24.1);
+                let curve1 = Curve::new_fromA24(&A24_1.0, &A24_1.1);
+                let kernelx = curve.ladder_3pt(&Pb, &Qb, &PQb, s.clone());
+                let kernel1x = curve1.ladder_3pt(&Pb1, &Qb1, &PQb1, s.clone());
+
+                let n = 162;
+                let strategy: [usize; 161] = [65, 37, 23, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 9, 5, 4, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 28, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1];
+
+                let eval_points = [Pa, Qa, R];
+                let (curve_new, image_points) = ec_lit::three_isogeny_chain(&curve, &kernelx, eval_points.to_vec(), n, &strategy);
+                (Pa, Qa, R) = (image_points[0], image_points[1], image_points[2]);
+
+                let eval_points = [Pa1, Qa1, R1];
+                let (curve1_new, image_points) = ec_lit::three_isogeny_chain(&curve1, &kernel1x, eval_points.to_vec(), n, &strategy);
+                (Pa1, Qa1, R1) = (image_points[0], image_points[1], image_points[2]);
+
+                let beta = self.l_c * generate_random_range(0.big(), self.l_c.big().pow(pub_key.power_c - 1) - 1) +
+                            generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
+
+                curve.xmul(&mut R, beta.clone());
+                curve1.xmul(&mut R1, beta * mu);
+
+                let bob_secret_1: Integer = self.l_a * generate_random_range(0.big(), self.l_a.big().pow(pub_key.power_a + 2) - 1) + 1;
+                let bob_secret_2: Integer = self.l_a * generate_random_range(0.big(), self.l_a.big().pow(pub_key.power_a + 2) - 1) + 1;
+
+                curve.xmul(&mut Pa, bob_secret_1.clone());
+                curve.xmul(&mut Qa, bob_secret_2.clone());
+
+                curve1.xmul(&mut Pa1, bob_secret_1);
+                curve1.xmul(&mut Qa1, bob_secret_2);
+
+                let points = CipherPoints::new(
+                    Pa,
+                    Qa,
+                    R,
+                );
+
+                let points1 = CipherPoints::new(
+                    Pa1,
+                    Qa1,
+                    R1,
+                );
+
+                println!("encrypt: {:?}", start.elapsed());
+
+                Cipher::new(
+                    points,
+                    points1,
+                    curve_new.A24_num,
+                    curve_new.A24_denom,
+                    curve1_new.A24_num,
+                    curve1_new.A24_denom,
                 )
+            }
+
+            pub fn decrypt(&self, pub_key: &PubKey, cipher: &Cipher, alice_secret: (Integer, Integer, Integer)) {
+                let start = Instant::now();
+
+                let (points, points1) = (&cipher.points, &cipher.points1);
+                let (mut Pa, mut Qa, mut R) = (points.Pa, points.Qa, points.R);
+                let (mut Pa1, mut Qa1, mut R1) = (points1.Pa, points1.Qa, points1.R);
+
+                let curve = Curve::new_fromA24(&cipher.A24_num, &cipher.A24_denom);
+                let curve1 = Curve::new_fromA24(&cipher.A24_1_num, &cipher.A24_1_denom);
+
+                let alpha = alice_secret.2;
+                
+                curve.xmul(&mut R, alpha);
+                curve.xmul(&mut Pa, alice_secret.0);
+                curve.xmul(&mut Qa, alice_secret.1);
+
+                let (Pa_complete, _) = curve.complete_pointX(&Pa); // S[0]
+                let (Qa_complete, _) = curve.complete_pointX(&Qa); // S[1]
+                let (R_complete, _) = curve.complete_pointX(&R); // S[2]
+
+                let (Pa1_complete, _) = curve1.complete_pointX(&Pa1); // S1[0]
+                let (Qa1_complete, _) = curve1.complete_pointX(&Qa1);
+
+                let t = self.l_a.big().pow(self.a);
+                let mut bytes = big_to_bytes(t);
+                let T1_0 = curve.mul(&Pa_complete, &bytes, bytes.len() * 8);
+                let T1_1 = curve.mul(&Pa_complete, &bytes, bytes.len() * 8);
+
+                // TODO: pairing check
+
+                let Rs = curve.add(&R_complete, &T1_0);
+
+                let Pa_shift = curve.add(&Pa_complete, &T1_0);
+                let Qa_shift = curve.add(&Qa_complete, &T1_0);
+
+                let Pa1_shift = curve.add(&Pa1_complete, &T1_1);
+                let Qa1_shift = curve.add(&Qa1_complete, &T1_1);
+
+                let Pa_shiftX = PointX::new_xz(&Pa_shift.X, &Pa_shift.Z);
+                let Qa_shiftX = PointX::new_xz(&Qa_shift.X, &Qa_shift.Z);
+
+                let Pa1_shiftX = PointX::new_xz(&Pa1_shift.X, &Pa1_shift.Z);
+                let Qa1_shiftX = PointX::new_xz(&Qa1_shift.X, &Qa1_shift.Z);
+
+                /*
+                Rs = S[2] + T1_0
+                R_shift = [Rs[0],Rs[2]]
+                Pas = S[0] + T1_0
+                Qas = S[1] + T1_0
+                Pas1 = S1[0] + T1_1
+                Qas1 = S1[1] + T1_1
+                
+                Pa_shift = [Pas[0],Pas[2]]
+                Pa1_shift = [Pas1[0],Pas1[2]]
+                Qa_shift = [Qas[0],Qas[2]]
+                Qa1_shift = [Qas1[0],Qas1[2]]
+                PQa_shift = [Pa_shift,Qa_shift,Pa1_shift,Qa1_shift]
+
+                R_ = [R]
+                R_shift_ = [R_shift]
+
+                pointsR = compute_image_gamma0(PQa,PQa1,PQa_shift,R_,R_shift_,a,tau,sqrtminus,strategy_for_2dim)
+                */
+
+                let ell_product = EllipticProduct::new(&curve, &curve1);
+
+                let strategy_2: [usize; 382] = [154, 93, 55, 33, 20, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 38, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 65, 37, 21, 12, 7, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 28, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1];
+                /*
+                let points = compute_isogeny(
+                        &ell_product,
+                        &mut Pa,
+                        &mut Qa,
+                        &Pa1,
+                        &Qa1,
+                        &mut Pa_shiftX,
+                        &mut Qa_shiftX,
+                        &Pa1_shiftX,
+                        &Qa1_shiftX,
+                        &Pb_to_be_mapped,
+                        &Qb_to_be_mapped,
+                        &PQb_to_be_mapped,
+                        &Pb_shiftX,
+                        &Qb_shiftX,
+                        &PQb_shiftX,
+                        self.a as usize,
+                        &strategy_2,
+                    );
+                */
+
+                println!("decrypt: {:?}", start.elapsed());
             }
 
             fn get_PQb_and_shift(&self, curve_1: &Curve, curve_2: &Curve, Pa: &Point, Qa: &mut Point,
