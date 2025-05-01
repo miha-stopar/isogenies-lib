@@ -457,6 +457,7 @@ macro_rules! define_litsigamal {
                         s = 7.big(); // TODO: remove, just for testing
 
                         kernel = codomain.ladder_3pt(&Pb_to_be_mapped, &Qb_to_be_mapped, &PQb_to_be_mapped, s.clone());
+                        // TODO: get_PQb_and_shift + / -
 
                         println!("");
                         println!("");
@@ -746,10 +747,12 @@ macro_rules! define_litsigamal {
                 let A24 = get_montgomery_A24(&Pb, &Qb, &PQb);
                 let A24_1 = get_montgomery_A24(&Pb1, &Qb1, &PQb1);
 
+                /*
                 println!("");
                 println!("");
                 println!("A: {}", A24.0 / A24.1);
                 println!("");
+                */
 
                 let s = self.l_b * generate_random_range(0.big(), self.l_b.big().pow(pub_key.power_b) - 1) +
                             generate_random_range(1.big(), 2.big()); // TODO: check if this is 1 or 2
@@ -761,6 +764,7 @@ macro_rules! define_litsigamal {
 
                 // debugging
 
+                /*
                 let A = ec_lit::Fq::ZERO;
                 let curve = ec_lit::Curve::new(&A);
 
@@ -794,20 +798,20 @@ macro_rules! define_litsigamal {
 
                 let kernelx = curve.ladder_3pt(&Pbb, &Qbb, &PQbb, s.clone());
 
-                println!("");
-                println!("");
-                println!("");
-                println!("kernelx: {}", kernelx.X / kernelx.Z);
-                println!("");
-
-
-
+                */
                 // end of debugging
 
                 let curve1 = Curve::new_fromA24(&A24_1.0, &A24_1.1);
 
                 let kernelx = curve.ladder_3pt(&Pb, &Qb, &PQb, s.clone());
                 let kernel1x = curve1.ladder_3pt(&Pb1, &Qb1, &PQb1, s.clone());
+
+                println!("");
+                println!("");
+                println!("");
+                println!("kernelx: {}", kernelx.X / kernelx.Z);
+                println!("");
+
 
                 
                 let n = 162;
@@ -864,7 +868,7 @@ macro_rules! define_litsigamal {
                 )
             }
 
-            pub fn decrypt(&self, pub_key: &PubKey, cipher: &Cipher, alice_secret: (Integer, Integer, Integer)) {
+            pub fn decrypt(&self, pub_key: &PubKey, cipher: &Cipher, alice_secret: (Integer, Integer, Integer)) -> Integer {
                 let start = Instant::now();
 
                 let (points, points1) = (&cipher.points, &cipher.points1);
@@ -939,14 +943,18 @@ macro_rules! define_litsigamal {
                 let mu1 = ec_lit::dlog_5(&curve, &R1_complete, &R1_2_complete, self.c.try_into().unwrap());
                 let mu2 = ec_lit::dlog_5(&curve, &R1_2_complete, &R1_complete, self.c.try_into().unwrap());
 
+                /*
                 println!("");
                 println!("mu1: {:?}", mu1);
                 println!("");
                 println!("mu2: {:?}", mu2);
                 println!("");
+                */
 
                 println!("decrypt: {:?}", start.elapsed());
                 println!("");
+
+                mu1
             }
 
             fn get_PQb_and_shift(&self, curve_1: &Curve, curve_2: &Curve, Pa: &Point, Qa: &mut Point,
@@ -982,7 +990,8 @@ macro_rules! define_litsigamal {
                 let (Qb1, _) = curve_1.complete_pointX(&QX);
                 // end of debugging
 
-                let PQb1 = curve_1.sub(&Pb1, &Qb1);
+                // let PQb1 = curve_1.sub(&Pb1, &Qb1);
+                let PQb1 = curve_1.add(&Pb1, &Qb1); // TODO
 
                 let t = self.l_a.big().pow(self.a + 2);
                 let mut bytes = big_to_bytes(t);

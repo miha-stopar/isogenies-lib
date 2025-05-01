@@ -36,6 +36,10 @@ mod tests {
         println!("mu: {:?}", mu);
         println!("");
         let cipher = lit_sigamal.encrypt(&pub_key, mu);
-        lit_sigamal.decrypt(&pub_key, &cipher, alice_secret);
+        let mu = lit_sigamal.decrypt(&pub_key, &cipher, alice_secret);
+
+        println!("");
+        println!("mu: {:?}", mu);
+        println!("");
     }
 }
