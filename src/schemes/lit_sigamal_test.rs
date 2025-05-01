@@ -24,7 +24,8 @@ mod tests {
         let l_b = 3;
         let l_c = 5;
         let lit_sigamal = ec_lit::LITSiGamal::new(curve, p, l_a, l_b, l_c, a, b, c, f, 3);
-        let (pub_key, alice_secret)= lit_sigamal.generate_pub_key();
+        // let (pub_key, alice_secret)= lit_sigamal.generate_pub_key();
+        let (pub_key, alice_secret)= lit_sigamal.generate_pub_key_dbg();
 
 
         let mu = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) +
