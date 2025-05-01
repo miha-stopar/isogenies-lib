@@ -638,12 +638,19 @@ macro_rules! define_ec_core {
 
                 for b in n_bits.iter().take(n_bits.len() - 1) {
                     // TODO: constant time
+                    // TODO: double_add
                     if *b == 1 {
                         self.xadd(&R2.X, &R2.Z, &R0.X, &R0.Z, &mut R1.X, &mut R1.Z);
                     } else {
                         self.xadd(&R1.X, &R1.Z, &R0.X, &R0.Z, &mut R2.X, &mut R2.Z);
                     }
                     self.xdbl(&mut R0.X, &mut R0.Z);
+
+                    /*
+                    println!("");
+                    println!("R0: {}", R0.X / R0.Z);
+                    println!("");
+                    */
                 }
                 self.xadd(&R2.X, &R2.Z, &R0.X, &R0.Z, &mut R1.X, &mut R1.Z);
 

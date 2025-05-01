@@ -451,13 +451,27 @@ macro_rules! define_litsigamal {
                     let mut s = 0.big();
                     let mut kernel = PointX::INFINITY;
                     while !no_backtracking {
-
                         s = generate_random_range(0.big(), l_b.big().pow(power_b - 1)) * l_b + 
                             generate_random_range(1.big(), 2.big()); // TODO: check if this is 1 or 2
 
-                        kernel = codomain.ladder_3pt(&Pb_to_be_mapped, &Qb_to_be_mapped, &PQb_to_be_mapped, s.clone());
-                        let mut check = kernel.clone();
+                        s = 7.big(); // TODO: remove, just for testing
 
+                        kernel = codomain.ladder_3pt(&Pb_to_be_mapped, &Qb_to_be_mapped, &PQb_to_be_mapped, s.clone());
+
+                        println!("");
+                        println!("");
+                        println!("");
+                        println!("Pb_to_be_mapped: {}", Pb_to_be_mapped.X / Pb_to_be_mapped.Z);
+                        println!("");
+                        println!("Qb_to_be_mapped: {}", Qb_to_be_mapped.X / Qb_to_be_mapped.Z);
+                        println!("");
+                        println!("PQb_to_be_mapped: {}", PQb_to_be_mapped.X / PQb_to_be_mapped.Z);
+                        println!("");
+                        println!("");
+                        println!("kernelx: {}", kernel.X /kernel.Z);
+                        println!("");
+
+                        let mut check = kernel.clone();
                         codomain.xmul(&mut check, f_mul.clone());
 
                         if check.equals(&backtracking_check) != 0xFFFFFFFF {
@@ -715,7 +729,7 @@ macro_rules! define_litsigamal {
                 (PubKey::new(
                     pubkey_points,
                     pubkey_points1,
-                    2,
+                    power_a,
                     power_b,
                     power_c,
                 ), (alice_secret0, alice_secret1, alpha))
@@ -732,14 +746,70 @@ macro_rules! define_litsigamal {
                 let A24 = get_montgomery_A24(&Pb, &Qb, &PQb);
                 let A24_1 = get_montgomery_A24(&Pb1, &Qb1, &PQb1);
 
+                println!("");
+                println!("");
+                println!("A: {}", A24.0 / A24.1);
+                println!("");
+
                 let s = self.l_b * generate_random_range(0.big(), self.l_b.big().pow(pub_key.power_b) - 1) +
                             generate_random_range(1.big(), 2.big()); // TODO: check if this is 1 or 2
+                let s = "11".big(); // dbg
 
                 let curve = Curve::new_fromA24(&A24.0, &A24.1);
+                // let A = A24.0 / A24.1;
+                // let curve = Curve::new(&A);
+
+                // debugging
+
+                let A = ec_lit::Fq::ZERO;
+                let curve = ec_lit::Curve::new(&A);
+
+                let mut X = Fq::new(
+                    &Fp::decode_reduce(&bytes_from_str("87042273176333530060578566038000830625165838429355625924513434887026369130349746415420555952922654553928828506530940833015172446565313387310031816593469594852213234805772651605423791434919532212551198331011556677531348059877562257352")),
+                    &Fp::decode_reduce(&bytes_from_str("1176528016519578465657942288192186424719698172922624856815276785211895644137324385620586796279266754650192081858873905925636230616038595092122626238574624388209919391900214401962926331911084415336639107551700295428789346432508778680229")),
+                );
+                let Z = Fq::new(
+                    &Fp::decode_reduce(&bytes_from_str("1")),
+                    &Fp::decode_reduce(&bytes_from_str("0")),
+                );
+                let Pbb = PointX::new_xz(&X, &Z);
+
+                X = Fq::new(
+                    &Fp::decode_reduce(&bytes_from_str("1509024317840555325663296612371441603775654055046944109962637366430540999704356191566971631869698793316705061328179810899036692447061117935225790580501283466974670729678611494259373368480663684788095439424776840012387584140092652800")),
+                    &Fp::decode_reduce(&bytes_from_str("514218034929853605655595760357535469123853678103322759844037815925689973119291025106090858555237294106110529160951960308324247683193648457937175625845664376918407566573859778497783124175764699919877487638746186291335773064422795095235")),
+                );
+                let Qbb = PointX::new_xz(&X, &Z);
+
+                X = Fq::new(
+                    &Fp::decode_reduce(&bytes_from_str("922264200986398433507956504368061357479100770000764524834901045300630502426648063492245602415832321338227826581496514637058092538179305766898705947591336208163742895653249363205262283428859149170592882170019065407008988545448819937323")),
+                    &Fp::decode_reduce(&bytes_from_str("644747826321703503002115246791676987738454812940522878851248613596947529450229668256549995595682060021590354837254288816505776022493634589619447388633231819428568124301339924648254133291831052121621617864105270671644220206769360884111")),
+                );
+                let PQbb = PointX::new_xz(&X, &Z);
+
+                /*
+                Pbb =  [1176528016519578465657942288192186424719698172922624856815276785211895644137324385620586796279266754650192081858873905925636230616038595092122626238574624388209919391900214401962926331911084415336639107551700295428789346432508778680229*sqrtminus + 87042273176333530060578566038000830625165838429355625924513434887026369130349746415420555952922654553928828506530940833015172446565313387310031816593469594852213234805772651605423791434919532212551198331011556677531348059877562257352, 1]
+                Qbb =  [514218034929853605655595760357535469123853678103322759844037815925689973119291025106090858555237294106110529160951960308324247683193648457937175625845664376918407566573859778497783124175764699919877487638746186291335773064422795095235*sqrtminus + 1509024317840555325663296612371441603775654055046944109962637366430540999704356191566971631869698793316705061328179810899036692447061117935225790580501283466974670729678611494259373368480663684788095439424776840012387584140092652800, 1]
+                PQbb =  [644747826321703503002115246791676987738454812940522878851248613596947529450229668256549995595682060021590354837254288816505776022493634589619447388633231819428568124301339924648254133291831052121621617864105270671644220206769360884111*sqrtminus + 922264200986398433507956504368061357479100770000764524834901045300630502426648063492245602415832321338227826581496514637058092538179305766898705947591336208163742895653249363205262283428859149170592882170019065407008988545448819937323, 1]
+                */
+
+                let kernelx = curve.ladder_3pt(&Pbb, &Qbb, &PQbb, s.clone());
+
+                println!("");
+                println!("");
+                println!("");
+                println!("kernelx: {}", kernelx.X / kernelx.Z);
+                println!("");
+
+
+
+                // end of debugging
+
                 let curve1 = Curve::new_fromA24(&A24_1.0, &A24_1.1);
+
                 let kernelx = curve.ladder_3pt(&Pb, &Qb, &PQb, s.clone());
                 let kernel1x = curve1.ladder_3pt(&Pb1, &Qb1, &PQb1, s.clone());
 
+                
                 let n = 162;
                 let strategy: [usize; 161] = [65, 37, 23, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 9, 5, 4, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 28, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1];
 
@@ -753,12 +823,16 @@ macro_rules! define_litsigamal {
 
                 let beta = self.l_c * generate_random_range(0.big(), self.l_c.big().pow(pub_key.power_c - 1) - 1) +
                             generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
+                let beta = 928347.big(); // dbg
 
                 curve.xmul(&mut R, beta.clone());
                 curve1.xmul(&mut R1, beta * mu);
 
                 let bob_secret_1: Integer = self.l_a * generate_random_range(0.big(), self.l_a.big().pow(pub_key.power_a + 2) - 1) + 1;
                 let bob_secret_2: Integer = self.l_a * generate_random_range(0.big(), self.l_a.big().pow(pub_key.power_a + 2) - 1) + 1;
+
+                let bob_secret_1: Integer = 2 * 1324.big() + 1; // dbg
+                let bob_secret_2: Integer = 2 * 8345.big() + 1; // dbg
 
                 curve.xmul(&mut Pa, bob_secret_1.clone());
                 curve.xmul(&mut Qa, bob_secret_2.clone());
@@ -881,7 +955,6 @@ macro_rules! define_litsigamal {
                 let Qb1 = generate_random_fq(curve_1, torsion_b, self.scalar_without_b.clone());
 
                 // TODO: the following is only for debugging:
-                /*
                 let px = Fq::new(
                     &Fp::decode_reduce(&bytes_from_str("589347475779467028048732638707745169074099572448781051271349481559473727012677648788277674070708563815384409822118544148404313695739142076641733342195789664410029747217412725418639602788946160431051681659016463369120955499530350884793")),
                     &Fp::decode_reduce(&bytes_from_str("295541731903830973966435177821009510545806235315633443160350494708236538905366964828599192114390194343094738330899036091771606752115327511842840580779568519473668508004731498100416200716785989577694849244176022777068709128659699958651")),
@@ -907,7 +980,6 @@ macro_rules! define_litsigamal {
 
                 let QX = PointX::new_xz(&qx, &qz);
                 let (Qb1, _) = curve_1.complete_pointX(&QX);
-                */
                 // end of debugging
 
                 let PQb1 = curve_1.sub(&Pb1, &Qb1);
