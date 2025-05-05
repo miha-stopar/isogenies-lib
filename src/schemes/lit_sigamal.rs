@@ -238,7 +238,7 @@ macro_rules! define_litsigamal {
                 bytes = big_to_bytes(c2.clone());
                 let c2Qc = self.curve.mul(&Qc, &bytes, bytes.len() * 8);
                 // let Pc1 = self.curve.add(&c1Pc, &c2Qc);
-                Pc = self.curve.add(&c1Pc, &c2Qc);
+                let Pc_rand = self.curve.add(&c1Pc, &c2Qc);
 
                 /*
                 let mut k_digits = c1.to_digits::<u64>(Order::MsfLe);
@@ -261,7 +261,7 @@ macro_rules! define_litsigamal {
 
                 // assert!(Pc.equals(&Pc1) == 0xFFFFFFFF);
 
-                let Rx = PointX::new_xz(&Pc.X, &Pc.Z);
+                let Rx = PointX::new_xz(&Pc_rand.X, &Pc_rand.Z);
 
                 println!("");
                 println!("");
@@ -320,16 +320,14 @@ macro_rules! define_litsigamal {
                 let torsion_c = l_c.big().pow(power_c);
                 let (Pc_gamma, Qc_gamma, PmQc_gamma) = apply_endomorphism_on_torsion_group(&curve, coord, imprim, torsion_c, mat5_2, mat5_3, mat5_4, &Pc, &Qc, &PmQc);
 
-                /*
                 let mut bytes = big_to_bytes(c1);
                 let c1Pc = self.curve.mul(&Pc_gamma, &bytes, bytes.len() * 8);
                 bytes = big_to_bytes(c2);
                 let c2Qc = self.curve.mul(&Qc_gamma, &bytes, bytes.len() * 8);
                 let R = self.curve.add(&c1Pc, &c2Qc);
                 let R_gamma = PointX::new_xz(&R.X, &R.Z);
-                */
 
-                let mut Ra1_to_be_mapped = PointX::new_xz(&Pc_gamma.X, &Pc_gamma.Z);
+                let mut Ra1_to_be_mapped = PointX::new_xz(&R_gamma.X, &R_gamma.Z);
                 
 
                 println!("2 (after apply endomorphism): {:?}", second_part.elapsed());
@@ -538,6 +536,7 @@ macro_rules! define_litsigamal {
                     (Pa_to_be_mapped, Qa_to_be_mapped, Ra_to_be_mapped, backtracking_check) = (image_points[0], image_points[1], image_points[2], image_points[3]);
                     codomain.xmul(&mut backtracking_check, f_mul.clone());
 
+                    /*
                     println!("");
                     println!("Pa1: {}", Pa1_to_be_mapped.X /Pa1_to_be_mapped.Z);
                     println!("");
@@ -549,12 +548,14 @@ macro_rules! define_litsigamal {
                     println!("");
                     println!("Ra1: {}", Ra1_to_be_mapped.X /Ra1_to_be_mapped.Z);
                     println!("");
+                    */
 
                     let eval_points = [Pa1_to_be_mapped, Qa1_to_be_mapped, Ra1_to_be_mapped]; 
                     (curve, image_points) = ec_lit::three_isogeny_chain(&curve, &kernel1, eval_points.to_vec(), n, &strategy);
                     (Pa1_to_be_mapped, Qa1_to_be_mapped, Ra1_to_be_mapped) = (image_points[0], image_points[1], image_points[2]);
 
 
+                    /*
                     println!("");
                     println!("Pa1: {}", Pa1_to_be_mapped.X /Pa1_to_be_mapped.Z);
                     println!("");
@@ -566,6 +567,7 @@ macro_rules! define_litsigamal {
                     println!("");
                     println!("Ra1: {}", Ra1_to_be_mapped.X /Ra1_to_be_mapped.Z);
                     println!("");
+                    */
 
 
                     let (Pa, ok1) = codomain.complete_pointX(&Pa_to_be_mapped);
@@ -626,8 +628,39 @@ macro_rules! define_litsigamal {
                 let alice_secret0: Integer = generate_random_range(0.big(), l_a.big().pow(power_a + 2) - 1) * l_a + 1;
                 let alice_secret1: Integer = generate_random_range(0.big(), l_a.big().pow(power_a + 2) - 1) * l_a + 1;
 
+                let alice_secret0 = (2*8 + 1).big(); // TODO: remove
+                let alice_secret1 = (2*7 + 1).big(); // TODO: remove
+
                 curve.xmul(&mut Pa1_to_be_mapped, alice_secret0.clone());
                 curve.xmul(&mut Qa1_to_be_mapped, alice_secret1.clone());
+
+                println!("");
+                println!("=================");
+                println!("");
+                println!("Pa: {}", Pa_to_be_mapped.X / Pa_to_be_mapped.Z);
+                println!("");
+
+                println!("");
+                println!("Qa: {}", Qa_to_be_mapped.X / Qa_to_be_mapped.Z);
+                println!("");
+
+                println!("");
+                println!("Ra: {}", Ra_to_be_mapped.X / Ra_to_be_mapped.Z);
+                println!("");
+
+
+                println!("");
+                println!("Pa1: {}", Pa1_to_be_mapped.X / Pa1_to_be_mapped.Z);
+                println!("");
+
+                println!("");
+                println!("Qa1: {}", Qa1_to_be_mapped.X / Qa1_to_be_mapped.Z);
+                println!("");
+
+                println!("");
+                println!("Ra1: {}", Ra1_to_be_mapped.X / Ra1_to_be_mapped.Z);
+                println!("");
+
 
                 let pubkey_points = PubKeyPoints::new(
                     Pa_to_be_mapped,

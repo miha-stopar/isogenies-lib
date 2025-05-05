@@ -632,6 +632,7 @@ macro_rules! define_ec_core {
                 PQ: &PointX,
                 s: Integer,
             ) -> PointX {
+                // TODO: uncomment
                 /*
                 let n_bits = bits_from_big(s);
                 
