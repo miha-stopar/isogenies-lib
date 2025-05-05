@@ -625,13 +625,14 @@ macro_rules! define_ec_core {
 
             // TODO
             // s*P + Q
-            pub fn ladder1_3pt( 
+            pub fn ladder_3pt( 
                 &self,
                 P: &PointX,
                 Q: &PointX,
                 PQ: &PointX,
                 s: Integer,
             ) -> PointX {
+                /*
                 let n_bits = bits_from_big(s);
                 
                 let mut R0 = *P;
@@ -651,11 +652,13 @@ macro_rules! define_ec_core {
                 self.xadd(&R2.X, &R2.Z, &R0.X, &R0.Z, &mut R1.X, &mut R1.Z);
 
                 R1 
+                */
+                *P
             }
 
             // TODO
             // works as in Sage code (make sure what is used: P+Q or P-Q)
-            pub fn ladder_3pt( 
+            pub fn ladder1_3pt( 
                 &self,
                 P: &PointX,
                 Q: &PointX,
@@ -671,11 +674,22 @@ macro_rules! define_ec_core {
 
                 let mut prev_bit = 0;
 
+                let mut i = 0;
                 for b in n_bits {
                     // TODO: constant time
+                    let bit = b & (1 << i);
+                    let swap = bit ^ prev_bit;
 
-                    let swap = b ^ prev_bit;
-                    prev_bit = b;
+                    i += 1;
+
+                    // let swap = b ^ prev_bit;
+                    println!("?????");
+                    println!("");
+                    println!("bit: {}", bit);
+                    println!("prev_bit: {}", prev_bit);
+                    println!("swap: {}", swap);
+                    // prev_bit = b;
+                    prev_bit = bit;
 
                     if swap == 1 {
                         P0 = PP.clone(); // TODO

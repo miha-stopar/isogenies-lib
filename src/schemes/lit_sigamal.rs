@@ -225,8 +225,8 @@ macro_rules! define_litsigamal {
                     c2 = generate_random_range(0.big(), l_c.big().pow(power_c) - 1);
 
                     // TODO: remove c1, c2
-                    // c1 = Integer::from(1);
-                    // c2 = Integer::from(1);
+                    c1 = Integer::from(1);
+                    c2 = Integer::from(1);
                     if c1.clone().modulo(&five) != zero && c2.clone().modulo(&five) != zero {
                         break;
                     }
@@ -263,6 +263,13 @@ macro_rules! define_litsigamal {
 
                 let Rx = PointX::new_xz(&Pc.X, &Pc.Z);
 
+                println!("");
+                println!("");
+                println!("");
+                println!("Rx: {}", Rx.X / Rx.Z);
+                println!("");
+
+
                 // N = (l_a**(2*a) - n**2) * l_b**b
                 let tau = l_a.big().pow(power_a * 2) - self.n * self.n;
                 let N = tau.clone() * l_b.big().pow(power_b);
@@ -288,8 +295,9 @@ macro_rules! define_litsigamal {
                 let (Pa_gamma, Qa_gamma, R_gamma) = apply_endomorphism_on_torsion_group(&curve, coord.clone(), imprim.clone(), torsion_a, mat2_2, mat2_3, mat2_4, &Pa, &Qa, &PmQa);
 
                 let mut Pa1_to_be_mapped = PointX::new_xz(&Pa_gamma.X, &Pa_gamma.Z);
-                let mut Qa1_to_be_mapped = PointX::new_xz(&Qa_gamma.X, &Qa_gamma.Z);
-                let mut Ra1_to_be_mapped = PointX::new_xz(&R_gamma.X, &R_gamma.Z);
+                // TODO
+                // let mut Qa1_to_be_mapped = PointX::new_xz(&Qa_gamma.X, &Qa_gamma.Z);
+                // let mut Ra1_to_be_mapped = PointX::new_xz(&R_gamma.X, &R_gamma.Z);
 
                 let bytes1 = big_to_bytes(a1);
                 let a1Pa_gamma = curve.mul(&Pa_gamma, &bytes1, bytes1.len() * 8);
@@ -303,7 +311,9 @@ macro_rules! define_litsigamal {
                 let Qa_rand = curve.add(&a1Pa, &a2Qa);
                 let Qa_rand_X = PointX::new_xz(&Qa_rand.X, &Qa_rand.Z);
 
+                let mut Qa1_to_be_mapped = PointX::new_xz(&Qa_rand_gamma.X, &Qa_rand_gamma.Z);
 
+            
                 let torsion_b = l_b.big().pow(power_b);
                 let (Pb_gamma, Qb_gamma, PmQb_gamma) = apply_endomorphism_on_torsion_group(&curve, coord.clone(), imprim.clone(), torsion_b.clone(), mat3_2, mat3_3, mat3_4, &Pb, &Qb, &PmQb);
 
@@ -316,9 +326,11 @@ macro_rules! define_litsigamal {
                 bytes = big_to_bytes(c2);
                 let c2Qc = self.curve.mul(&Qc_gamma, &bytes, bytes.len() * 8);
                 let R = self.curve.add(&c1Pc, &c2Qc);
-
-                let Rx = PointX::new_xz(&R.X, &R.Z);
+                let R_gamma = PointX::new_xz(&R.X, &R.Z);
                 */
+
+                let mut Ra1_to_be_mapped = PointX::new_xz(&Pc_gamma.X, &Pc_gamma.Z);
+                
 
                 println!("2 (after apply endomorphism): {:?}", second_part.elapsed());
                 let third_part = Instant::now();
@@ -330,6 +342,17 @@ macro_rules! define_litsigamal {
                 let fourth_part = Instant::now();
  
                 // TODO: set [2^a]Pa_gamma = (1,*)
+                /*
+                let t = self.l_a.big().pow(self.a); // TODO: define once
+                let bytes = big_to_bytes(t);
+                let Pa_gamma_4 = curve.mul(&Pa_gamma, &bytes, bytes.len() * 8);
+                let check = Pa_gamma_4.X / Pa_gamma_4.Y;
+                if check.equals(&Fq::ONE) != 0xFFFFFFFF {
+                    println!("");
+                    println!("fix");
+                    println!("");
+                }
+                */
 
                 let bytes = big_to_bytes(dlog2); // TODO
                 let dlog_Qb = curve.mul(&Qb, &bytes, bytes.len() * 8);
@@ -358,6 +381,12 @@ macro_rules! define_litsigamal {
                 let (mut codomain, mut image_points) = ec_lit::three_isogeny_chain(&curve, &kernel1x, eval_points.to_vec(), n, &strategy);
                 let (mut Pa_isog3X, mut Qa_rand_isog3X, R_isog3X) = (image_points[0], image_points[1], image_points[2]);
 
+                println!("");
+                println!("");
+                println!("");
+                println!("R_isog3X: {}", R_isog3X.X / R_isog3X.Z);
+                println!("");
+
                 // TODO
                 let mut Pa_to_be_mapped = Pa_isog3X.clone(); // to be mapped by 3-isogeny chain
                 let mut Qa_to_be_mapped = Qa_rand_isog3X.clone();
@@ -366,7 +395,7 @@ macro_rules! define_litsigamal {
                 let (Pa, ok1) = codomain.complete_pointX(&Pa_isog3X);
                 let (mut Qa_rand, ok1) = codomain.complete_pointX(&Qa_rand_isog3X);
 
-                let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) = self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa_rand, &Pa_gamma, &Qa_rand_gamma, torsion_b.clone(), tau.clone());
+                let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) = self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa_rand, &Pa_gamma, &Qa_rand_gamma, torsion_b.clone(), tau.clone(), 1);
 
                 // TODO: compute the discrete logarithm s such that Qa_new = s * Pa_new
                 // K := Qa_new - s * Pa_new
@@ -450,6 +479,11 @@ macro_rules! define_litsigamal {
                     let mut no_backtracking = false;
                     let mut s = 0.big();
                     let mut kernel = PointX::INFINITY;
+
+                    println!("");
+                    println!("++++++++++++++++++++++++++++++++++++");
+                    println!("");
+
                     while !no_backtracking {
                         s = generate_random_range(0.big(), l_b.big().pow(power_b - 1)) * l_b + 
                             generate_random_range(1.big(), 2.big()); // TODO: check if this is 1 or 2
@@ -459,7 +493,9 @@ macro_rules! define_litsigamal {
                         kernel = codomain.ladder_3pt(&Pb_to_be_mapped, &Qb_to_be_mapped, &PQb_to_be_mapped, s.clone());
                         // TODO: get_PQb_and_shift + / -
 
+                        /*
                         println!("");
+                        println!("s: {}", s);
                         println!("");
                         println!("");
                         println!("Pb_to_be_mapped: {}", Pb_to_be_mapped.X / Pb_to_be_mapped.Z);
@@ -469,34 +505,75 @@ macro_rules! define_litsigamal {
                         println!("PQb_to_be_mapped: {}", PQb_to_be_mapped.X / PQb_to_be_mapped.Z);
                         println!("");
                         println!("");
+                        println!("=------");
                         println!("kernelx: {}", kernel.X /kernel.Z);
                         println!("");
+                        */
 
                         let mut check = kernel.clone();
                         codomain.xmul(&mut check, f_mul.clone());
 
                         if check.equals(&backtracking_check) != 0xFFFFFFFF {
+                            /*
+                            println!("");
+                            println!("");
+                            println!("no backtracking --------------------");
+                            println!("");
+                            */
                             no_backtracking = true;
                         }
                     }
 
                     let kernel1 = curve.ladder_3pt(&Pb1_to_be_mapped, &Qb1_to_be_mapped, &PQb1_to_be_mapped, s);
 
+                    /*
+                    println!("");
+                    println!("=------");
+                    println!("kernel1: {}", kernel1.X /kernel1.Z);
+                    println!("");
+                    */
+
                     let eval_points = [Pa_to_be_mapped, Qa_to_be_mapped, Ra_to_be_mapped, Qb_to_be_mapped];
                     (codomain, image_points) = ec_lit::three_isogeny_chain(&codomain, &kernel, eval_points.to_vec(), n, &strategy);
                     (Pa_to_be_mapped, Qa_to_be_mapped, Ra_to_be_mapped, backtracking_check) = (image_points[0], image_points[1], image_points[2], image_points[3]);
                     codomain.xmul(&mut backtracking_check, f_mul.clone());
 
+                    println!("");
+                    println!("Pa1: {}", Pa1_to_be_mapped.X /Pa1_to_be_mapped.Z);
+                    println!("");
+
+                    println!("");
+                    println!("Qa1: {}", Qa1_to_be_mapped.X /Qa1_to_be_mapped.Z);
+                    println!("");
+
+                    println!("");
+                    println!("Ra1: {}", Ra1_to_be_mapped.X /Ra1_to_be_mapped.Z);
+                    println!("");
+
                     let eval_points = [Pa1_to_be_mapped, Qa1_to_be_mapped, Ra1_to_be_mapped]; 
                     (curve, image_points) = ec_lit::three_isogeny_chain(&curve, &kernel1, eval_points.to_vec(), n, &strategy);
                     (Pa1_to_be_mapped, Qa1_to_be_mapped, Ra1_to_be_mapped) = (image_points[0], image_points[1], image_points[2]);
+
+
+                    println!("");
+                    println!("Pa1: {}", Pa1_to_be_mapped.X /Pa1_to_be_mapped.Z);
+                    println!("");
+
+                    println!("");
+                    println!("Qa1: {}", Qa1_to_be_mapped.X /Qa1_to_be_mapped.Z);
+                    println!("");
+
+                    println!("");
+                    println!("Ra1: {}", Ra1_to_be_mapped.X /Ra1_to_be_mapped.Z);
+                    println!("");
+
 
                     let (Pa, ok1) = codomain.complete_pointX(&Pa_to_be_mapped);
                     let (mut Qa, ok1) = codomain.complete_pointX(&Qa_to_be_mapped);
                     let (Pa1, ok1) = codomain.complete_pointX(&Pa1_to_be_mapped);
                     let (Qa1, ok1) = codomain.complete_pointX(&Qa1_to_be_mapped);
 
-                    let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) = self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa, &Pa1, &Qa1, torsion_b.clone(), tau.clone());
+                    let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) = self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa, &Pa1, &Qa1, torsion_b.clone(), tau.clone(), 2);
 
                     Pb_to_be_mapped = PointX::new_xz(&Pb.X, &Pb.Z);
                     Qb_to_be_mapped = PointX::new_xz(&Qb.X, &Qb.Z);
@@ -541,9 +618,9 @@ macro_rules! define_litsigamal {
 
                 println!("6 (after a series of (2,2)-isogenies): {:?}", sixth_part.elapsed());
 
-
                 let alpha: Integer = generate_random_range(0.big(), l_c.big().pow(power_b - 1)) * l_c + 
                     generate_random_range(1.big(), 4.big()); // TODO: check if this is 1 or 4
+                let alpha = 3.big(); // TODO, dbg
                 curve.xmul(&mut Ra1_to_be_mapped, alpha.clone());
 
                 let alice_secret0: Integer = generate_random_range(0.big(), l_a.big().pow(power_a + 2) - 1) * l_a + 1;
@@ -759,59 +836,27 @@ macro_rules! define_litsigamal {
                 let s = "11".big(); // dbg
 
                 let curve = Curve::new_fromA24(&A24.0, &A24.1);
-                // let A = A24.0 / A24.1;
-                // let curve = Curve::new(&A);
-
-                // debugging
-
-                /*
-                let A = ec_lit::Fq::ZERO;
-                let curve = ec_lit::Curve::new(&A);
-
-                let mut X = Fq::new(
-                    &Fp::decode_reduce(&bytes_from_str("87042273176333530060578566038000830625165838429355625924513434887026369130349746415420555952922654553928828506530940833015172446565313387310031816593469594852213234805772651605423791434919532212551198331011556677531348059877562257352")),
-                    &Fp::decode_reduce(&bytes_from_str("1176528016519578465657942288192186424719698172922624856815276785211895644137324385620586796279266754650192081858873905925636230616038595092122626238574624388209919391900214401962926331911084415336639107551700295428789346432508778680229")),
-                );
-                let Z = Fq::new(
-                    &Fp::decode_reduce(&bytes_from_str("1")),
-                    &Fp::decode_reduce(&bytes_from_str("0")),
-                );
-                let Pbb = PointX::new_xz(&X, &Z);
-
-                X = Fq::new(
-                    &Fp::decode_reduce(&bytes_from_str("1509024317840555325663296612371441603775654055046944109962637366430540999704356191566971631869698793316705061328179810899036692447061117935225790580501283466974670729678611494259373368480663684788095439424776840012387584140092652800")),
-                    &Fp::decode_reduce(&bytes_from_str("514218034929853605655595760357535469123853678103322759844037815925689973119291025106090858555237294106110529160951960308324247683193648457937175625845664376918407566573859778497783124175764699919877487638746186291335773064422795095235")),
-                );
-                let Qbb = PointX::new_xz(&X, &Z);
-
-                X = Fq::new(
-                    &Fp::decode_reduce(&bytes_from_str("922264200986398433507956504368061357479100770000764524834901045300630502426648063492245602415832321338227826581496514637058092538179305766898705947591336208163742895653249363205262283428859149170592882170019065407008988545448819937323")),
-                    &Fp::decode_reduce(&bytes_from_str("644747826321703503002115246791676987738454812940522878851248613596947529450229668256549995595682060021590354837254288816505776022493634589619447388633231819428568124301339924648254133291831052121621617864105270671644220206769360884111")),
-                );
-                let PQbb = PointX::new_xz(&X, &Z);
-
-                /*
-                Pbb =  [1176528016519578465657942288192186424719698172922624856815276785211895644137324385620586796279266754650192081858873905925636230616038595092122626238574624388209919391900214401962926331911084415336639107551700295428789346432508778680229*sqrtminus + 87042273176333530060578566038000830625165838429355625924513434887026369130349746415420555952922654553928828506530940833015172446565313387310031816593469594852213234805772651605423791434919532212551198331011556677531348059877562257352, 1]
-                Qbb =  [514218034929853605655595760357535469123853678103322759844037815925689973119291025106090858555237294106110529160951960308324247683193648457937175625845664376918407566573859778497783124175764699919877487638746186291335773064422795095235*sqrtminus + 1509024317840555325663296612371441603775654055046944109962637366430540999704356191566971631869698793316705061328179810899036692447061117935225790580501283466974670729678611494259373368480663684788095439424776840012387584140092652800, 1]
-                PQbb =  [644747826321703503002115246791676987738454812940522878851248613596947529450229668256549995595682060021590354837254288816505776022493634589619447388633231819428568124301339924648254133291831052121621617864105270671644220206769360884111*sqrtminus + 922264200986398433507956504368061357479100770000764524834901045300630502426648063492245602415832321338227826581496514637058092538179305766898705947591336208163742895653249363205262283428859149170592882170019065407008988545448819937323, 1]
-                */
-
-                let kernelx = curve.ladder_3pt(&Pbb, &Qbb, &PQbb, s.clone());
-
-                */
-                // end of debugging
-
                 let curve1 = Curve::new_fromA24(&A24_1.0, &A24_1.1);
 
                 let kernelx = curve.ladder_3pt(&Pb, &Qb, &PQb, s.clone());
                 let kernel1x = curve1.ladder_3pt(&Pb1, &Qb1, &PQb1, s.clone());
+
+                /*
+                println!("");
+                println!("");
+                println!("");
+                println!("Pb_to_be_mapped: {}", Pb.X / Pb.Z);
+                println!("");
+                println!("Qb_to_be_mapped: {}", Qb.X / Qb.Z);
+                println!("");
+                println!("PQb_to_be_mapped: {}", PQb.X / PQb.Z);
+                */
 
                 println!("");
                 println!("");
                 println!("");
                 println!("kernelx: {}", kernelx.X / kernelx.Z);
                 println!("");
-
 
                 
                 let n = 162;
@@ -820,17 +865,17 @@ macro_rules! define_litsigamal {
                 let eval_points = [Pa, Qa, R];
                 let (curve_new, image_points) = ec_lit::three_isogeny_chain(&curve, &kernelx, eval_points.to_vec(), n, &strategy);
                 (Pa, Qa, R) = (image_points[0], image_points[1], image_points[2]);
-
+ 
                 let eval_points = [Pa1, Qa1, R1];
                 let (curve1_new, image_points) = ec_lit::three_isogeny_chain(&curve1, &kernel1x, eval_points.to_vec(), n, &strategy);
                 (Pa1, Qa1, R1) = (image_points[0], image_points[1], image_points[2]);
-
+ 
                 let beta = self.l_c * generate_random_range(0.big(), self.l_c.big().pow(pub_key.power_c - 1) - 1) +
                             generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
                 let beta = 928347.big(); // dbg
 
-                curve.xmul(&mut R, beta.clone());
-                curve1.xmul(&mut R1, beta * mu);
+                curve_new.xmul(&mut R, beta.clone());
+                curve1_new.xmul(&mut R1, beta * mu);
 
                 let bob_secret_1: Integer = self.l_a * generate_random_range(0.big(), self.l_a.big().pow(pub_key.power_a + 2) - 1) + 1;
                 let bob_secret_2: Integer = self.l_a * generate_random_range(0.big(), self.l_a.big().pow(pub_key.power_a + 2) - 1) + 1;
@@ -838,12 +883,12 @@ macro_rules! define_litsigamal {
                 let bob_secret_1: Integer = 2 * 1324.big() + 1; // dbg
                 let bob_secret_2: Integer = 2 * 8345.big() + 1; // dbg
 
-                curve.xmul(&mut Pa, bob_secret_1.clone());
-                curve.xmul(&mut Qa, bob_secret_2.clone());
+                curve_new.xmul(&mut Pa, bob_secret_1.clone());
+                curve_new.xmul(&mut Qa, bob_secret_2.clone());
 
-                curve1.xmul(&mut Pa1, bob_secret_1);
-                curve1.xmul(&mut Qa1, bob_secret_2);
-
+                curve1_new.xmul(&mut Pa1, bob_secret_1);
+                curve1_new.xmul(&mut Qa1, bob_secret_2);
+ 
                 let points = CipherPoints::new(
                     Pa,
                     Qa,
@@ -868,12 +913,12 @@ macro_rules! define_litsigamal {
                 )
             }
 
-            pub fn decrypt(&self, pub_key: &PubKey, cipher: &Cipher, alice_secret: (Integer, Integer, Integer)) -> Integer {
+            pub fn decrypt(&self, cipher: &Cipher, alice_secret: (Integer, Integer, Integer)) -> Integer {
                 let start = Instant::now();
 
                 let (points, points1) = (&cipher.points, &cipher.points1);
                 let (mut Pa, mut Qa, mut R) = (points.Pa, points.Qa, points.R);
-                let (mut Pa1, mut Qa1, mut R1) = (points1.Pa, points1.Qa, points1.R);
+                let (Pa1, Qa1, R1) = (points1.Pa, points1.Qa, points1.R);
 
                 let curve = Curve::new_fromA24(&cipher.A24_num, &cipher.A24_denom);
                 let curve1 = Curve::new_fromA24(&cipher.A24_1_num, &cipher.A24_1_denom);
@@ -883,8 +928,8 @@ macro_rules! define_litsigamal {
                 curve.xmul(&mut R, alpha);
                 curve.xmul(&mut Pa, alice_secret.0);
                 curve.xmul(&mut Qa, alice_secret.1);
-
-                let (Pa_complete, _) = curve.complete_pointX(&Pa);
+ 
+                let (mut Pa_complete, _) = curve.complete_pointX(&Pa);
                 let (Qa_complete, _) = curve.complete_pointX(&Qa);
                 let (R_complete, _) = curve.complete_pointX(&R);
 
@@ -892,12 +937,50 @@ macro_rules! define_litsigamal {
                 let (Qa1_complete, _) = curve1.complete_pointX(&Qa1);
                 let (R1_complete, _) = curve1.complete_pointX(&R1);
 
-                let t = self.l_a.big().pow(self.a);
-                let bytes = big_to_bytes(t);
-                let T1_0 = curve.mul(&Pa_complete, &bytes, bytes.len() * 8);
-                let T1_1 = curve.mul(&Pa_complete, &bytes, bytes.len() * 8);
 
+                let t = self.l_a.big().pow(self.a);
+                let bytes = big_to_bytes(t.clone());
+                let mut T1_0 = curve.mul(&Pa_complete, &bytes, bytes.len() * 8);
+                let T1_1 = curve1.mul(&Pa1_complete, &bytes, bytes.len() * 8);
+
+                let Qa_complete_mul = curve.mul(&Qa_complete, &bytes, bytes.len() * 8);
+                let Qa1_complete_mul = curve1.mul(&Qa1_complete, &bytes, bytes.len() * 8);
+
+                println!("");
+                println!("");
+                println!("before pairing 11111111");
+                println!("");
+                println!("");
+
+                let t = 2;
+                let (mut w1, ok) = curve.weil_pairing_2exp(t, &T1_0, &Qa_complete_mul);
+                assert_eq!(ok, 0xFFFFFFFF);
+                let bytes = big_to_bytes(3.big());
+                w1.set_pow_simple(&bytes);
+
+                println!("");
+                println!("");
+                println!("before pairing 222222222");
+                println!("");
+                println!("");
+
+
+                let (w2, ok) = curve1.weil_pairing_2exp(t, &T1_1, &Qa1_complete_mul);
+                assert_eq!(ok, 0xFFFFFFFF);
+
+                if w1.equals(&w2) != 0xFFFFFFFF {
+                    Pa_complete.Y.set_neg();
+                    T1_0.Y.set_neg();
+                }
+
+                /*
+                if (weil_pairing_pari(T1_0,(2**a)*S[1],4)** 3 != weil_pairing_pari(T1_1,(2**a)*S1[1],4)):
+                    S[0] = (-1)*S[0]
+                    T1_0 = (-1)*T1_0
+                */
                 // TODO: pairing check
+                // T1_0.Y.set_neg();
+                // Pa_complete.Y.set_neg();
 
                 let R_shift = curve.add(&R_complete, &T1_0);
                 let R_shiftX = PointX::new_xz(&R_shift.X, &R_shift.Z);
@@ -905,8 +988,8 @@ macro_rules! define_litsigamal {
                 let Pa_shift = curve.add(&Pa_complete, &T1_0);
                 let Qa_shift = curve.add(&Qa_complete, &T1_0);
 
-                let Pa1_shift = curve.add(&Pa1_complete, &T1_1);
-                let Qa1_shift = curve.add(&Qa1_complete, &T1_1);
+                let Pa1_shift = curve1.add(&Pa1_complete, &T1_1);
+                let Qa1_shift = curve1.add(&Qa1_complete, &T1_1);
 
                 let mut Pa_shiftX = PointX::new_xz(&Pa_shift.X, &Pa_shift.Z);
                 let mut Qa_shiftX = PointX::new_xz(&Qa_shift.X, &Qa_shift.Z);
@@ -917,7 +1000,7 @@ macro_rules! define_litsigamal {
                 let ell_product = EllipticProduct::new(&curve, &curve1);
 
                 let strategy_2: [usize; 382] = [154, 93, 55, 33, 20, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 38, 22, 13, 8, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 65, 37, 21, 12, 7, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 28, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1];
-
+                
                 let b_points = [R];
                 let b_shift_points = [R_shiftX];
                 let points_R = compute_isogeny(
@@ -940,58 +1023,93 @@ macro_rules! define_litsigamal {
 
                 let (R1_2_complete, _) = curve1.complete_pointX(&R1_2);
 
-                let mu1 = ec_lit::dlog_5(&curve, &R1_complete, &R1_2_complete, self.c.try_into().unwrap());
-                let mu2 = ec_lit::dlog_5(&curve, &R1_2_complete, &R1_complete, self.c.try_into().unwrap());
+                let mu1 = ec_lit::dlog_5(&curve1, &R1_complete, &R1_2_complete, self.c.try_into().unwrap());
+                let mu2 = ec_lit::dlog_5(&curve1, &R1_2_complete, &R1_complete, self.c.try_into().unwrap());
 
-                /*
                 println!("");
                 println!("mu1: {:?}", mu1);
                 println!("");
                 println!("mu2: {:?}", mu2);
                 println!("");
-                */
 
                 println!("decrypt: {:?}", start.elapsed());
                 println!("");
 
-                mu1
+                mu2
             }
 
             fn get_PQb_and_shift(&self, curve_1: &Curve, curve_2: &Curve, Pa: &Point, Qa: &mut Point,
-                    Pa1: &Point, Qa1: &Point, torsion_b: Integer, tau: Integer) -> (Point, Point, Point, Point, Point, Point, Point, Point, Point, Point) {
-                let Pb1 = generate_random_fq(curve_1, torsion_b.clone(), self.scalar_without_b.clone());
-                let Qb1 = generate_random_fq(curve_1, torsion_b, self.scalar_without_b.clone());
+                    Pa1: &Point, Qa1: &Point, torsion_b: Integer, tau: Integer, dbg_index: usize) -> (Point, Point, Point, Point, Point, Point, Point, Point, Point, Point) {
+                let mut Pb1 = generate_random_fq(curve_1, torsion_b.clone(), self.scalar_without_b.clone());
+                let mut Qb1 = generate_random_fq(curve_1, torsion_b, self.scalar_without_b.clone());
 
                 // TODO: the following is only for debugging:
-                let px = Fq::new(
-                    &Fp::decode_reduce(&bytes_from_str("589347475779467028048732638707745169074099572448781051271349481559473727012677648788277674070708563815384409822118544148404313695739142076641733342195789664410029747217412725418639602788946160431051681659016463369120955499530350884793")),
-                    &Fp::decode_reduce(&bytes_from_str("295541731903830973966435177821009510545806235315633443160350494708236538905366964828599192114390194343094738330899036091771606752115327511842840580779568519473668508004731498100416200716785989577694849244176022777068709128659699958651")),
-                );
 
-                let pz = Fq::new(
-                    &Fp::decode_reduce(&bytes_from_str("89542995344710952948107022790100922686334678202826420161095874206526834236077000668814682919417119967989382371825802002025554791683974908178374722677745710441261906652561600152816296300222128057559398717792476238492791294646212107584")),
-                    &Fp::decode_reduce(&bytes_from_str("1028199781928077642554616804903240208550974242321502258355144963022928866609527418284098186948125250284199941214438305372352745234972686884241582592073140746296427566777630409750957270938545946624116302693122101933302505969963727803020")),
-                );
-                let PX = PointX::new_xz(&px, &pz);
-                let (mut Pb1, _) = curve_1.complete_pointX(&PX);
-                Pb1.Y.set_neg();
+                if dbg_index == 1 {
+                    let px = Fq::new(
+                        &Fp::decode_reduce(&bytes_from_str("589347475779467028048732638707745169074099572448781051271349481559473727012677648788277674070708563815384409822118544148404313695739142076641733342195789664410029747217412725418639602788946160431051681659016463369120955499530350884793")),
+                        &Fp::decode_reduce(&bytes_from_str("295541731903830973966435177821009510545806235315633443160350494708236538905366964828599192114390194343094738330899036091771606752115327511842840580779568519473668508004731498100416200716785989577694849244176022777068709128659699958651")),
+                    );
 
-                let qx = Fq::new(
-                    &Fp::decode_reduce(&bytes_from_str("454140180413608233286394846003134365209314843053780796163906640030713711389055041986213108103635675206609008574032235475274293757590849226484000435247916029901267410923839011673395777802804904328624904321463415715607384207304067875730")),
-                    &Fp::decode_reduce(&bytes_from_str("1243112448202039772158444090834398340074566723306283492337265843328542753962809102809078142471446057326889296295982219243530765736786289041817270190922322511604202629506602681892554629222996194581581219464530795781841550001797599410006")),
-                );
+                    let pz = Fq::new(
+                        &Fp::decode_reduce(&bytes_from_str("89542995344710952948107022790100922686334678202826420161095874206526834236077000668814682919417119967989382371825802002025554791683974908178374722677745710441261906652561600152816296300222128057559398717792476238492791294646212107584")),
+                        &Fp::decode_reduce(&bytes_from_str("1028199781928077642554616804903240208550974242321502258355144963022928866609527418284098186948125250284199941214438305372352745234972686884241582592073140746296427566777630409750957270938545946624116302693122101933302505969963727803020")),
+                    );
+                    let PX = PointX::new_xz(&px, &pz);
+                    (Pb1, _) = curve_1.complete_pointX(&PX);
+                    Pb1.Y.set_neg();
 
-                let qz = Fq::new(
-                    &Fp::decode_reduce(&bytes_from_str("1052179633628854838348234790181091744705359231662359128521305087623977163897424533351031768785764629228680763061743717048694702723750786611598195928571348917667108362366464498799815518080430742521740861086356920849755947555393300743532")),
-                    &Fp::decode_reduce(&bytes_from_str("1064275765062938759527616005874886327370713276008282087681071518299603510092884744948583012023499246802112511221842256640840835566271805426695601243375872188201751132299529941374828828373089760184532851360899361002657396410465738357472")),
-                );
+                    let qx = Fq::new(
+                        &Fp::decode_reduce(&bytes_from_str("454140180413608233286394846003134365209314843053780796163906640030713711389055041986213108103635675206609008574032235475274293757590849226484000435247916029901267410923839011673395777802804904328624904321463415715607384207304067875730")),
+                        &Fp::decode_reduce(&bytes_from_str("1243112448202039772158444090834398340074566723306283492337265843328542753962809102809078142471446057326889296295982219243530765736786289041817270190922322511604202629506602681892554629222996194581581219464530795781841550001797599410006")),
+                    );
 
-                let QX = PointX::new_xz(&qx, &qz);
-                let (Qb1, _) = curve_1.complete_pointX(&QX);
+                    let qz = Fq::new(
+                        &Fp::decode_reduce(&bytes_from_str("1052179633628854838348234790181091744705359231662359128521305087623977163897424533351031768785764629228680763061743717048694702723750786611598195928571348917667108362366464498799815518080430742521740861086356920849755947555393300743532")),
+                        &Fp::decode_reduce(&bytes_from_str("1064275765062938759527616005874886327370713276008282087681071518299603510092884744948583012023499246802112511221842256640840835566271805426695601243375872188201751132299529941374828828373089760184532851360899361002657396410465738357472")),
+                    );
+
+                    let QX = PointX::new_xz(&qx, &qz);
+                    (Qb1, _) = curve_1.complete_pointX(&QX);
+                } else {
+                    let px = Fq::new(
+                        &Fp::decode_reduce(&bytes_from_str("284707190851302075926377063138643761676122518864665550138554350732573227293123587051907006783021460026585455871404018076970517581567031238032632831488051206693751540697662652780496985234073415652017084557602710706990588136599420102096")),
+                        &Fp::decode_reduce(&bytes_from_str("4433206878219121884491950114955940050211700723058222307183932529106090176445532488192447704785491805751562283162365888008148621761674266348704859253404297466367931215163833005890081063719658319791338544511987560854732703312240947031")),
+                    );
+
+                    let pz = Fq::new(
+                        &Fp::decode_reduce(&bytes_from_str("1093935580269457206149374076770843225706669129380470411936650859912240538078291466643328407199225712337866700580108763359406951491933814233135993306482146305732905615647772041901933910489239185311569121548211842583140047412454765613305")),
+                        &Fp::decode_reduce(&bytes_from_str("1058746561392362583015971962998183602791552932464219152435984593356777921207689856807492624119867947182507749577424350815864146522253512104890649805341781640256245725471234537497460313528057066910946709776469323303225975507097522965590")),
+                    );
+                    let PX = PointX::new_xz(&px, &pz);
+                    (Pb1, _) = curve_1.complete_pointX(&PX);
+                    Pb1.Y.set_neg();
+
+                    let qx = Fq::new(
+                        &Fp::decode_reduce(&bytes_from_str("145906234163643449030383730881120164351395064575978090914954268500926786583728869199373317834271986476877315118658884030103672435546508158706589528861130614410530635777559247958672748047469744348747979052090700786837774220905750451334")),
+                        &Fp::decode_reduce(&bytes_from_str("766927802926939947613940812232960547095107913377442979431559751914776504643902023279120677143016734429835058593038324957421113750100735428986654560453300619399286631099476511286144418104949927538098263242063404210826681074530878105377")),
+                    );
+
+                    let qz = Fq::new(
+                        &Fp::decode_reduce(&bytes_from_str("17419782317540346937134817761607359768723700988741504660760338340476733698028437247332684816574260923297851007969869787984299743170956056497979887538897018574853409590185803871726852482940019308515889258533338726222427150787964900510")),
+                        &Fp::decode_reduce(&bytes_from_str("891775174187706552397851193269110663997129891837664509985080668295184536400915054403320330055172222617408490414104838764654009673467101334621063315809437588065515559074427782962273905781376370930984854891614238782019433308352768046476")),
+                    );
+
+                    let QX = PointX::new_xz(&qx, &qz);
+                    (Qb1, _) = curve_1.complete_pointX(&QX);
+
+                }
+
+
+
+
+
                 // end of debugging
 
-                // let PQb1 = curve_1.sub(&Pb1, &Qb1);
-                let PQb1 = curve_1.add(&Pb1, &Qb1); // TODO
+
+
+                let PQb1 = curve_1.sub(&Pb1, &Qb1);
+                // let PQb1 = curve_1.add(&Pb1, &Qb1); // TODO
 
                 let t = self.l_a.big().pow(self.a + 2);
                 let mut bytes = big_to_bytes(t);
