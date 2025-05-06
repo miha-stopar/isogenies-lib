@@ -69,8 +69,8 @@ def generate_lit_si_gamal_pubparam(a, b, c, sqrtminus, Fp, Fp2, p):
 
     return [Pa, Qa, Pb, Qb, Pc, Qc]
 
-def precompute_lit_si_gamal_128():
-    l_a, l_b, l_c, a, b, c, f, n = get_lit_si_gamal_params(128)
+def precompute_lit_si_gamal(param):
+    l_a, l_b, l_c, a, b, c, f, n = get_lit_si_gamal_params(param)
 
     p = (l_a**(a+2))*(l_b**b)*(l_c**c)*f - 1
     print("p:", p)
@@ -118,9 +118,9 @@ def precompute_lit_si_gamal_128():
     print("c: ", c)
     print("")
 
-    compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pa, Qa, l_a, a+2)
+    # compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pa, Qa, l_a, a+2)
     # compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pb, Qb, l_b, b)
-    # compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pc, Qc, l_c, c)
+    compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pc, Qc, l_c, c)
 
 def precompute_sqisign():
     import re
@@ -232,5 +232,7 @@ def precompute_sqisign():
     compute_and_print_endomorphism_matrices(E, Fp2, P_three, Q_three, 3, exp3)
 
 
-precompute_lit_si_gamal_128()
+# param = 128
+param = 192
+precompute_lit_si_gamal(param)
 # precompute_sqisign()

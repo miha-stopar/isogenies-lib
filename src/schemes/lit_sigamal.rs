@@ -263,13 +263,6 @@ macro_rules! define_litsigamal {
 
                 let Rx = PointX::new_xz(&Pc_rand.X, &Pc_rand.Z);
 
-                println!("");
-                println!("");
-                println!("");
-                println!("Rx: {}", Rx.X / Rx.Z);
-                println!("");
-
-
                 // N = (l_a**(2*a) - n**2) * l_b**b
                 let tau = l_a.big().pow(power_a * 2) - self.n * self.n;
                 let N = tau.clone() * l_b.big().pow(power_b);
@@ -282,9 +275,35 @@ macro_rules! define_litsigamal {
                 // let gamma = QuatAlgEl::new("8".big(), "4".big(), "6".big(), "2".big(), 2.big(), qa.clone());
 
                 let gamma = QuatAlgEl::new("8425099297649819352166379388758583438269420404259906871066684285709655835562922681747598532398853172000034459777928781756277965902285271705188053172406860".big(), "10672475422448534529312519343800163927437511879170590252915490695777092409588869040995562812407263134190749362059361293778411214787787911660929131931909741".big(), "7138531157822206556546664362792862977".big(), "6507363534081204197854356661058574173".big(), 1.big(), qa.clone());
+
+                /*
+                gamma.x = 2*gamma.x;
+                gamma.y = 2*gamma.y;
+                gamma.z = 2*gamma.z;
+                gamma.t = 2*gamma.t;
+                gamma.denom = 2.big();
+                */
+
+                println!("");
+                println!("");
+                println!("gamma: ");
+                println!("");
+                println!("{:?}", gamma);
+                println!("");
+                println!("");
                 
                 let order = standard_maximal_extremal_order().order;
-                let (mut coord, imprim) = gamma.factor_in_order(order.lattice.clone());
+                let (coord, imprim) = gamma.factor_in_order(order.lattice.clone());
+
+                println!("");
+                println!("coord");
+                println!("{:?}", coord);
+                println!("");
+                println!("imprim");
+                println!("{:?}", imprim);
+                println!("");
+                println!("");
+                println!("");
 
                 println!("1 (before apply endomorphism): {:?}", start.elapsed());
                 let second_part = Instant::now();
@@ -379,12 +398,6 @@ macro_rules! define_litsigamal {
                 let (mut codomain, mut image_points) = ec_lit::three_isogeny_chain(&curve, &kernel1x, eval_points.to_vec(), n, &strategy);
                 let (mut Pa_isog3X, mut Qa_rand_isog3X, R_isog3X) = (image_points[0], image_points[1], image_points[2]);
 
-                println!("");
-                println!("");
-                println!("");
-                println!("R_isog3X: {}", R_isog3X.X / R_isog3X.Z);
-                println!("");
-
                 // TODO
                 let mut Pa_to_be_mapped = Pa_isog3X.clone(); // to be mapped by 3-isogeny chain
                 let mut Qa_to_be_mapped = Qa_rand_isog3X.clone();
@@ -458,10 +471,6 @@ macro_rules! define_litsigamal {
                     let mut s = 0.big();
                     let mut kernel = PointX::INFINITY;
 
-                    println!("");
-                    println!("++++++++++++++++++++++++++++++++++++");
-                    println!("");
-
                     while !no_backtracking {
                         s = generate_random_range(0.big(), l_b.big().pow(power_b - 1)) * l_b + 
                             generate_random_range(1.big(), 2.big()); // TODO: check if this is 1 or 2
@@ -470,23 +479,6 @@ macro_rules! define_litsigamal {
 
                         kernel = codomain.ladder_3pt(&Pb_to_be_mapped, &Qb_to_be_mapped, &PQb_to_be_mapped, s.clone());
                         // TODO: get_PQb_and_shift + / -
-
-                        /*
-                        println!("");
-                        println!("s: {}", s);
-                        println!("");
-                        println!("");
-                        println!("Pb_to_be_mapped: {}", Pb_to_be_mapped.X / Pb_to_be_mapped.Z);
-                        println!("");
-                        println!("Qb_to_be_mapped: {}", Qb_to_be_mapped.X / Qb_to_be_mapped.Z);
-                        println!("");
-                        println!("PQb_to_be_mapped: {}", PQb_to_be_mapped.X / PQb_to_be_mapped.Z);
-                        println!("");
-                        println!("");
-                        println!("=------");
-                        println!("kernelx: {}", kernel.X /kernel.Z);
-                        println!("");
-                        */
 
                         let mut check = kernel.clone();
                         codomain.xmul(&mut check, f_mul.clone());
@@ -540,9 +532,6 @@ macro_rules! define_litsigamal {
                     let b_points = [Pb_to_be_mapped, Qb_to_be_mapped, PQb_to_be_mapped];
                     let b_shift_points = [Pb_shiftX, Qb_shiftX, PQb_shiftX];
                 
-                    println!("");
-                    println!("========================== 0");
-                    println!("");
                     /*
                     println!("Pb_to_be_mapped: {}", Pb_to_be_mapped.X / Pb_to_be_mapped.Z);
                     println!("");
@@ -567,7 +556,6 @@ macro_rules! define_litsigamal {
                     println!("PQb shift: {}", PQb_shiftX.X / PQb_shiftX.Z);
                     println!("");
                     println!("");
-                    */
 
                     println!("");
                     println!("Pa shift: {}", Pa_shiftX.X / Pa_shiftX.Z);
@@ -581,6 +569,7 @@ macro_rules! define_litsigamal {
                     println!("");
                     println!("Qa1 shift: {}", Qa1_shiftX.X / Qa1_shiftX.Z);
                     println!("");
+                    */
 
                     // TODO:
                     let mut Pa = Pa_to_be_mapped.clone();
@@ -623,9 +612,9 @@ macro_rules! define_litsigamal {
                 curve.xmul(&mut Pa1_to_be_mapped, alice_secret0.clone());
                 curve.xmul(&mut Qa1_to_be_mapped, alice_secret1.clone());
 
+                /*
                 println!("");
                 println!("================= ????????????????????????????????????????????????");
-                /*
                 println!("");
                 println!("Pa: {}", Pa_to_be_mapped.X / Pa_to_be_mapped.Z);
                 println!("");
@@ -661,7 +650,6 @@ macro_rules! define_litsigamal {
                 println!("PQb_to_be_mapped: {}", PQb_to_be_mapped.X / PQb_to_be_mapped.Z);
                 println!("");
                 println!("");
-                */
 
                 println!("");
                 println!("========================== 2");
@@ -672,8 +660,7 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("PQb1_to_be_mapped: {}", PQb1_to_be_mapped.X / PQb1_to_be_mapped.Z);
                 println!("");
-
-
+                */
 
                 let pubkey_points = PubKeyPoints::new(
                     Pa_to_be_mapped,
@@ -1190,6 +1177,17 @@ macro_rules! define_litsigamal {
 
                 let (gamma, _) =
                     represent_integer(N.clone(), qa.clone(), order.clone(), bad_prod_primes).unwrap();
+                
+                println!("gamma:");
+                println!("");
+                println!("gamma[0] = {}", gamma.x);
+                println!("");
+                println!("gamma[1] = {}", gamma.y);
+                println!("");
+                println!("gamma[2] = {}", gamma.z);
+                println!("");
+                println!("gamma[3] = {}", gamma.t);
+                println!("");
 
                 // TODO: remove
                 assert!(*gamma.reduced_norm().numer() == N);
