@@ -147,6 +147,7 @@ macro_rules! define_litsigamal {
         /// LITSiGamal struct
         #[derive(Clone, Debug)]
         pub struct LITSiGamal {
+            param: u32,
             curve: Curve,
             p: Integer,
             l_a: u32,
@@ -155,7 +156,6 @@ macro_rules! define_litsigamal {
             a: u32,
             b: u32,
             c: u32,
-            f: u32,
             scalar_without_b: Integer, // p + 1 = scalar_without_b * l_b**b
             n: u32,
         }
@@ -173,7 +173,7 @@ macro_rules! define_litsigamal {
                 let scalar_without_b = l_a.big().pow(a + 2) * l_c.big().pow(c) * f;
 
                 Self {
-                    curve, p, l_a, l_b, l_c, a, b, c, f, scalar_without_b, n
+                    param, curve, p, l_a, l_b, l_c, a, b, c, scalar_without_b, n
                 }
             }
 
@@ -181,9 +181,10 @@ macro_rules! define_litsigamal {
                 let start = Instant::now();
 
                 let fileName = "src/schemes/precomputed.json";
-                let (PaX, QaX, PmQaX, mat2_2, mat2_3, mat2_4, power_a) = load_torsion_info(fileName, "lit-sigamal-128", 2);
-                let (PbX, QbX, PmQbX, mat3_2, mat3_3, mat3_4, power_b) = load_torsion_info(fileName, "lit-sigamal-128", 3);
-                let (PcX, QcX, PmQcX, mat5_2, mat5_3, mat5_4, power_c) = load_torsion_info(fileName, "lit-sigamal-128", 5);
+                let s = &format!("lit-sigamal-{}", self.param);
+                let (PaX, QaX, PmQaX, mat2_2, mat2_3, mat2_4, power_a) = load_torsion_info(fileName, s, 2);
+                let (PbX, QbX, PmQbX, mat3_2, mat3_3, mat3_4, power_b) = load_torsion_info(fileName, s, 3);
+                let (PcX, QcX, PmQcX, mat5_2, mat5_3, mat5_4, power_c) = load_torsion_info(fileName, s, 5);
 
                 let power_a = power_a as u32;
                 let power_b = power_b as u32;
@@ -192,19 +193,17 @@ macro_rules! define_litsigamal {
                 let mut curve = self.curve.clone();
     
                 // TODO: prepare completions
-                let (Pa, ok1) = curve.complete_pointX(&PaX); // TODO: check ok
-                assert!(ok1 == 0xFFFFFFFF);
-                let (mut Qa, ok2) = curve.complete_pointX(&QaX); // TODO: check ok
-                let (PmQa, ok2) = curve.complete_pointX(&PmQaX); // TODO: check ok
+                let (Pa, _) = curve.complete_pointX(&PaX);
+                let (Qa, _) = curve.complete_pointX(&QaX);
+                let (PmQa, _) = curve.complete_pointX(&PmQaX);
 
-                let (Pb, ok1) = curve.complete_pointX(&PbX); // TODO: check ok
-                assert!(ok1 == 0xFFFFFFFF);
-                let (Qb, ok2) = curve.complete_pointX(&QbX); // TODO: check ok
-                let (PmQb, ok3) = curve.complete_pointX(&PmQbX); // TODO: check ok
+                let (Pb, _) = curve.complete_pointX(&PbX);
+                let (Qb, _) = curve.complete_pointX(&QbX);
+                let (PmQb, _) = curve.complete_pointX(&PmQbX);
 
-                let (mut Pc, ok1) = curve.complete_pointX(&PcX); // TODO: check ok
-                let (Qc, ok2) = curve.complete_pointX(&QcX); // TODO: check ok
-                let (PmQc, ok3) = curve.complete_pointX(&PmQcX); // TODO: check ok
+                let (Pc, _) = curve.complete_pointX(&PcX);
+                let (Qc, _) = curve.complete_pointX(&QcX);
+                let (PmQc, _) = curve.complete_pointX(&PmQcX);
  
                 let l_a = 2;
                 let l_b = 3;
@@ -287,14 +286,6 @@ macro_rules! define_litsigamal {
                 // let gamma = QuatAlgEl::new("8".big(), "4".big(), "6".big(), "2".big(), 2.big(), qa.clone());
 
                 let gamma = QuatAlgEl::new("8425099297649819352166379388758583438269420404259906871066684285709655835562922681747598532398853172000034459777928781756277965902285271705188053172406860".big(), "10672475422448534529312519343800163927437511879170590252915490695777092409588869040995562812407263134190749362059361293778411214787787911660929131931909741".big(), "7138531157822206556546664362792862977".big(), "6507363534081204197854356661058574173".big(), 1.big(), qa.clone());
-
-                /*
-                gamma.x = 2*gamma.x;
-                gamma.y = 2*gamma.y;
-                gamma.z = 2*gamma.z;
-                gamma.t = 2*gamma.t;
-                gamma.denom = 2.big();
-                */
 
                 println!("");
                 println!("");
@@ -895,14 +886,13 @@ macro_rules! define_litsigamal {
                 println!("Qb_to_be_mapped: {}", Qb.X / Qb.Z);
                 println!("");
                 println!("PQb_to_be_mapped: {}", PQb.X / PQb.Z);
-                */
 
                 println!("");
                 println!("");
                 println!("");
                 println!("kernelx: {}", kernelx.X / kernelx.Z);
                 println!("");
-
+                */
                 
                 let n = 162;
                 let strategy: [usize; 161] = [65, 37, 23, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 9, 5, 4, 2, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 28, 16, 9, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 4, 2, 1, 1, 1, 2, 1, 1, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 12, 7, 4, 2, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1];
@@ -1188,7 +1178,7 @@ macro_rules! define_litsigamal {
                 let order = standard_maximal_extremal_order().order;
 
                 let (gamma, _) =
-                    represent_integer(N.clone(), qa.clone(), order.clone(), bad_prod_primes).unwrap();
+                    represent_integer(N.clone(), qa.clone(), order.clone(), bad_prod_primes.clone()).unwrap();
                 
                 println!("gamma:");
                 println!("");
@@ -1200,9 +1190,20 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("gamma[3] = {}", gamma.t);
                 println!("");
+                println!("denom:");
+                println!("{}", gamma.denom);
 
-                // TODO: remove
-                assert!(*gamma.reduced_norm().numer() == N);
+                let norm = gamma.reduced_norm(); 
+                println!("");
+                println!("???????");
+                println!("");
+                println!("norm:");
+                println!("{:?}", norm.numer() / norm.denom());
+                println!("");
+                println!("N");
+                println!("{}", N);
+
+                assert!(norm.numer() == &(N * norm.denom()));
 
                 gamma
             }

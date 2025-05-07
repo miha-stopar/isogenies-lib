@@ -36,7 +36,7 @@ mod tests {
         if mu_decrypted == mu || check == mu_decrypted {
             println!("Decryption successful!");
         } else {
-            println!("Decryption failed!");
+            println!("Decryption failed.");
         } 
         println!("");
         println!("mu: {:?}", mu_decrypted);
