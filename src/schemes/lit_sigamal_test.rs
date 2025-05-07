@@ -5,7 +5,7 @@ mod tests {
     use num_traits::Pow;
 
     #[test]
-    fn lit_sigamal_128_test() {
+    fn lit_sigamal_test() {
         /*
         lam = 128
         a = 3 * lam
