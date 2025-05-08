@@ -102,9 +102,9 @@ def precompute_lit_si_gamal(param):
     print("c: ", c)
     print("")
 
-    compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pa, Qa, l_a, a+2)
+    # compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pa, Qa, l_a, a+2)
     # compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pb, Qb, l_b, b)
-    # compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pc, Qc, l_c, c)
+    compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pc, Qc, l_c, c)
 
 def precompute_sqisign():
     import re

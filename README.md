@@ -106,4 +106,6 @@ pub mod ec_lit192 {
 }
 ```
 
-To generate the torsion points, use the `sage/precompute.sage` script and paste the output to `precomputed.json`.
+## Torsion points
+
+To generate the torsion points, use the `sage/precompute.sage` script and paste the output to `precomputed.json`. Make sure to use `compute_and_print_endomorphism_matrices_montgomery` with the proper parameters.
