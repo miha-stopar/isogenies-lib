@@ -906,6 +906,23 @@ macro_rules! define_ec_core {
                 Fq::condswap(&mut P.Z, &mut Q.Z, ctl32);
             }
 
+            /*
+            let mut k_digits = c1.to_digits::<u64>(Order::MsfLe);
+            k_digits.reverse();
+            // TODO
+
+            // let k_digits: Vec<u64> = [1, 0, 0, 0].to_vec(); // TODO: remove, JUST DEBUGGING
+
+            let mut l_digits = c2.to_digits::<u64>(Order::MsfLe);
+            l_digits.reverse();
+            while l_digits.len() < 4 {
+                l_digits.push(0);
+            }
+            // let l_digits: Vec<u64> = [1, 0, 0, 0].to_vec(); // TODO: remove, JUST DEBUGGING
+
+            let f: usize = 36; // TODO
+            let Pc = self.curve.xdblmul_bounded(&Pc, &k_digits, &Qc, &l_digits, &PmQc, f);
+            */
             pub fn xdblmul_bounded(
                 self,
                 P: &Point,

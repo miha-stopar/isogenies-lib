@@ -55,7 +55,14 @@ pub mod ec5248 {
     crate::theta::theta::define_theta_structure! {}
 }
 
-pub mod ec_lit {
+pub mod ec_sqisign_lvl1 {
+    pub type Fp = crate::fields::SQIsignLvl1::Fp;
+    pub type Fq = crate::fields::SQIsignLvl1Ext::Fp2;
+    crate::ec::eccore::define_ec_core! {}
+    crate::ec::ec_helpers::define_ec_helpers! {}
+}
+
+pub mod ec_lit128 {
     pub type Fp = crate::fields::FpLit128::Fp;
     pub type Fq = crate::fields::FpLit128Ext::Fp2;
     crate::ec::eccore::define_ec_core! {}
@@ -65,9 +72,22 @@ pub mod ec_lit {
     crate::schemes::lit_sigamal::define_litsigamal! {}
 }
 
-pub mod ec_sqisign_lvl1 {
-    pub type Fp = crate::fields::SQIsignLvl1::Fp;
-    pub type Fq = crate::fields::SQIsignLvl1Ext::Fp2;
+pub mod ec_lit192 {
+    pub type Fp = crate::fields::FpLit192::Fp;
+    pub type Fq = crate::fields::FpLit192Ext::Fp2;
     crate::ec::eccore::define_ec_core! {}
     crate::ec::ec_helpers::define_ec_helpers! {}
+    
+    crate::theta::theta::define_theta_structure! {}
+    crate::schemes::lit_sigamal::define_litsigamal! {}
+}
+
+pub mod ec_lit256 {
+    pub type Fp = crate::fields::FpLit256::Fp;
+    pub type Fq = crate::fields::FpLit256Ext::Fp2;
+    crate::ec::eccore::define_ec_core! {}
+    crate::ec::ec_helpers::define_ec_helpers! {}
+    
+    crate::theta::theta::define_theta_structure! {}
+    crate::schemes::lit_sigamal::define_litsigamal! {}
 }
