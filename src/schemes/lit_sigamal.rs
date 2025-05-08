@@ -350,14 +350,6 @@ macro_rules! define_litsigamal {
                 let bytes = big_to_bytes(t);
                 let Pa_gamma_4 = curve.mul(&Pa_gamma, &bytes, bytes.len() * 8);
                 if Pa_gamma_4.X.equals(&Pa_gamma_4.Z) != 0xFFFFFFFF {
-                    /*
-                    Pa1[0] = (-1)*Pa1[0]
-                    Qa1[0] = (-1)*Qa1[0]
-                    R1[0] = (-1)*R1[0]
-                    */
-                    println!("");
-                    println!("fix");
-                    println!("");
                     Pa_gamma.X.set_neg();
                     Qa_rand_gamma.X.set_neg();
                     R_gamma.X.set_neg();
@@ -415,27 +407,22 @@ macro_rules! define_litsigamal {
                 println!("2 (after apply endomorphism): {:?}", second_part.elapsed());
                 let third_part = Instant::now();
 
-                let mut dlog = dlog_3(&curve, &Pb_gamma, &Qb_gamma, self.b.try_into().unwrap());
+                // TODO: remove one dlog
+                let dlog1 = dlog_3(&curve, &Pb_gamma, &Qb_gamma, self.b.try_into().unwrap());
                 let dlog2 = dlog_3(&curve, &Qb_gamma, &Pb_gamma, self.b.try_into().unwrap());
-                // TODO:
-                if dlog == 0.big() {
-                    dlog = dlog2;
-                }
-
-                println!("");
-                println!("dlog:");
-                println!("");
-                println!("{}", dlog);
-                println!("");
-                println!("");
-
                 println!("3 (after dlog): {:?}", third_part.elapsed());
                 let fourth_part = Instant::now();
- 
 
-                let bytes = big_to_bytes(dlog); // TODO
-                let dlog_Qb = curve.mul(&Qb, &bytes, bytes.len() * 8);
-                let kernel1 = curve.sub(&Pb, &dlog_Qb); // TODO: PointX directly
+                let kernel1;
+                if dlog1 != 0.big() {
+                    let bytes = big_to_bytes(dlog1);
+                    let dlog_Pb = curve.mul(&Pb, &bytes, bytes.len() * 8);
+                    kernel1 = curve.sub(&Qb, &dlog_Pb);
+                } else {
+                    let bytes = big_to_bytes(dlog2);
+                    let dlog_Qb = curve.mul(&Qb, &bytes, bytes.len() * 8);
+                    kernel1 = curve.sub(&Pb, &dlog_Qb);
+                }
 
                 let kernel1x = PointX::new_xz(&kernel1.X, &kernel1.Z);
 
@@ -448,6 +435,17 @@ macro_rules! define_litsigamal {
                 // endomorphism gamma is of order (l_a**(2*a) - n**2) * l_b**b
                 // let's take the isogeny gamma1 with kernel: ker(gamma) \cap E[l_b**b]
 
+                println!("???????????????????");
+                println!("");
+                println!("Pa: {}", PaX.X / PaX.Z);
+                println!("");
+                println!("Qa rand: {}", Qa_rand_X.X / Qa_rand_X.Z);
+                println!("");
+                println!("R: {}", Rx.X / Rx.Z);
+                println!("");
+                println!("");
+
+
                 // TODO: eval_points are [Pa, Qa, R]
  
                 // TODO: remove, just for testing, instead use the kernel of 
@@ -456,7 +454,6 @@ macro_rules! define_litsigamal {
                 let (mut codomain, mut image_points) = three_isogeny_chain(&curve, &kernel1x, eval_points.to_vec(), n, self.strategy);
                 let (mut Pa_isog3X, mut Qa_rand_isog3X, R_isog3X) = (image_points[0], image_points[1], image_points[2]);
 
-                /* */
                 println!("???????????????????");
                 println!("");
                 println!("Pa: {}", Pa_isog3X.X / Pa_isog3X.Z);
