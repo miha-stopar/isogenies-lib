@@ -1,7 +1,7 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::{ec_lit128, ec_lit192, util::{generate_random_range, Big}};
+    use crate::{ec_lit128, ec_lit192, ec_lit256, util::{generate_random_range, Big}};
     use num_traits::Pow;
 
     #[test]

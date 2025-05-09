@@ -211,12 +211,15 @@ macro_rules! define_litsigamal {
                 let mut curve = self.curve.clone();
     
                 // TODO: prepare completions
-                let (Pa, ok) = curve.complete_pointX(&PaX);
+                let (mut Pa, ok) = curve.complete_pointX(&PaX);
                 assert!(ok == 0xFFFFFFFF);
-                let (Qa, ok) = curve.complete_pointX(&QaX);
+                let (mut Qa, ok) = curve.complete_pointX(&QaX);
                 assert!(ok == 0xFFFFFFFF);
                 let (PmQa, ok) = curve.complete_pointX(&PmQaX);
                 assert!(ok == 0xFFFFFFFF);
+
+                // TODO: remove
+                Qa.Y.set_neg();
 
                 let (Pb, ok) = curve.complete_pointX(&PbX);
                 assert!(ok == 0xFFFFFFFF);
@@ -231,7 +234,8 @@ macro_rules! define_litsigamal {
                 assert!(ok == 0xFFFFFFFF);
                 let (PmQc, ok) = curve.complete_pointX(&PmQcX);
                 assert!(ok == 0xFFFFFFFF);
- 
+
+                 
                 let l_a = 2;
                 let l_b = 3;
                 let l_c = 5;
@@ -278,10 +282,6 @@ macro_rules! define_litsigamal {
                 // let Pc1 = self.curve.add(&c1Pc, &c2Qc);
                 let Pc_rand = self.curve.add(&c1Pc, &c2Qc);
  
-
-
-                // assert!(Pc.equals(&Pc1) == 0xFFFFFFFF);
-
                 let Rx = PointX::new_xz(&Pc_rand.X, &Pc_rand.Z);
 
                 // N = (l_a**(2*a) - n**2) * l_b**b
@@ -304,6 +304,7 @@ macro_rules! define_litsigamal {
                     gamma = QuatAlgEl::new("115034383765258308173869630803674256703096200737601306604080778577500662170211571077551439881270955842375054996585306464758397144568425999812798300399826830691608217466591363049193803646634765565719105889635721026446645640892102299356189611639735230463534509693094105608190825525818657935296719156053255271268".big(), "222484115657115893958902915028106030577367887176420131412175285518662989713732282842327197920855850337900974245996449363815987841928261389510023490179919263409815002729950806314599928539121075635050724429257579550304435551525616145070175835971744270403218256354000616923571986093356185782178174038030354757992".big(), "272597988669066918205151842358056055753978918781169760737777262046809362515".big(), "-825233551822909176888050535145909755368781011894025287792789244761948382824".big(), 1.big(), qa.clone());
                 }
 
+                /*
                 println!("");
                 println!("");
                 println!("gamma: ");
@@ -311,6 +312,7 @@ macro_rules! define_litsigamal {
                 println!("{:?}", gamma);
                 println!("");
                 println!("");
+                */
                 
                 let order = standard_maximal_extremal_order().order;
                 let (coord, imprim) = gamma.factor_in_order(order.lattice.clone());
@@ -344,6 +346,23 @@ macro_rules! define_litsigamal {
                 let R = self.curve.add(&c1Pc, &c2Qc);
                 let mut R_gamma = PointX::new_xz(&R.X, &R.Z);
 
+                println!("");
+                println!("+++++++++++++");
+                println!("");
+                println!("Pa1: {}", Pa_gamma.X / Pa_gamma.Z);
+                println!("");
+                println!("Pa1: {}", Pa_gamma.Y / Pa_gamma.Z);
+                println!("");
+                println!("Qa1: {}", Qa_rand_gamma.X / Qa_rand_gamma.Z);
+                println!("");
+                println!("Qa1: {}", Qa_rand_gamma.Y / Qa_rand_gamma.Z);
+                println!("");
+                println!("");
+                println!("R1: {}", R_gamma.X / R_gamma.Z);
+                println!("");
+                println!("R1: {}", R.Y / R.Z);
+                println!("");
+                println!("");
 
                 // Set [2^a]Pa_gamma = (1,*)
                 let t = self.l_a.big().pow(self.a); // TODO: define once
@@ -353,16 +372,42 @@ macro_rules! define_litsigamal {
                     Pa_gamma.X.set_neg();
                     Qa_rand_gamma.X.set_neg();
                     R_gamma.X.set_neg();
+
+                    println!("HHHHHMMMMMMMMMMMMMMMMMM");
                 }
 
+                println!("");
+                println!("Pa1: {}", Pa_gamma.X / Pa_gamma.Z);
+                println!("");
+                println!("Qa1: {}", Qa_rand_gamma.X / Qa_rand_gamma.Z);
+                println!("");
+                println!("R1: {}", R_gamma.X / R_gamma.Z);
+                println!("");
+                println!("");
+
                 let mut Ra1_to_be_mapped = PointX::new_xz(&R_gamma.X, &R_gamma.Z);
+
+                println!("Qa before rand");
+                println!("Qa: {}", Qa.X / Qa.Z);
+                println!("");
+                println!("Qa: {}", Qa.Y / Qa.Z);
+                println!("");
+
 
                 let a1Pa = curve.mul(&Pa, &bytes1, bytes1.len() * 8);
                 let a2Qa = curve.mul(&Qa, &bytes2, bytes2.len() * 8);
                 let Qa_rand = curve.add(&a1Pa, &a2Qa);
                 let Qa_rand_X = PointX::new_xz(&Qa_rand.X, &Qa_rand.Z);
 
+                println!("Qa after rand");
+                println!("Qa: {}", Qa_rand.X / Qa_rand.Z);
+                println!("");
+                println!("Qa: {}", Qa_rand.Y / Qa_rand.Z);
+                println!("");
+
+
                 println!("============ 111 ==============");
+                println!("Pa: {}", Pa.X / Pa.Z);
                 println!("");
                 println!("Pa: {}", Pa.Y / Pa.Z);
                 println!("");
@@ -396,11 +441,15 @@ macro_rules! define_litsigamal {
 
                 println!("???????????????????");
                 println!("");
-                println!("Qb: {}", Qb_gamma.X / Qb_gamma.Z);
+                println!("Qb_gamma: {}", Qb_gamma.X / Qb_gamma.Z);
                 println!("");
-                println!("Qb: {}", Qb_gamma.Y / Qb_gamma.Z);
+                println!("Qb_gamma: {}", Qb_gamma.Y / Qb_gamma.Z);
                 println!("");
 
+                println!("");
+                println!("Pa_gamma: {}", Pa_gamma.X / Pa_gamma.Z);
+                println!("");
+                println!("Pa_gamma: {}", Pa_gamma.Y / Pa_gamma.Z);
                 println!("");
                 
 
@@ -426,15 +475,12 @@ macro_rules! define_litsigamal {
 
                 let kernel1x = PointX::new_xz(&kernel1.X, &kernel1.Z);
 
-                // Precomputed with strategy.py
-                // let strategy: [usize; 35] = [21, 14, 5, 3, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
-                // let strategy: [usize; 161] = [55, 38, 34, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 13, 8, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1]; 
-
                 let n = self.strategy.len() + 1;
 
                 // endomorphism gamma is of order (l_a**(2*a) - n**2) * l_b**b
                 // let's take the isogeny gamma1 with kernel: ker(gamma) \cap E[l_b**b]
 
+                /*
                 println!("???????????????????");
                 println!("");
                 println!("Pa: {}", PaX.X / PaX.Z);
@@ -442,6 +488,13 @@ macro_rules! define_litsigamal {
                 println!("Qa rand: {}", Qa_rand_X.X / Qa_rand_X.Z);
                 println!("");
                 println!("R: {}", Rx.X / Rx.Z);
+                println!("");
+                println!("");
+                */
+
+                println!("");
+                println!("kernel1x:");
+                println!("{}", kernel1x.X / kernel1x.Z);
                 println!("");
                 println!("");
 
@@ -454,27 +507,31 @@ macro_rules! define_litsigamal {
                 let (mut codomain, mut image_points) = three_isogeny_chain(&curve, &kernel1x, eval_points.to_vec(), n, self.strategy);
                 let (mut Pa_isog3X, mut Qa_rand_isog3X, R_isog3X) = (image_points[0], image_points[1], image_points[2]);
 
-                println!("???????????????????");
-                println!("");
-                println!("Pa: {}", Pa_isog3X.X / Pa_isog3X.Z);
-                println!("");
-                println!("Qa rand: {}", Qa_rand_isog3X.X / Qa_rand_isog3X.Z);
-                println!("");
-                println!("R: {}", R_isog3X.X / R_isog3X.Z);
-                println!("");
-                println!("");
-
-
                 // TODO
                 let mut Pa_to_be_mapped = Pa_isog3X.clone(); // to be mapped by 3-isogeny chain
                 let mut Qa_to_be_mapped = Qa_rand_isog3X.clone();
                 let mut Ra_to_be_mapped = R_isog3X.clone();
 
-                let (Pa, _) = codomain.complete_pointX(&Pa_isog3X);
+                let (mut Pa, _) = codomain.complete_pointX(&Pa_isog3X);
                 let (mut Qa_rand, _) = codomain.complete_pointX(&Qa_rand_isog3X);
 
-                let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) = self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa_rand, &Pa_gamma, &Qa_rand_gamma, torsion_b.clone(), tau.clone(), 1);
+                // TODO 1: remove
+                Pa.Y.set_neg();
 
+                println!("????????????/ after 3-isogeny");
+                println!("");
+                println!("Pa: {}", Pa.X / Pa.Z);
+                println!("");
+                println!("Pa: {}", Pa.Y / Pa.Z);
+                println!("");
+                println!("Qa: {}", Qa_rand.X / Qa_rand.Z);
+                println!("");
+                println!("Qa: {}", Qa_rand.Y / Qa_rand.Z);
+                println!("");
+
+
+                let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) =
+                    self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa_rand, &Pa_gamma, &Qa_rand_gamma, torsion_b.clone(), tau.clone(), 1);
 
                 let ell_product = EllipticProduct::new(&codomain, &curve);
  
@@ -498,13 +555,49 @@ macro_rules! define_litsigamal {
                 println!("4 (after 3-isogeny): {:?}", fourth_part.elapsed());
                 let fifth_part = Instant::now();
 
-                // Precomputed with strategy.py
-                // TODO: derive 383 from self.a
-                // let n = 383;
-                // let strategy: [usize; 383] = [144, 89, 55, 34, 27, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 6, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1]; 
-
                 let b_points = [Pb_to_be_mapped, Qb_to_be_mapped, PQb_to_be_mapped];
                 let b_shift_points = [Pb_shiftX, Qb_shiftX, PQb_shiftX];
+
+                println!("??????????????????? 1111");
+                println!("");
+                println!("Pa: {}", Pa_isog3X.X / Pa_isog3X.Z);
+                println!("");
+                println!("Qa rand: {}", Qa_rand_isog3X.X / Qa_rand_isog3X.Z);
+                println!("");
+                println!("R: {}", R_isog3X.X / R_isog3X.Z);
+                println!("");
+                println!("");
+
+                println!("");
+                println!("Pa1: {}", Pa_gamma.X / Pa_gamma.Z);
+                println!("");
+                println!("Qa1: {}", Qa_rand_gamma.X / Qa_rand_gamma.Z);
+                println!("");
+                println!("R1: {}", R_gamma.X / R_gamma.Z);
+                println!("");
+                println!("");
+
+
+                println!("");
+                println!("?????????????? 11111 2222222222");
+                println!("");
+                println!("Pb_to_be_mapped: {}", Pb_to_be_mapped.X / Pb_to_be_mapped.Z);
+                println!("");
+                println!("Qb_to_be_mapped: {}", Qb_to_be_mapped.X / Qb_to_be_mapped.Z);
+                println!("");
+                println!("PQb_to_be_mapped: {}", PQb_to_be_mapped.X / PQb_to_be_mapped.Z);
+                println!("");
+
+                println!("");
+                println!("");
+                println!("Pb_to_be_mapped shift: {}", Pb_shiftX.X / Pb_shiftX.Z);
+                println!("");
+                println!("Qb_to_be_mapped: {}", Qb_shiftX.X / Qb_shiftX.Z);
+                println!("");
+                println!("PQb_to_be_mapped: {}", PQb_shiftX.X / PQb_shiftX.Z);
+                println!("");
+
+
 
                 let points = compute_isogeny(
                     &ell_product,
@@ -525,6 +618,17 @@ macro_rules! define_litsigamal {
                 let mut Pb1_to_be_mapped = points[0];
                 let mut Qb1_to_be_mapped = points[1];
                 let mut PQb1_to_be_mapped = points[2];
+
+                println!("");
+                println!("?????????????? 2222222222");
+                println!("");
+                println!("Pb1_to_be_mapped: {}", Pb1_to_be_mapped.X / Pb1_to_be_mapped.Z);
+                println!("");
+                println!("Qb1_to_be_mapped: {}", Qb1_to_be_mapped.X / Qb1_to_be_mapped.Z);
+                println!("");
+                println!("PQb1_to_be_mapped: {}", PQb1_to_be_mapped.X / PQb1_to_be_mapped.Z);
+                println!("");
+
 
                 let f_mul = l_b.big().pow(power_b - 1);
                 let mut backtracking_check = PointX::INFINITY;
@@ -1053,15 +1157,6 @@ macro_rules! define_litsigamal {
                     T1_0.Y.set_neg();
                 }
 
-                /*
-                if (weil_pairing_pari(T1_0,(2**a)*S[1],4)** 3 != weil_pairing_pari(T1_1,(2**a)*S1[1],4)):
-                    S[0] = (-1)*S[0]
-                    T1_0 = (-1)*T1_0
-                */
-                // TODO: pairing check
-                // T1_0.Y.set_neg();
-                // Pa_complete.Y.set_neg();
-
                 let R_shift = curve.add(&R_complete, &T1_0);
                 let R_shiftX = PointX::new_xz(&R_shift.X, &R_shift.Z);
 
@@ -1180,34 +1275,35 @@ macro_rules! define_litsigamal {
                 }
                 */
 
-                /*
                 if dbg_index == 1 {
                     let px = Fq::new(
-                        &Fp::decode_reduce(&bytes_from_str("19132568804003938421518062471978266228936064968344881791868197136494629031451080167007671128132065234994293228972263053806888840480962398691441125398116403864979842114632441548038455673847447378378514969372368683241391708974420886450538141502678087003285783111772300578346752735987490696353842004284857325258416654718869612954246511991864033721192978")),
-                        &Fp::decode_reduce(&bytes_from_str("35413931464722509441569731163575455106004744050837140386994527400159629631399637717989767718754514865376544400994982353763250089816371811068971185229946057551186825810699307076057870674649203333812362911349192217281199624611487442563709754072258077589236966124768210143050139740923507130288753243620502565779013908570536240496049480523346605394133697")),
+                        &Fp::decode_reduce(&bytes_from_str("100753668991277171490355201963314361660277645075961895756320938950168994514482427293306239033660286623006285771602255294614047768873955453249009536038635480600609949967051972938597826938849228962334903205675411066846922940384643092092279790200426417290168896154871688513316825098806810230568949110978399701497397053374116351799534310886558731859695035")),
+                        &Fp::decode_reduce(&bytes_from_str("92491204986494587062469574918792029832463703933911054081899559112869325256948727640481348400100974046002831075111319174084532620604355339075994447057770040806318499818104273395199086316466838953093133105852775798782177762798648120044926202821175782302660121264222153205705057638314529152060144033573462773770910925560526192345144512046921897361174455")),
                     );
 
                     let pz = Fq::new(
-                        &Fp::decode_reduce(&bytes_from_str("43357249449400739886019313006915305096712968589791330666836835481544333579421021560411092677365878545954545151054055284031057390454412645848614190835190736248238486253712667484758866259465259018358682186077106340343019585687456727803545300207527714585114610622625956360520255892556853618599040986337501109430121729742044283303965497535855387906457107")),
-                        &Fp::decode_reduce(&bytes_from_str("77555452016239630760656441847960015234978284657673141086607403814440416290052964566857067902611103671839458474098414373884467170779504835176231111207506387702673476798213026307120924323995940353809537399701854180486162409881068531503989250769304544422462123212761145721456411273453334164286945462237560474050847824756473557830459213084933431268549391")),
+                        &Fp::decode_reduce(&bytes_from_str("24293388504956253077372164835795399721275131521456330722678329733580297003553177728701242059110522001002304721045756579397687672974167077731302249702631807053980403681828774847871792685839412925953940802345039701493033860963032605104836853290964917839269280826448654916072976331099812006292113423111931728348898201882959720154531942096808570830554846")),
+                        &Fp::decode_reduce(&bytes_from_str("43193131590983153142628149447805190883166757103637037696639364321071101922462575285905642903061374594278575678085918592555482501700615245354855074621447418818071075599318865996257076907441678039615200455622152190660127030200760550190717864307233279429346277791029494764062475399613110935273631525431029296322950024647969375850340816648561647267325392")),
                     );
                     let PX = PointX::new_xz(&px, &pz);
                     (Pb1, _) = curve_1.complete_pointX(&PX);
                     // Pb1.Y.set_neg();
 
                     let qx = Fq::new(
-                        &Fp::decode_reduce(&bytes_from_str("59756032847395319221268681159908797964561853929183184028529113025713857927097173305562252009686166152770796274716136600915134310687039305979680012583170391506117408444893566832831875713264253818441436844002894252310852134460698487623465467949358098014263907058887799113184850421141932913857105498056182930674220990181981477632894261055417761062007491")),
-                        &Fp::decode_reduce(&bytes_from_str("24476354169312177776431152510149088213619914219043351830993378928391612080117786279766711441093688682187566593698153947837134410256705627859994850298459640862078382903023032548923456349249665960972012920881406821428406687137034508776015708428920839923534305830413545428674153491796601977085913736023783117876191406284164606203182112943221774217820954")),
+                        &Fp::decode_reduce(&bytes_from_str("92800230721345441162567807132495527094605382065602766535910967876544586971842691712839102714824637428384554254754379959538413107014907462352067566929527779019185895766916159870537902829454602047029080398134950882584172060983785451580629223865090477781733518921514513602856580694516207736109612523928995149942659823699518566090343902142792932806359465")),
+                        &Fp::decode_reduce(&bytes_from_str("17009880293362217888967415176967777605183176713298609826127896833072607034879406147555001951852622528855735101964893980079033771419931609675044074335255273634915213459776214947323530145315947765462918519568657464371409772689310797636928648506816499789238556591504127524784820075592657373174982784164226625062065860948910286098448181191730299744190572")),
                     );
 
                     let qz = Fq::new(
-                        &Fp::decode_reduce(&bytes_from_str("54593393628556950107232096357570666812188588469133390170454325722685001047117128909293960112868917257806275037479715768639702014205873014222775150365141615338153234663479511328951483507100896992035956541871546129458349460867536215399460093782612976154393124100939613366495400663716423712461890765104258819366613035486305523714308455044059572284499788")),
-                        &Fp::decode_reduce(&bytes_from_str("62638007336452265987647940358466765592985596121359547796308861216308581892965932801271924428448136140826846185628743931838421569524017488652538225120414278745320787612684231829531962144896597892791109613184167401424221131296825688923657040786888758719499276538267720831121809998122173859267127543586040348663080133389114789526842711373293142140388191")),
+                        &Fp::decode_reduce(&bytes_from_str("67527619995723224728180604860988697475649633708037080082738323284235243594291683279084838163690353530491691421861704215504817711013715203968001095988641405790375897731286671338350633505408156887589812421863703757392526310199192819906051384545352358833970415961177037132038079246954736725532927296233309565083222857423759306842392386847884133310092827")),
+                        &Fp::decode_reduce(&bytes_from_str("86157855271729660947311291427197838280989162217790018062054085227023835453186725992316786949148834193398279640580166117562123008802177447999933455172356327152343065666920033385043752744167092531197813461713116612836553217038357119946255007657328533780811581961708907868104889464415728150227200741976759222206481103363658542196037282203837877819517848")),
                     );
 
                     let QX = PointX::new_xz(&qx, &qz);
                     (Qb1, _) = curve_1.complete_pointX(&QX);
-                } else {
+                    Qb1.Y.set_neg();
+                } /*
+                else {
                     let px = Fq::new(
                         &Fp::decode_reduce(&bytes_from_str("27580306152060830764888389512697935838439324181398630040894085785110125235047766544499276904874482322745995080155166906759318897120343029223790587996030019043319538399763911993802134354967518664982916738522547743944517622506082693195356147883347055495013893375691534124531058147197694466670595939668769423703229388190531551342744043756167322459851385")),
                         &Fp::decode_reduce(&bytes_from_str("65861192476587340014135937361037052169346733379705169508778783602437668149906554071745972506005541468758238139706774790934631642488859040590749269729356241308548566336253828663211982929408109427741661852303595157843124444523474231581171217755936358998653303559306062037913569873362619566751143545731110995314449749941540340226368379595141382489382959")),
@@ -1238,17 +1334,19 @@ macro_rules! define_litsigamal {
 
 
                 // end of debugging
-                /*
                 println!("");
                 println!("");
                 println!("foo");
                 println!("");
+                println!("{}", Pb1.X / Pb1.Z);
+                println!("");
                 println!("{}", Pb1.Y / Pb1.Z);
+                println!("");
+                println!("{}", Qb1.X / Qb1.Z);
                 println!("");
                 println!("{}", Qb1.Y / Qb1.Z);
                 println!("");
                 println!("");
-                */
 
                 let PQb1 = curve_1.sub(&Pb1, &Qb1);
                 // let PQb1 = curve_1.add(&Pb1, &Qb1); // TODO
@@ -1257,17 +1355,17 @@ macro_rules! define_litsigamal {
                 let mut bytes = big_to_bytes(t);
                 let Pa_check = curve_1.mul(&Pa, &bytes, bytes.len() * 8);
 
+
                 // let (foo, ok) = codomain.weil_pairing_2exp((self.a+2).try_into().unwrap(), &Pa_isog3, &Qa_isog3);
                 let t = (self.a+2).try_into().unwrap();
-                let (mut w1, ok) = curve_1.weil_pairing_2exp(t, Pa, Qa);
+                let (mut w1, _) = curve_1.weil_pairing_2exp(t, Pa, Qa);
                 bytes = big_to_bytes(tau);
                 w1.set_pow_simple(&bytes);
-
-                let (w2, ok) = curve_2.weil_pairing_2exp(t, Pa1, Qa1);
-
+                let (w2, _) = curve_2.weil_pairing_2exp(t, Pa1, Qa1);
                 if w1.equals(&w2) == 0xFFFFFFFF {
                     
                 } else {
+                    println!("gooooooooooooooo 111111");
                     Qa.Y.set_neg();
                 }
 
@@ -1275,6 +1373,32 @@ macro_rules! define_litsigamal {
                 // use this result
                 let shift_1 = curve_1.double_iter(Pa, self.a as usize);
                 let shift_2 = curve_2.double_iter(Pa1, self.a as usize);
+            
+                println!("============ goo ==============");
+                println!("");
+                println!("Pa: {}", Pa.X / Pa.Z);
+                println!("");
+                println!("Pa: {}", Pa.Y / Pa.Z);
+                println!("");
+
+                println!("");
+                println!("Pa1: {}", Pa1.X / Pa1.Z);
+                println!("");
+                println!("Pa1: {}", Pa1.Y / Pa1.Z);
+                println!("");
+
+                println!("");
+                println!("shift 1: {}", shift_1.X / shift_1.Z);
+                println!("");
+                println!("shift 1: {}", shift_1.Y / shift_1.Z);
+                println!("");
+
+                println!("");
+                println!("shift 2: {}", shift_2.X / shift_2.Z);
+                println!("");
+                println!("shift 2: {}", shift_2.Y / shift_2.Z);
+                println!("");
+
 
                 let Pa_shift = curve_1.add(Pa, &shift_1);
                 let Qa_shift = curve_1.add(Qa, &shift_1);
@@ -1305,6 +1429,7 @@ macro_rules! define_litsigamal {
                 let (gamma, _) =
                     represent_integer(N.clone(), qa.clone(), order.clone(), bad_prod_primes.clone()).unwrap();
                 
+                /*
                 println!("gamma:");
                 println!("");
                 println!("gamma[0] = {}", gamma.x);
@@ -1317,8 +1442,10 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("denom:");
                 println!("{}", gamma.denom);
+                */
 
                 let norm = gamma.reduced_norm(); 
+                /*
                 println!("");
                 println!("???????");
                 println!("");
@@ -1327,6 +1454,7 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("N");
                 println!("{}", N);
+                */
 
                 assert!(norm.numer() == &(N * norm.denom()));
 

@@ -113,12 +113,35 @@ def compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pxz, Qxz, l, e):
     A24 = [Fp2(1),2]
     # Full points (not Montgomery):
     P, Q = MontoEllip(A24, [Pxz, Qxz])
+
+    # TODO
+    # x, y = Q.xy()
+    # Q = E(x, -y)
+
+    print("")
+    print("======================================")
+    print("")
+    print("P:")
+    print(P[0]/P[2])
+    print("")
+    print(P[1]/P[2])
+    print("")
+    print("Q:")
+    print(Q[0]/Q[2])
+    print("")
+    print(Q[1]/Q[2])
+    print("")
+    print("")
+
+
+
     compute_and_print_endomorphism_matrices(E, Fp2, P, Q, l, e)
 
 def compute_and_print_endomorphism_matrices(E, Fp2, P, Q, l, e):
     name = str(l) + "**" + str(e)
     PmQ = P - Q
     torsion = P.order()
+ 
     assert(P.order() == Q.order())
     assert(torsion == l**e)
 
