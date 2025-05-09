@@ -218,9 +218,6 @@ macro_rules! define_litsigamal {
                 let (PmQa, ok) = curve.complete_pointX(&PmQaX);
                 assert!(ok == 0xFFFFFFFF);
 
-                // TODO: remove
-                Qa.Y.set_neg();
-
                 let (Pb, ok) = curve.complete_pointX(&PbX);
                 assert!(ok == 0xFFFFFFFF);
                 let (Qb, ok) = curve.complete_pointX(&QbX);
@@ -1232,6 +1229,7 @@ macro_rules! define_litsigamal {
                 // TODO: the following is only for debugging:
 
                 // 128
+                /*
                 if dbg_index == 1 {
                     let px = Fq::new(
                         &Fp::decode_reduce(&bytes_from_str("589347475779467028048732638707745169074099572448781051271349481559473727012677648788277674070708563815384409822118544148404313695739142076641733342195789664410029747217412725418639602788946160431051681659016463369120955499530350884793")),
@@ -1285,6 +1283,7 @@ macro_rules! define_litsigamal {
                     let QX = PointX::new_xz(&qx, &qz);
                     (Qb1, _) = curve_1.complete_pointX(&QX);
                 }
+                */
 
                 /*
                 if dbg_index == 1 {

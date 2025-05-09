@@ -118,6 +118,7 @@ def compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pxz, Qxz, l, e):
     # x, y = Q.xy()
     # Q = E(x, -y)
 
+    """
     print("")
     print("======================================")
     print("")
@@ -132,7 +133,7 @@ def compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pxz, Qxz, l, e):
     print(Q[1]/Q[2])
     print("")
     print("")
-
+    """
 
 
     compute_and_print_endomorphism_matrices(E, Fp2, P, Q, l, e)
