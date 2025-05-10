@@ -32,12 +32,13 @@ pub fn represent_integer(
     qa: QuatAlg,
     order: QuaternionOrder,
     bad_primes_prod: Integer,
+    adjust_param: Integer,
 ) -> Result<(QuatAlgEl, Integer), anyhow::Error> {
     let prime_list = vec![5.big()];
     let how_many_primes = 1;
 
     // adjusting the norm of gamma (multiplied by 4 to find a solution in the full maximal order)
-    let adjusted_n_gamma = n_gamma.clone() * 4.big();
+    let adjusted_n_gamma = n_gamma.clone() * adjust_param.clone();
     let (mut sq_bound, _) = adjusted_n_gamma.clone().div_rem(-qa.p.clone());
 
     // TODO
@@ -54,7 +55,8 @@ pub fn represent_integer(
 
     let mut counter = 0;
 
-    while counter < KLPT_REPRES_NUM_GAMMA_TRIAL {
+    // while counter < KLPT_REPRES_NUM_GAMMA_TRIAL {
+    while x == 0.big() && y == 0.big() {
         counter += 1;
 
         // we start by sampling the third coordinate
@@ -100,14 +102,19 @@ pub fn represent_integer(
     }
 
     let elem = QuatAlgEl::new(x, y, z, t, 1.big(), qa.clone());
-    let order_basis = order;
-    let (primitive, content) = elem.factor_in_order(order_basis.lattice.clone());
-    let coeffs_new = order_basis.lattice.basis * primitive;
 
-    let gamma = QuatAlgEl::new_from_matrix(coeffs_new, order_basis.lattice.denom, qa);
-    let n_gamma_new = adjusted_n_gamma / (content.clone() * content);
+    if adjust_param == 1.big() {
+        return Ok((elem, adjusted_n_gamma));
+    } else {
+        let order_basis = order;
+        let (primitive, content) = elem.factor_in_order(order_basis.lattice.clone());
+        let coeffs_new = order_basis.lattice.basis * primitive;
 
-    Ok((gamma, n_gamma_new))
+        let gamma = QuatAlgEl::new_from_matrix(coeffs_new, order_basis.lattice.denom, qa);
+        let n_gamma_new = adjusted_n_gamma / (content.clone() * content);
+
+        return Ok((gamma, n_gamma_new));
+    }
 }
 
 /// Find two integers C[0], C[1] such that `gamma` * j * (C[0] + i C[1]]) * `delta` is in the eichler order ZZ + `ideal`.
@@ -381,7 +388,7 @@ pub fn klpt(
 ) -> (bool, QuatAlgEl) {
     let n_gamma = 2.big().pow(k) * ideal.norm.clone();
 
-    let (gamma, _) = match represent_integer(n_gamma.clone(), qa.clone(), order.clone(), 1.big()) {
+    let (gamma, _) = match represent_integer(n_gamma.clone(), qa.clone(), order.clone(), 1.big(), 4.big()) {
         Ok((gamma, gamma_norm)) => (gamma, gamma_norm),
         Err(_) => return (false, QuatAlgEl::zero(qa.clone())),
     };
@@ -573,13 +580,13 @@ mod tests {
         temp = m.clone() * temp;
 
         let order = standard_maximal_extremal_order().order;
-        let (gamma1, _) = represent_integer(temp, qa.clone(), order.clone(), 1.big()).unwrap();
+        let (gamma1, _) = represent_integer(temp, qa.clone(), order.clone(), 1.big(), 4.big()).unwrap();
 
         temp = 2.big().pow(exp as u32 * 3);
         let (shift_gamma, temp) =
-            represent_integer(temp, qa.clone(), order.clone(), 1.big()).unwrap();
+            represent_integer(temp, qa.clone(), order.clone(), 1.big(), 4.big()).unwrap();
 
-        let (delta, _) = represent_integer(temp, qa.clone(), order.clone(), 1.big()).unwrap();
+        let (delta, _) = represent_integer(temp, qa.clone(), order.clone(), 1.big(), 4.big()).unwrap();
 
         let ideal = QuaternionIdeal::new_left_ideal(gamma1, m, order.clone(), qa.clone());
 
@@ -595,7 +602,7 @@ mod tests {
         let mut tmp = generate_random_prime(3 * exp, true);
         tmp = tmp * n_tau.clone();
         let order = standard_maximal_extremal_order().order;
-        let (gamma_tau, _) = represent_integer(tmp, qa.clone(), order.clone(), 1.big()).unwrap();
+        let (gamma_tau, _) = represent_integer(tmp, qa.clone(), order.clone(), 1.big(), 4.big()).unwrap();
 
         let ideal = QuaternionIdeal::new_left_ideal(
             gamma_tau.clone(),

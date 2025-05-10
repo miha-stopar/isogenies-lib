@@ -36,7 +36,7 @@ mod tests {
     #[test]
     fn lit_sigamal_192_test() {
         let l_c = 5;
-        let lit_sigamal = ec_lit256::LITSiGamal::new(256);
+        let lit_sigamal = ec_lit192::LITSiGamal::new(192);
         let (pub_key, alice_secret)= lit_sigamal.generate_pub_key();
         // let (pub_key, alice_secret)= lit_sigamal.generate_pub_key_dbg();
 
