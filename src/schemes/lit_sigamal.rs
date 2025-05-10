@@ -232,6 +232,8 @@ macro_rules! define_litsigamal {
                 let (PmQc, ok) = curve.complete_pointX(&PmQcX);
                 assert!(ok == 0xFFFFFFFF);
 
+                // Qa.Y.set_neg(); // TODO 1
+
                  
                 let l_a = 2;
                 let l_b = 3;
@@ -322,7 +324,6 @@ macro_rules! define_litsigamal {
                 
                 let (mut Pa_gamma, Qa_gamma, R_gamma) = apply_endomorphism_on_torsion_group(&curve, coord.clone(), imprim.clone(), torsion_a, mat2_2, mat2_3, mat2_4, &Pa, &Qa, &PmQa);
 
-                let mut Pa1_to_be_mapped = PointX::new_xz(&Pa_gamma.X, &Pa_gamma.Z);
                 // TODO
                 // let mut Qa1_to_be_mapped = PointX::new_xz(&Qa_gamma.X, &Qa_gamma.Z);
                 // let mut Ra1_to_be_mapped = PointX::new_xz(&R_gamma.X, &R_gamma.Z);
@@ -371,7 +372,6 @@ macro_rules! define_litsigamal {
 
                     // R.X.set_neg();
                     R_gamma.X.set_neg();
-
                     
                     let mut tmp = PointX::new_xz(&Pa_gamma.X, &Pa_gamma.Z);
                     (Pa_gamma, _) = curve.complete_pointX(&tmp);
@@ -382,9 +382,9 @@ macro_rules! define_litsigamal {
                     // tmp = PointX::new_xz(&R_gamma.X, &R_gamma.Z);
                     // (R, _) = curve.complete_pointX(&tmp);
 
-
                     println!("HHHHHMMMMMMMMMMMMMMMMMM");
                 }
+                let mut Pa1_to_be_mapped = PointX::new_xz(&Pa_gamma.X, &Pa_gamma.Z);
 
                 println!("");
                 println!("Pa1: {}", Pa_gamma.X / Pa_gamma.Z);
@@ -403,7 +403,6 @@ macro_rules! define_litsigamal {
                 println!("Qa: {}", Qa.Y / Qa.Z);
                 println!("");
 
-
                 let a1Pa = curve.mul(&Pa, &bytes1, bytes1.len() * 8);
                 let a2Qa = curve.mul(&Qa, &bytes2, bytes2.len() * 8);
                 let Qa_rand = curve.add(&a1Pa, &a2Qa);
@@ -414,7 +413,6 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("Qa: {}", Qa_rand.Y / Qa_rand.Z);
                 println!("");
-
 
                 println!("============ 111 ==============");
                 println!("Pa: {}", Pa.X / Pa.Z);
@@ -501,13 +499,7 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("");
                 */
-
-                println!("");
-                println!("kernel1x:");
-                println!("{}", kernel1x.X / kernel1x.Z);
-                println!("");
-                println!("");
-
+ 
 
                 // TODO: eval_points are [Pa, Qa, R]
  
@@ -676,21 +668,78 @@ macro_rules! define_litsigamal {
 
                     let kernel1 = curve.ladder_3pt(&Pb1_to_be_mapped, &Qb1_to_be_mapped, &PQb1_to_be_mapped, s);
 
+                    println!("");
+                    println!("kernel:");
+                    println!("{}", kernel.X / kernel.Z);
+                    println!("");
+                    println!("");
+
+
+                    println!("");
+                    println!("kernel1:");
+                    println!("{}", kernel1.X / kernel1.Z);
+                    println!("");
+                    println!("");
+
+                    println!("");
+                    println!("---------- before 2 x 3-isogeny ----------------");
+                    println!("");
+                    println!("Pa_to_be_mapped: {}", Pa_to_be_mapped.X / Pa_to_be_mapped.Z);
+                    println!("");
+                    println!("Qa_to_be_mapped: {}", Qa_to_be_mapped.X / Qa_to_be_mapped.Z);
+                    println!("");
+                    println!("PQa_to_be_mapped: {}", Ra_to_be_mapped.X / Ra_to_be_mapped.Z);
+                    println!("");
+
+                    println!("Qb_to_be_mapped: {}", Qb_to_be_mapped.X / Qb_to_be_mapped.Z);
+                    println!("");
+
+
                     let eval_points = [Pa_to_be_mapped, Qa_to_be_mapped, Ra_to_be_mapped, Qb_to_be_mapped];
                     (codomain, image_points) = three_isogeny_chain(&codomain, &kernel, eval_points.to_vec(), n, &self.strategy);
                     (Pa_to_be_mapped, Qa_to_be_mapped, Ra_to_be_mapped, backtracking_check) = (image_points[0], image_points[1], image_points[2], image_points[3]);
                     codomain.xmul(&mut backtracking_check, f_mul.clone());
 
+                    println!("after first 3-isogeny");
+                    println!("");
+                    println!("Pa_to_be_mapped: {}", Pa_to_be_mapped.X / Pa_to_be_mapped.Z);
+                    println!("");
+                    println!("Qa_to_be_mapped: {}", Qa_to_be_mapped.X / Qa_to_be_mapped.Z);
+                    println!("");
+                    println!("PQa_to_be_mapped: {}", Ra_to_be_mapped.X / Ra_to_be_mapped.Z);
+                    println!("");
+
+                    println!("-------------");
+                    println!("");
+                    println!("Pa1_to_be_mapped: {}", Pa1_to_be_mapped.X / Pa1_to_be_mapped.Z);
+                    println!("");
+                    println!("Qa1_to_be_mapped: {}", Qa1_to_be_mapped.X / Qa1_to_be_mapped.Z);
+                    println!("");
+                    println!("PQa1_to_be_mapped: {}", Ra1_to_be_mapped.X / Ra1_to_be_mapped.Z);
+                    println!("");
+
+
                     let eval_points = [Pa1_to_be_mapped, Qa1_to_be_mapped, Ra1_to_be_mapped]; 
                     (curve, image_points) = three_isogeny_chain(&curve, &kernel1, eval_points.to_vec(), n, &self.strategy);
                     (Pa1_to_be_mapped, Qa1_to_be_mapped, Ra1_to_be_mapped) = (image_points[0], image_points[1], image_points[2]);
+
+                    println!("after second 3-isogeny");
+                    println!("");
+                    println!("Pa1_to_be_mapped: {}", Pa1_to_be_mapped.X / Pa1_to_be_mapped.Z);
+                    println!("");
+                    println!("Qa1_to_be_mapped: {}", Qa1_to_be_mapped.X / Qa1_to_be_mapped.Z);
+                    println!("");
+                    println!("PQa1_to_be_mapped: {}", Ra1_to_be_mapped.X / Ra1_to_be_mapped.Z);
+                    println!("");
+
 
                     let (Pa, _) = codomain.complete_pointX(&Pa_to_be_mapped);
                     let (mut Qa, _) = codomain.complete_pointX(&Qa_to_be_mapped);
                     let (Pa1, _) = curve.complete_pointX(&Pa1_to_be_mapped);
                     let (Qa1, _) = curve.complete_pointX(&Qa1_to_be_mapped);
 
-                    let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) = self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa, &Pa1, &Qa1, torsion_b.clone(), tau.clone(), 2);
+                    let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) =
+                        self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa, &Pa1, &Qa1, torsion_b.clone(), tau.clone(), 2);
 
                     Pb_to_be_mapped = PointX::new_xz(&Pb.X, &Pb.Z);
                     Qb_to_be_mapped = PointX::new_xz(&Qb.X, &Qb.Z);
@@ -1313,8 +1362,7 @@ macro_rules! define_litsigamal {
                     let QX = PointX::new_xz(&qx, &qz);
                     (Qb1, _) = curve_1.complete_pointX(&QX);
                     Qb1.Y.set_neg();
-                }*/ /*
-                else {
+                } else {
                     let px = Fq::new(
                         &Fp::decode_reduce(&bytes_from_str("24123553726066587528282347391548844062398117349933605659150597882727115516644243785505737428080808079667896639775705254588405790832816990191780911594089407961117509498380673094842227466657610011310518180779497154085964531669703428981675171292181446413266424732304876912824483626937559661422274592653989312806472911262349932599817909950492252277419015")),
                         &Fp::decode_reduce(&bytes_from_str("86089270101478411532221744496882941055019147186485544032277556318986638540962961918928227824371721612938549288638310625282669014523991869763689639560965746712499817027091358084104324108310271865005399436786060817456995508628258164979516140461179174733998524173619183401994208437486785593265903471326134035167376968051813145337369344744781934453695240")),
@@ -1342,7 +1390,6 @@ macro_rules! define_litsigamal {
                     (Qb1, _) = curve_1.complete_pointX(&QX);
                 }
                 */
-
 
                 // end of debugging
                 println!("");
