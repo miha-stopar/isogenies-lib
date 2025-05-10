@@ -114,11 +114,11 @@ def compute_and_print_endomorphism_matrices_montgomery(E, Fp2, Pxz, Qxz, l, e):
     # Full points (not Montgomery):
     P, Q = MontoEllip(A24, [Pxz, Qxz])
 
-    x, y = P.xy()
-    P = E(x, -y)
+    # x, y = P.xy()
+    # P = E(x, -y)
 
-    x, y = Q.xy()
-    Q = E(x, -y)
+    # x, y = Q.xy()
+    # Q = E(x, -y)
 
     print("")
     print("order:")

@@ -304,8 +304,8 @@ macro_rules! define_litsigamal {
                     c2 = generate_random_range(0.big(), l_c.big().pow(power_c) - 1);
 
                     // TODO: remove c1, c2
-                    c1 = Integer::from(1);
-                    c2 = Integer::from(1);
+                    // c1 = Integer::from(1);
+                    // c2 = Integer::from(1);
                     if c1.clone().modulo(&five) != zero && c2.clone().modulo(&five) != zero {
                         break;
                     }
