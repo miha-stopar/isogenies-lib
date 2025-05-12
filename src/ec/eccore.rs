@@ -632,8 +632,6 @@ macro_rules! define_ec_core {
                 PQ: &PointX,
                 s: Integer,
             ) -> PointX {
-                // TODO: uncomment
-                /*
                 let n_bits = bits_from_big(s);
                 
                 let mut R0 = *P;
@@ -653,8 +651,6 @@ macro_rules! define_ec_core {
                 self.xadd(&R2.X, &R2.Z, &R0.X, &R0.Z, &mut R1.X, &mut R1.Z);
 
                 R1 
-                */
-                *P
             }
 
             // TODO

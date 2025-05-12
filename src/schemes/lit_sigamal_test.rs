@@ -3,6 +3,7 @@
 mod tests {
     use crate::{ec_lit128, ec_lit192, ec_lit256, util::{generate_random_range, Big}};
     use num_traits::Pow;
+    use rug::Integer;
 
     #[test]
     fn lit_sigamal_128_test() {
@@ -11,9 +12,9 @@ mod tests {
         let (pub_key, alice_secret)= lit_sigamal.generate_pub_key();
         // let (pub_key, alice_secret)= lit_sigamal.generate_pub_key_dbg();
 
-        let mu = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) +
+        let mu: Integer = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) +
                     generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
-        let mu = 234234.big(); // TODO, dbg
+        // let mu = 234234.big(); // TODO, dbg
 
         println!("");
         println!("mu: {:?}", mu);
@@ -40,9 +41,9 @@ mod tests {
         let (pub_key, alice_secret)= lit_sigamal.generate_pub_key();
         // let (pub_key, alice_secret)= lit_sigamal.generate_pub_key_dbg();
 
-        let mu = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) +
+        let mu: Integer = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) +
                     generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
-        let mu = 234234.big(); // TODO, dbg
+        // let mu = 234234.big(); // TODO, dbg
 
         println!("");
         println!("mu: {:?}", mu);
@@ -69,13 +70,18 @@ mod tests {
         let (pub_key, alice_secret)= lit_sigamal.generate_pub_key();
         // let (pub_key, alice_secret)= lit_sigamal.generate_pub_key_dbg();
 
-        let mu = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) +
+        let mu: Integer = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) +
                     generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
-        let mu = 234234.big(); // TODO, dbg
+        // let mu = 234234.big(); // TODO, dbg
+        let mu = 11111.big();
+        let mu = 11112.big();
+        let mu = 11113.big();
 
+        /*
         println!("");
         println!("mu: {:?}", mu);
         println!("");
+        */
         let cipher = lit_sigamal.encrypt(&pub_key, mu.clone());
         let mu_decrypted = lit_sigamal.decrypt(&cipher, alice_secret);
 

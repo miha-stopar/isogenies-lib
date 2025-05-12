@@ -114,8 +114,9 @@ def optimised_strategy(n, M, S, I):
 # where the cost is the time in ns for one operation
 # Use the middle time values from msi.rs output:
 
-data = [162, 454, 344, 13] # LIT-SiGamal 128 3-isogeny
+# data = [162, 454, 344, 13] # LIT-SiGamal 128 3-isogeny
 # data = [384, 454, 344, 13] # LIT-SiGamal 128 (2,2)-isogeny
+data= [162, 468, 347, 13]
 strat = optimised_strategy(*data)
 print(strat)
 print("")
