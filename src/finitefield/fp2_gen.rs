@@ -16,6 +16,7 @@
 // Macro expectations:
 // A finite field Fp = GF(p) with p = 3 mod 4
 // NQR_RE a Fp type such that (i + NQR_RE) is a NQR
+#[macro_export]
 macro_rules! define_fp2_core {
     () => {
         use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
@@ -67,6 +68,7 @@ macro_rules! define_fp2_core {
             };
 
             pub const ENCODED_LENGTH: usize = 2 * Fp::ENCODED_LENGTH;
+            pub const CHAR_BIT_LENGTH: usize = Fp::BIT_LENGTH;
 
             /// Non-quadratic residue.
             pub const NQR: Self = Self {
@@ -1307,3 +1309,17 @@ macro_rules! define_fp2_tests {
 
 #[cfg(test)]
 pub(crate) use define_fp2_tests;
+
+#[macro_export]
+macro_rules! define_fp2_from_modulus {
+    (
+        typename = $typename:ident,
+        base_typename = $base_typename:ident,
+        modulus = $modulus:expr,
+    ) => {
+        use isogenies_lib::finitefield::fp_gen::define_fp_core;
+        
+        define_fp_core!(typename = $base_typename, modulus = $modulus,);
+        define_fp2_from_type!(typename = $typename, base_field = $base_typename,);
+    };
+}

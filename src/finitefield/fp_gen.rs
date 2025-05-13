@@ -43,6 +43,7 @@
 //    SQRT_EH ([u8; ...]) encodes e/2^(5*SQRT_EL) in base 2^5 (little-endian)
 //    It is best for performance is SQRT_EL is as big as possible
 //
+#[macro_export]
 macro_rules! define_fp_core {
     () => {
         use crate::finitefield::utils64::{
@@ -1883,7 +1884,7 @@ macro_rules! define_fp_core {
     };
 } // End of macro: define_fp_core
 
-pub(crate) use define_fp_core;
+pub use define_fp_core;
 
 // ========================================================================
 

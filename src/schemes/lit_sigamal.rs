@@ -701,6 +701,8 @@ macro_rules! define_litsigamal {
 
                 // TODO:
                 let image_points1 = vec![
+                    P1P2,
+                    P1P2,
                     P1P2
                     // CouplePoint::new(&self.two_dim.P, &self.two_dim.Q),
                     // CouplePoint::new(&self.two_dim.omegaP, &self.two_dim.omegaQ),
