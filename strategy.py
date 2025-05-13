@@ -116,7 +116,14 @@ def optimised_strategy(n, M, S, I):
 
 # data = [162, 454, 344, 13] # LIT-SiGamal 128 3-isogeny
 # data = [384, 454, 344, 13] # LIT-SiGamal 128 (2,2)-isogeny
-data= [162, 468, 347, 13]
+# data= [162, 468, 347, 13] # 128
+
+#data = [384, 2.3087, 347, 13] # 256
+
+# 2308, 1777, 59006
+# 449.35 ns, 387.60 ns, 13.678 micro s
+# data = [324, 2308, 1777, 59006] # LIT-SiGamal 256 3-isogeny
+data = [767, 2308, 1777, 59006] # LIT-SiGamal 256 (2,2)-isogeny
 strat = optimised_strategy(*data)
 print(strat)
 print("")

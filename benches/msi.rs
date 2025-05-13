@@ -3,7 +3,8 @@
 // the correct optimisation costs for the strategies.
 
 // use isogenies_lib::fields::Fp117Ext::Fp2 as FpSmall;
-use isogenies_lib::fields::FpLit128Ext::Fp2 as FpSmall;
+// use isogenies_lib::fields::FpLit128Ext::Fp2 as FpSmall;
+use isogenies_lib::fields::FpLit256Ext::Fp2 as FpSmall;
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::time::Duration;

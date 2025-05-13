@@ -586,6 +586,7 @@ macro_rules! define_ec_core {
                 }
             }
 
+            #[inline(always)]
             pub fn double_add(
                 &self,
                 P: &PointX,
@@ -623,8 +624,8 @@ macro_rules! define_ec_core {
                 (Db, Sum)
             }
 
-            // TODO
             // s*P + Q
+            #[inline(always)]
             pub fn ladder_3pt( 
                 &self,
                 P: &PointX,
@@ -651,53 +652,6 @@ macro_rules! define_ec_core {
                 self.xadd(&R2.X, &R2.Z, &R0.X, &R0.Z, &mut R1.X, &mut R1.Z);
 
                 R1 
-            }
-
-            // TODO
-            // works as in Sage code (make sure what is used: P+Q or P-Q)
-            pub fn ladder1_3pt( 
-                &self,
-                P: &PointX,
-                Q: &PointX,
-                PQ: &PointX,
-                s: Integer,
-            ) -> PointX {
-                let n_bits = bits_from_big(s);
-                
-                let mut PP = *P; // TODO
-                let mut P0 = *P;
-                let mut Q0 = *Q;
-                let mut PQ0 = *PQ;
-
-                let mut prev_bit = 0;
-
-                let mut i = 0;
-                for b in n_bits {
-                    // TODO: constant time
-                    let bit = b & (1 << i);
-                    let swap = bit ^ prev_bit;
-
-                    i += 1;
-
-                    // let swap = b ^ prev_bit;
-                    println!("?????");
-                    println!("");
-                    println!("bit: {}", bit);
-                    println!("prev_bit: {}", prev_bit);
-                    println!("swap: {}", swap);
-                    // prev_bit = b;
-                    prev_bit = bit;
-
-                    if swap == 1 {
-                        P0 = PP.clone(); // TODO
-                        PP = PQ0.clone(); // TODO
-                        PQ0 = P0.clone(); // TODO
-                    }
-
-                    (Q0, PQ0) = self.double_add(&Q0, &PQ0, &PP);
-                }
-
-                PQ0
             }
 
             /// P3 <- n*P
