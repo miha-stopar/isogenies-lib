@@ -5,7 +5,8 @@ macro_rules! define_litsigamal {
         use crate::quaternion::quaternion_order::standard_maximal_extremal_order;
         use crate::util::{generate_random_range};
         use std::time::Instant;
-#[derive(Clone, Debug)] pub struct PubKeyPoints {
+
+        #[derive(Clone, Debug)] pub struct PubKeyPoints {
             pub Pa: PointX,
             pub Qa: PointX,
             pub Pb: PointX,
@@ -558,7 +559,6 @@ macro_rules! define_litsigamal {
                 println!("");
                 println!("");
                 */
- 
 
                 // TODO: eval_points are [Pa, Qa, R]
  
@@ -661,6 +661,9 @@ macro_rules! define_litsigamal {
                 println!("");
                 */
 
+                // println!("1 (before apply endomorphism): {:?}", start.elapsed());
+                let chain1 = Instant::now();
+
                 let points = compute_isogeny(
                     &ell_product,
                     &mut Pa_isog3X,
@@ -676,6 +679,53 @@ macro_rules! define_litsigamal {
                     self.a as usize,
                     self.strategy_2,
                 );
+
+                println!("chain1: {:?}", chain1.elapsed());
+
+                // start of debugging
+
+                let Pb11 = generate_random_fp(&codomain, torsion_b.clone(), self.scalar_without_b.clone());
+                let Qb11 = generate_random_fq(&codomain, torsion_b.clone(), self.scalar_without_b.clone());
+
+                let mut bytes1 = big_to_bytes(Integer::from(self.n));
+                let torsion8_Pb = self.curve.mul(&Pb11, &bytes1, bytes1.len() * 8);
+                let torsion8_Qb = self.curve.mul(&Qb11, &bytes1, bytes1.len() * 8);
+
+                let factor = l_a.big().pow(self.a - 1);
+                bytes1 = big_to_bytes(factor);
+                let torsion8_Pa = self.curve.mul(&Pa_gamma, &bytes1, bytes1.len() * 8);
+                let torsion8_Qa = self.curve.mul(&Qa_gamma, &bytes1, bytes1.len() * 8);
+
+                let P1P2 = CouplePoint::new(&torsion8_Pa, &torsion8_Qa);
+                let Q1Q2 = CouplePoint::new(&torsion8_Qa, &torsion8_Qb);
+
+                // TODO:
+                let image_points1 = vec![
+                    P1P2
+                    // CouplePoint::new(&self.two_dim.P, &self.two_dim.Q),
+                    // CouplePoint::new(&self.two_dim.omegaP, &self.two_dim.omegaQ),
+                ];
+
+                // Precomputed with strategy.py
+                // TODO: derive 383 from self.a
+                // let strategy: [usize; 383] = [144, 89, 55, 34, 27, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 6, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
+
+                let chain2 = Instant::now();
+
+                let (product1, points1) = product_isogeny(
+                    &ell_product,
+                    &P1P2,
+                    &Q1Q2,
+                    &image_points1,
+                    // self.a as usize,
+                    self.a as usize - 1,
+                    &self.strategy_2,
+                );
+
+                println!("chain2: {:?}", chain2.elapsed());
+
+                // end of debugging
+
 
                 let mut Pb1_to_be_mapped = points[0];
                 let mut Qb1_to_be_mapped = points[1];
@@ -1147,13 +1197,6 @@ macro_rules! define_litsigamal {
                 let A24 = get_montgomery_A24(&Pb, &Qb, &PQb);
                 let A24_1 = get_montgomery_A24(&Pb1, &Qb1, &PQb1);
 
-                /*
-                println!("");
-                println!("");
-                println!("A: {}", A24.0 / A24.1);
-                println!("");
-                */
-
                 let s = self.l_b * generate_random_range(0.big(), self.l_b.big().pow(pub_key.power_b) - 1) +
                             generate_random_range(1.big(), 2.big()); // TODO: check if this is 1 or 2
                 let s = "11".big(); // dbg
@@ -1164,32 +1207,19 @@ macro_rules! define_litsigamal {
                 let kernelx = curve.ladder_3pt(&Pb, &Qb, &PQb, s.clone());
                 let kernel1x = curve1.ladder_3pt(&Pb1, &Qb1, &PQb1, s.clone());
 
-                /*
-                println!("");
-                println!("");
-                println!("");
-                println!("Pb_to_be_mapped: {}", Pb.X / Pb.Z);
-                println!("");
-                println!("Qb_to_be_mapped: {}", Qb.X / Qb.Z);
-                println!("");
-                println!("PQb_to_be_mapped: {}", PQb.X / PQb.Z);
-
-                println!("");
-                println!("");
-                println!("");
-                println!("kernelx: {}", kernelx.X / kernelx.Z);
-                println!("");
-                */
-                
                 let n = self.strategy.len() + 1;
 
                 let eval_points = [Pa, Qa, R];
                 let (curve_new, image_points) = three_isogeny_chain(&curve, &kernelx, eval_points.to_vec(), n, &self.strategy);
                 (Pa, Qa, R) = (image_points[0], image_points[1], image_points[2]);
+
+                // println!("encrypt: {:?}", start.elapsed());
  
                 let eval_points = [Pa1, Qa1, R1];
                 let (curve1_new, image_points) = three_isogeny_chain(&curve1, &kernel1x, eval_points.to_vec(), n, &self.strategy);
                 (Pa1, Qa1, R1) = (image_points[0], image_points[1], image_points[2]);
+
+                // println!("encrypt: {:?}", start.elapsed());
  
                 let beta = self.l_c * generate_random_range(0.big(), self.l_c.big().pow(pub_key.power_c - 1) - 1) +
                             generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
@@ -1221,8 +1251,6 @@ macro_rules! define_litsigamal {
                     Qa1,
                     R1,
                 );
-
-                println!("encrypt: {:?}", start.elapsed());
 
                 Cipher::new(
                     points,
