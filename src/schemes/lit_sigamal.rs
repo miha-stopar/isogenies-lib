@@ -5,7 +5,9 @@ macro_rules! define_litsigamal {
         use crate::quaternion::quaternion_order::standard_maximal_extremal_order;
         use crate::util::{generate_random_range};
         use std::time::Instant;
-#[derive(Clone, Debug)] pub struct PubKeyPoints {
+
+        #[derive(Clone, Debug)]
+        pub struct PubKeyPoints {
             pub Pa: PointX,
             pub Qa: PointX,
             pub Pb: PointX,
@@ -496,6 +498,7 @@ macro_rules! define_litsigamal {
                 let mut Qa1_to_be_mapped = PointX::new_xz(&Qa_rand_gamma.X, &Qa_rand_gamma.Z);
             
                 let torsion_b = l_b.big().pow(power_b);
+                let torsion_b_minus = l_b.big().pow(power_b - 1);
                 let (Pb_gamma, Qb_gamma, PmQb_gamma) = apply_endomorphism_on_torsion_group(&curve, coord.clone(), imprim.clone(), torsion_b.clone(), mat3_2, mat3_3, mat3_4, &Pb, &Qb, &PmQb);
 
                 /* 
@@ -528,7 +531,7 @@ macro_rules! define_litsigamal {
                     println!("pubkey dlog 1");
                     let bytes = big_to_bytes(dlog1);
                     let dlog_Pb = curve.mul(&Pb, &bytes, bytes.len() * 8);
-                    kernel1 = curve.sub(&Qb, &dlog_Pb);
+                    kernel1 = curve.sub(&Qb, &donsog_Pb);
                 } else {
                     println!("pubkey dlog 2");
                     let bytes = big_to_bytes(dlog2);
@@ -593,7 +596,7 @@ macro_rules! define_litsigamal {
                 */
 
                 let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) =
-                    self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa_rand, &Pa_gamma, &Qa_rand_gamma, torsion_b.clone(), tau.clone(), 1);
+                    self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa_rand, &Pa_gamma, &Qa_rand_gamma, torsion_b_minus.clone(), tau.clone(), 1);
 
                 let ell_product = EllipticProduct::new(&codomain, &curve);
  
@@ -699,30 +702,21 @@ macro_rules! define_litsigamal {
                 // println!("5 (after (2,2)-isogeny): {:?}", fifth_part.elapsed());
                 // let sixth_part = Instant::now();
 
-                for _ in 0..1 { // TODO: 0..6
+                for _ in 0..6 {
                     let mut no_backtracking = false;
                     let mut s = 0.big();
                     let mut kernel = PointX::INFINITY;
 
                     while !no_backtracking {
                         s = generate_random_range(0.big(), l_b.big().pow(power_b - 1)) * l_b + 
-                            generate_random_range(1.big(), 2.big()); // TODO: check if this is 1 or 2
-
-                        s = 7.big(); // TODO: remove, just for testing
+                            generate_random_range(1.big(), 3.big());
 
                         kernel = codomain.ladder_3pt(&Pb_to_be_mapped, &Qb_to_be_mapped, &PQb_to_be_mapped, s.clone());
-                        // TODO: get_PQb_and_shift + / -
 
                         let mut check = kernel.clone();
                         codomain.xmul(&mut check, f_mul.clone());
 
-                        if check.equals(&backtracking_check) != 0xFFFFFFFF {
-                            /*
-                            println!("");
-                            println!("");
-                            println!("no backtracking --------------------");
-                            println!("");
-                            */
+                        if (check.X * backtracking_check.Z).equals(&(backtracking_check.X * check.Z)) != 0xFFFFFFFF || backtracking_check.equals(&PointX::INFINITY) == 0xFFFFFFFF {
                             no_backtracking = true;
                         }
                     }
@@ -759,7 +753,16 @@ macro_rules! define_litsigamal {
                     let eval_points = [Pa_to_be_mapped, Qa_to_be_mapped, Ra_to_be_mapped, Qb_to_be_mapped];
                     (codomain, image_points) = three_isogeny_chain(&codomain, &kernel, eval_points.to_vec(), n, &self.strategy);
                     (Pa_to_be_mapped, Qa_to_be_mapped, Ra_to_be_mapped, backtracking_check) = (image_points[0], image_points[1], image_points[2], image_points[3]);
+
+                    println!("???? 11");
+                    println!("backtracking_check: {}", backtracking_check.X / backtracking_check.Z);
+                    println!("");
+
                     codomain.xmul(&mut backtracking_check, f_mul.clone());
+
+                    println!("???? 22");
+                    println!("backtracking_check: {}", backtracking_check.X / backtracking_check.Z);
+                    println!("");
 
                     /*
                     println!("after first 3-isogeny");
@@ -802,7 +805,7 @@ macro_rules! define_litsigamal {
                     let (Qa1, _) = curve.complete_pointX(&Qa1_to_be_mapped);
 
                     let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) =
-                        self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa, &Pa1, &Qa1, torsion_b.clone(), tau.clone(), 2);
+                        self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa, &Pa1, &Qa1, torsion_b_minus.clone(), tau.clone(), 2);
 
                     Pb_to_be_mapped = PointX::new_xz(&Pb.X, &Pb.Z);
                     Qb_to_be_mapped = PointX::new_xz(&Qb.X, &Qb.Z);
@@ -1338,9 +1341,23 @@ macro_rules! define_litsigamal {
             }
 
             fn get_PQb_and_shift(&self, curve_1: &Curve, curve_2: &Curve, Pa: &Point, Qa: &mut Point,
-                    Pa1: &Point, Qa1: &Point, torsion_b: Integer, tau: Integer, dbg_index: usize) -> (Point, Point, Point, Point, Point, Point, Point, Point, Point, Point) {
-                let mut Pb1 = generate_random_fq(curve_1, torsion_b.clone(), self.scalar_without_b.clone());
-                let mut Qb1 = generate_random_fq(curve_1, torsion_b, self.scalar_without_b.clone());
+                    Pa1: &Point, Qa1: &Point, torsion_b_minus: Integer, tau: Integer, dbg_index: usize) -> (Point, Point, Point, Point, Point, Point, Point, Point, Point, Point) {
+                let mut Pb1;
+                let mut Qb1;
+                loop {
+                    Pb1 = generate_random_fq(curve_1, torsion_b_minus.clone(), self.scalar_without_b.clone());
+                    Qb1 = generate_random_fq(curve_1, torsion_b_minus.clone(), self.scalar_without_b.clone());
+
+                    // Pb1 and Qb1 needs to be linear independent
+                    let mut Pb1_check = PointX::new_xz(&Pb1.X, &Pb1.Z);
+                    let mut Qb1_check = PointX::new_xz(&Qb1.X, &Qb1.Z);
+                    curve_1.xmul(&mut Pb1_check, torsion_b_minus.clone());
+                    curve_1.xmul(&mut Qb1_check, torsion_b_minus.clone());
+                
+                    if (Pb1_check.X * Qb1_check.Z).equals(&(Qb1_check.X * Pb1_check.Z)) != 0xFFFFFFFF {
+                        break;
+                    }
+                } 
 
                 // TODO: the following is only for debugging:
 

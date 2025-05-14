@@ -220,6 +220,7 @@ macro_rules! define_ec_helpers {
             (P_new, Q_new, PmQ_new)
         }
 
+        /// Generate a random point on the curve with x in Fp.
         pub fn generate_random_fp(curve: &Curve, order: Integer, f: Integer) -> Point {
             // p + 1 = order * f
             let mut rng = ChaCha20Rng::from_entropy();
@@ -243,7 +244,9 @@ macro_rules! define_ec_helpers {
             }
         }
 
-        pub fn generate_random_fq(curve: &Curve, order: Integer, f: Integer) -> Point {
+        /// Generate a random point on the curve with x in Fq.
+        /// The point needs to be of order `x^k`, where `order_minus = x^{k-1}`.
+        pub fn generate_random_fq(curve: &Curve, order_minus: Integer, f: Integer) -> Point {
             // p + 1 = order * f
             let mut rng = ChaCha20Rng::from_entropy();
             let mut X: Fq;
@@ -256,7 +259,7 @@ macro_rules! define_ec_helpers {
                 let (Px, _) = curve.complete_pointX(&Pxz); // TODO
                 P = curve.mul(&Px, &f_bytes, f_bytes.len() * 8);
 
-                let bytes = big_to_bytes(order.clone() - 1);
+                let bytes = big_to_bytes(order_minus.clone());
                 let Q = curve.mul(&P, &bytes, bytes.len() * 8);
 
                 if Q.isinfinity() == 0x00000000 {
