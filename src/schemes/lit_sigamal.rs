@@ -754,15 +754,7 @@ macro_rules! define_litsigamal {
                     (codomain, image_points) = three_isogeny_chain(&codomain, &kernel, eval_points.to_vec(), n, &self.strategy);
                     (Pa_to_be_mapped, Qa_to_be_mapped, Ra_to_be_mapped, backtracking_check) = (image_points[0], image_points[1], image_points[2], image_points[3]);
 
-                    println!("???? 11");
-                    println!("backtracking_check: {}", backtracking_check.X / backtracking_check.Z);
-                    println!("");
-
                     codomain.xmul(&mut backtracking_check, f_mul.clone());
-
-                    println!("???? 22");
-                    println!("backtracking_check: {}", backtracking_check.X / backtracking_check.Z);
-                    println!("");
 
                     /*
                     println!("after first 3-isogeny");
