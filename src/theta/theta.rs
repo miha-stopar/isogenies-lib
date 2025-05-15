@@ -1087,7 +1087,6 @@ macro_rules! define_theta_structure {
             let P1P2_8 = E1E2.x_double_iter(&P1P2, n - 1);
             let Q1Q2_8 = E1E2.x_double_iter(&Q1Q2, n - 1);
 
-            let P1P2_4 = E1E2.x_double(&P1P2_8);
             let Q1Q2_4 = E1E2.x_double(&Q1Q2_8);
 
             let zero = PointX::new_xz(&Fq::ONE, &Fq::ZERO);
@@ -1108,15 +1107,15 @@ macro_rules! define_theta_structure {
             }
 
             let image_points = vec![P1P2_8, Q1Q2_8, P1P2, Q1Q2, P1P2_shift, Q1Q2_shift];
+
+            let chain1 = std::time::Instant::now();
+
             let (theta_A, images, b_theta, b_shift_theta) = product_to_theta(&E1E2, &Q1Q2_4, image_points.as_slice(), &b_couple_points, &b_shift_couple_points);
             let points = hat_phi_psi(theta_A, &images, &b_theta, &b_shift_theta, n, strategy);
 
-            let (mut sqrt, err) = Fq::MINUS_ONE.sqrt(); // TODO: precompute
+            let (mut sqrt, _) = Fq::MINUS_ONE.sqrt(); // TODO: precompute
             // Note: there are two possible square roots, we change it to the other to be compatible with Sage code:
             sqrt.set_neg();
-
-            let check = sqrt * sqrt;
-            assert!(check.equals(&Fq::MINUS_ONE) == 0xFFFFFFFF);
 
             let (x, y, z, t) = theta_A.null_point.hadamard();
             let mut theta_2 = ThetaPoint::new(&x, &y, &z, &t);
@@ -1124,10 +1123,7 @@ macro_rules! define_theta_structure {
             let M = [Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, sqrt, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, sqrt, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ONE];
             apply_base_change(&mut theta_2, M);
 
-            let (theta_A1, theta_A2) = split_theta_point(&theta_2);
-
-            let mut points1_theta = vec![];
-            let mut points2_theta = vec![];
+            let (theta_A1, _) = split_theta_point(&theta_2);
 
             let mut mont_points = vec![];
             for P in points {
@@ -1135,27 +1131,16 @@ macro_rules! define_theta_structure {
                 let mut theta = ThetaPoint::new(&x, &y, &z, &t);
                 apply_base_change(&mut theta, M);
 
-                let (theta1, theta2) = split_theta_point(&theta);
-                points1_theta.push(theta1);
-                points2_theta.push(theta2);
-                // TODO: points1 not used?
-
-                // NOTE: to use theta_point_to_montgomery_point the variablse
-                // would need to be (x,y) -> (y,x)
-                // let Q = theta_point_to_montgomery_point(&theta_A2, &theta2);
-                // points1:
-                /*
-                let X = &theta_A2.1 * theta2.0 + &theta_A2.0 * theta2.1;
-                let Z = &theta_A2.1 * theta2.0 - &theta_A2.0 * theta2.1;
-                */
+                let (theta1, _) = split_theta_point(&theta);
                 
-                // points2:
                 let X = -Fq::ONE * (&theta_A1.0 * theta1.0 + &theta_A1.1 * theta1.1) * sqrt;
                 let Z = &theta_A1.1 * theta1.0 - &theta_A1.0 * theta1.1;
 
                 let Q = PointX::new_xz(&X, &Z);
                 mont_points.push(Q);
             }
+
+            println!("chain1: {:?}", chain1.elapsed());
 
             mont_points
         }

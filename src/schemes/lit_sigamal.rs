@@ -680,6 +680,53 @@ macro_rules! define_litsigamal {
                 let mut Qb1_to_be_mapped = points[1];
                 let mut PQb1_to_be_mapped = points[2];
 
+                // start of debugging
+
+                let Pb11 = generate_random_fp(&codomain, torsion_b_minus.clone(), self.scalar_without_b.clone());
+                let Qb11 = generate_random_fq(&codomain, torsion_b_minus.clone(), self.scalar_without_b.clone());
+
+                let mut bytes1 = big_to_bytes(Integer::from(self.n));
+                let torsion8_Pb = self.curve.mul(&Pb11, &bytes1, bytes1.len() * 8);
+                let torsion8_Qb = self.curve.mul(&Qb11, &bytes1, bytes1.len() * 8);
+
+                let factor = l_a.big().pow(self.a - 1);
+                bytes1 = big_to_bytes(factor);
+                let torsion8_Pa = self.curve.mul(&Pa_gamma, &bytes1, bytes1.len() * 8);
+                let torsion8_Qa = self.curve.mul(&Qa_gamma, &bytes1, bytes1.len() * 8);
+
+                let P1P2 = CouplePoint::new(&torsion8_Pa, &torsion8_Qa);
+                let Q1Q2 = CouplePoint::new(&torsion8_Qa, &torsion8_Qb);
+
+
+                // TODO:
+                let image_points1 = vec![
+                    P1P2,
+                    P1P2,
+                    P1P2
+                    // CouplePoint::new(&self.two_dim.P, &self.two_dim.Q),
+                    // CouplePoint::new(&self.two_dim.omegaP, &self.two_dim.omegaQ),
+                ];
+
+                // Precomputed with strategy.py
+                // TODO: derive 383 from self.a
+                // let strategy: [usize; 383] = [144, 89, 55, 34, 27, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 6, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
+
+                let chain2 = Instant::now();
+
+                let (product1, points1) = product_isogeny(
+                    &ell_product,
+                    &P1P2,
+                    &Q1Q2,
+                    &image_points1,
+                    // self.a as usize,
+                    self.a as usize - 1,
+                    &self.strategy_2,
+                );
+
+                println!("chain2: {:?}", chain2.elapsed());
+
+                // end of debugging
+
                 /*
                 println!("");
                 println!("?????????????? 2222222222");
