@@ -1108,7 +1108,7 @@ macro_rules! define_theta_structure {
             }
 
             let image_points = vec![P1P2_8, Q1Q2_8, P1P2, Q1Q2, P1P2_shift, Q1Q2_shift];
-            let (theta_A, images, b_theta, b_shift_theta) = product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4, image_points.as_slice(), &b_couple_points, &b_shift_couple_points);
+            let (theta_A, images, b_theta, b_shift_theta) = product_to_theta(&E1E2, &Q1Q2_4, image_points.as_slice(), &b_couple_points, &b_shift_couple_points);
             let points = hat_phi_psi(theta_A, &images, &b_theta, &b_shift_theta, n, strategy);
 
             let (mut sqrt, err) = Fq::MINUS_ONE.sqrt(); // TODO: precompute
@@ -1395,47 +1395,62 @@ macro_rules! define_theta_structure {
             (theta_dual, theta_dual_inv, theta)
         } 
 
+
         pub fn product_to_theta(
             E1E2: &EllipticProduct,
-            P1P2_4: &CouplePointX,
             Q1Q2_4: &CouplePointX,
             image_points: &[CouplePointX],
             b_points: &[CouplePointX],
             b_shift_points: &[CouplePointX],
         ) -> (ThetaStructure, Vec<ThetaPoint>, Vec<ThetaPoint>, Vec<ThetaPoint>) {
             let (E1, E2) = E1E2.curves();
-            // let (P1, P2) = P1P2_4.points();
             let (Q1, Q2) = Q1Q2_4.points();
 
-            let (a10, a11, a12, a13) = get_base_submatrix_x(&E1, Q1.X, Q1.Z);
+            let (a10, _a11, a12, _a13) = get_base_submatrix_x(&E1, Q1.X, Q1.Z);
             let (a20, a21, a22, a23) = get_base_submatrix_x(&E2, Q2.X, Q2.Z);
 
-            let m00 = &a10 * &a20 + &a12 * &a22 + Fq::ONE;
-            let m01 = &a10 * &a22 + &a12 * &a20;
+            let a10a20 = &a10 * &a20;
+            let a12a22 = &a12 * &a22;
+            let a10a22 = &a10 * &a22;
+            let a12a20 = &a12 * &a20;
 
-            let (a, b, c, d) = (m00, m01, m01, m00);
-            let (a1, b1, c1, d1) = (m00 * a20 + m01 * a21, m00 * a22 + m01 * a23, m01 * a20 + m00 * a21, m01 * a22 + m00 * a23);
-            let (a2, b2, c2, d2) = (c, d, a, b);
-            let (a3, b3, c3, d3) = (c1, d1, a1, b1);
+            let m00 = a10a20 + a12a22 + Fq::ONE;
+            let m01 = a10a22 + a12a20;
 
-            let M = [a, b, c, d, a1, b1, c1, d1, a2, b2, c2, d2, a3, b3, c3, d3];
+            // Matrix M construction
+            let (a, b, c, d) = (m00.clone(), m01.clone(), m01.clone(), m00.clone());
+
+            let a1 = &m00 * &a20 + &m01 * &a21;
+            let b1 = &m00 * &a22 + &m01 * &a23;
+            let c1 = &m01 * &a20 + &m00 * &a21;
+            let d1 = &m01 * &a22 + &m00 * &a23;
+
+            let (a2, b2, c2, d2) = (c.clone(), d.clone(), a.clone(), b.clone());
+            let (a3, b3, c3, d3) = (c1.clone(), d1.clone(), a1.clone(), b1.clone());
+
+            let M = [
+                a.clone(), b.clone(), c.clone(), d.clone(),
+                a1.clone(), b1.clone(), c1.clone(), d1.clone(),
+                a2.clone(), b2.clone(), c2.clone(), d2.clone(),
+                a3.clone(), b3.clone(), c3.clone(), d3.clone(),
+            ];
 
             let theta = ThetaStructure::new_from_coords(&a, &a1, &a2, &a3);
-            
-            let mut images = vec![];
-            for i in 0..image_points.len() {
-                images.push(base_change_couple_point_x(&image_points[i], M));
-            }
 
-            let mut b_theta = vec![];
-            for i in 0..b_points.len() {
-                b_theta.push(base_change_couple_point_x(&b_points[i], M));
-            }
+            let images: Vec<ThetaPoint> = image_points
+                .iter()
+                .map(|pt| base_change_couple_point_x(pt, M))
+                .collect();
 
-            let mut b_shift_theta = vec![];
-            for i in 0..b_shift_points.len() {
-                b_shift_theta.push(base_change_couple_point_x(&b_shift_points[i], M));
-            }
+            let b_theta: Vec<ThetaPoint> = b_points
+                .iter()
+                .map(|pt| base_change_couple_point_x(pt, M))
+                .collect();
+
+            let b_shift_theta: Vec<ThetaPoint> = b_shift_points
+                .iter()
+                .map(|pt| base_change_couple_point_x(pt, M))
+                .collect();
 
             (theta, images, b_theta, b_shift_theta)
         }
