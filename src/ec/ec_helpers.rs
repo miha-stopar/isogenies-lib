@@ -4,9 +4,7 @@ macro_rules! define_ec_helpers {
     () => {
         use std::fs;
         use crate::linalg::matrix::Matrix;
-        // use std::ops::Div;
         use crate::util::{big_to_bytes, bytes_from_str, Big};
-        use rug::integer::Order;
         use num_traits::Pow;
         use rand::prelude::*;
         use rand_chacha::ChaCha20Rng;
@@ -66,21 +64,6 @@ macro_rules! define_ec_helpers {
             let mut mat10mat11 = mat[(1, 0)].clone() - mat[(1, 1)].clone();
             mat10mat11 = mat10mat11.clone() % torsion.clone();
             let mat10mat11 = big_to_bytes(mat10mat11);
-
-            vec![mat00, mat01, mat10, mat11, mat00mat01, mat10mat11]
-        }
-
-        pub fn endomorphism_matrix_to_digits(mat: Matrix<Integer>, torsion: Integer) -> Vec<Integer> {
-            // TODO
-            let mat00 = mat[(0, 0)].clone();
-            let mat10 = mat[(1, 0)].clone();
-            let mat01 = mat[(0, 1)].clone();
-            let mat11 = mat[(1, 1)].clone();
-
-            let mut mat00mat01 = mat[(0, 0)].clone() - mat[(0, 1)].clone();
-            mat00mat01 = mat00mat01.clone() % torsion.clone();
-            let mut mat10mat11 = mat[(1, 0)].clone() - mat[(1, 1)].clone();
-            mat10mat11 = mat10mat11.clone() % torsion.clone();
 
             vec![mat00, mat01, mat10, mat11, mat00mat01, mat10mat11]
         }
@@ -169,9 +152,7 @@ macro_rules! define_ec_helpers {
             */
 
             let mat = from_endomorphism_to_matrix(coord, imprim, torsion.clone(), mat2, mat3, mat4);
-            // TODO
             let mat_bytes = endomorphism_matrix_to_bytes(mat.clone(), torsion.clone());
-            let mat_bytes1 = endomorphism_matrix_to_digits(mat, torsion.clone());
 
             let mat00 = &mat_bytes[0];
             let mat01 = &mat_bytes[1];
@@ -180,31 +161,10 @@ macro_rules! define_ec_helpers {
             let mat00mat01 = &mat_bytes[4];
             let mat10mat11 = &mat_bytes[5];
 
-            let amat00 = &mat_bytes1[0];
-            let amat01 = &mat_bytes1[1];
-            let amat10 = &mat_bytes1[2];
-            let amat11 = &mat_bytes1[3];
-            let amat00mat01 = &mat_bytes1[4];
-            let amat10mat11 = &mat_bytes1[5];
-
-
             let P_new1 = curve.mul(P, &mat00, mat00.len() * 8);
             let P_new2 = curve.mul(Q, &mat10, mat10.len() * 8);
             // mat00 * P + mat10 * Q
             let P_new = curve.add(&P_new1, &P_new2);
-
-            /*
-            let mut k_digits = amat00.to_digits::<u64>(Order::MsfLe);
-            k_digits.reverse();
-            let mut l_digits = amat10.to_digits::<u64>(Order::MsfLe);
-            l_digits.reverse();
-            let f: usize = 36; // TODO
-            let aP_new = curve.xdblmul_bounded(&P, &k_digits, &Q, &l_digits, &PmQ, f);
-            */
-
-            // assert!(P_new.equals(&aP_new) == 0xFFFFFFFF);
-
-
 
             let Q_new1 = curve.mul(&P, &mat01, mat01.len() * 8);
             let Q_new2 = curve.mul(&Q, &mat11, mat11.len() * 8);
@@ -232,7 +192,7 @@ macro_rules! define_ec_helpers {
                 X = Fp::rand(&mut rng);
                 let FqX = Fq::new(&X, &Fp::ZERO);
                 let Pxz = PointX::new_xz(&FqX, &Fq::ONE);
-                let (Px, _) = curve.complete_pointX(&Pxz); // TODO
+                let (Px, _) = curve.complete_pointX(&Pxz);
                 P = curve.mul(&Px, &f_bytes, f_bytes.len() * 8);
 
                 let bytes = big_to_bytes(order.clone() - 1);
@@ -256,7 +216,7 @@ macro_rules! define_ec_helpers {
             loop {
                 X = Fq::rand(&mut rng);
                 let Pxz = PointX::new_xz(&X, &Fq::ONE);
-                let (Px, _) = curve.complete_pointX(&Pxz); // TODO
+                let (Px, _) = curve.complete_pointX(&Pxz);
                 P = curve.mul(&Px, &f_bytes, f_bytes.len() * 8);
 
                 let bytes = big_to_bytes(order_minus.clone());

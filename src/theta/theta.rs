@@ -1329,16 +1329,13 @@ macro_rules! define_theta_structure {
         }
 
         pub fn codomain_isogeny(Ta_8: &ThetaPoint, Tb_8: &ThetaPoint) -> (ThetaPoint, ThetaPoint, ThetaStructure) {
-            let (x1, y1, z1, t1) = Ta_8.squared_theta(); // hadamard already there
-            let (x2, y2, z2, t2) = Tb_8.squared_theta(); // hadamard already there
+            let (x1, y1, _, t1) = Ta_8.squared_theta();
+            let (x2, y2, z2, _) = Tb_8.squared_theta();
 
             let theta_dual: ThetaPoint;
             let theta_dual_inv: ThetaPoint;
 
             if t1 == Fq::ZERO {
-                // TODO
-                // println!("11111111111111111111111111111111111111111111111");
-                // println!("t1 == 0");
                 let alpha = x1 * x2;
                 let beta = y1 * x2;
                 let gamma = z2 * x1;
@@ -1353,8 +1350,6 @@ macro_rules! define_theta_structure {
                     &theta_dual_inv_list[3],
                 ); 
             } else {
-                // println!("222222222222222222222222222222222222222222222222");
-                // println!("t1 != 0");
                 let inv_list = proj_inv(&[x1, x2, y2]);
                 let mut alpha = x1 * inv_list[0];
                 let mut beta = y1 * inv_list[0];
@@ -1379,7 +1374,6 @@ macro_rules! define_theta_structure {
 
             (theta_dual, theta_dual_inv, theta)
         } 
-
 
         pub fn product_to_theta(
             E1E2: &EllipticProduct,
