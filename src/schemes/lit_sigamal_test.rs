@@ -10,11 +10,8 @@ mod tests {
         let l_c = 5;
         let lit_sigamal = ec_lit128::LITSiGamal::new(128);
         let (pub_key, alice_secret)= lit_sigamal.generate_pub_key();
-        // let (pub_key, alice_secret)= lit_sigamal.generate_pub_key_dbg();
 
-        let mu: Integer = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) +
-                    generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
-        // let mu = 234234.big(); // TODO, dbg
+        let mu: Integer = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 2) - 1) + generate_random_range(1.big(), 5.big());
 
         println!("");
         println!("mu: {:?}", mu);
@@ -41,9 +38,7 @@ mod tests {
         let (pub_key, alice_secret)= lit_sigamal.generate_pub_key();
         // let (pub_key, alice_secret)= lit_sigamal.generate_pub_key_dbg();
 
-        let mu: Integer = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) +
-                    generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
-        // let mu = 234234.big(); // TODO, dbg
+        let mu: Integer = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 2) - 1) + generate_random_range(1.big(), 5.big());
 
         println!("");
         println!("mu: {:?}", mu);
@@ -70,12 +65,7 @@ mod tests {
         let (pub_key, alice_secret)= lit_sigamal.generate_pub_key();
         // let (pub_key, alice_secret)= lit_sigamal.generate_pub_key_dbg();
 
-        let mu: Integer = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) +
-                    generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
-        // let mu = 234234.big(); // TODO, dbg
-        let mu = 11111.big();
-        let mu = 11112.big();
-        let mu = 11113.big();
+        let mu: Integer = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 2) - 1) + generate_random_range(1.big(), 5.big());
 
         /*
         println!("");

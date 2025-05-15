@@ -310,10 +310,6 @@ macro_rules! define_litsigamal {
                 loop {
                     c1 = generate_random_range(0.big(), l_c.big().pow(power_c) - 1);
                     c2 = generate_random_range(0.big(), l_c.big().pow(power_c) - 1);
-
-                    // TODO: remove c1, c2
-                    // c1 = Integer::from(1);
-                    // c2 = Integer::from(1);
                     if c1.clone().modulo(&five) != zero && c2.clone().modulo(&five) != zero {
                         break;
                     }
@@ -884,16 +880,12 @@ macro_rules! define_litsigamal {
 
                 // println!("6 (after a series of (2,2)-isogenies): {:?}", sixth_part.elapsed());
 
-                let alpha: Integer = generate_random_range(0.big(), l_c.big().pow(power_b - 1)) * l_c + 
-                    generate_random_range(1.big(), 4.big()); // TODO: check if this is 1 or 4
-                let alpha = 3.big(); // TODO, dbg
+                let alpha: Integer = generate_random_range(0.big(), l_c.big().pow(power_c - 2)) * l_c + 
+                    generate_random_range(1.big(), 5.big());
                 curve.xmul(&mut Ra1_to_be_mapped, alpha.clone());
 
-                let alice_secret0: Integer = generate_random_range(0.big(), l_a.big().pow(self.a + 2) - 1) * l_a + 1;
-                let alice_secret1: Integer = generate_random_range(0.big(), l_a.big().pow(self.a + 2) - 1) * l_a + 1;
-
-                // let alice_secret0 = (2*8 + 1).big(); // TODO: remove
-                // let alice_secret1 = (2*7 + 1).big(); // TODO: remove
+                let alice_secret0: Integer = generate_random_range(0.big(), l_a.big().pow(self.a + 2) - 2) * l_a + 1;
+                let alice_secret1: Integer = generate_random_range(0.big(), l_a.big().pow(self.a + 2) - 2) * l_a + 1;
 
                 curve.xmul(&mut Pa1_to_be_mapped, alice_secret0.clone());
                 curve.xmul(&mut Qa1_to_be_mapped, alice_secret1.clone());
@@ -1149,9 +1141,8 @@ macro_rules! define_litsigamal {
                 println!("");
                 */
 
-                let s = self.l_b * generate_random_range(0.big(), self.l_b.big().pow(pub_key.power_b) - 1) +
-                            generate_random_range(1.big(), 2.big()); // TODO: check if this is 1 or 2
-                let s = "11".big(); // dbg
+                let s = self.l_b * generate_random_range(0.big(), self.l_b.big().pow(pub_key.power_b) - 2) +
+                            generate_random_range(1.big(), 3.big());
 
                 let curve = Curve::new_fromA24(&A24.0, &A24.1);
                 let curve1 = Curve::new_fromA24(&A24_1.0, &A24_1.1);
@@ -1186,9 +1177,8 @@ macro_rules! define_litsigamal {
                 let (curve1_new, image_points) = three_isogeny_chain(&curve1, &kernel1x, eval_points.to_vec(), n, &self.strategy);
                 (Pa1, Qa1, R1) = (image_points[0], image_points[1], image_points[2]);
  
-                let beta = self.l_c * generate_random_range(0.big(), self.l_c.big().pow(pub_key.power_c - 1) - 1) +
-                            generate_random_range(1.big(), 4.big()); // TODO: check if this can be 4
-                let beta = 928347.big(); // dbg
+                let beta = self.l_c * generate_random_range(0.big(), self.l_c.big().pow(pub_key.power_c - 2) - 1) +
+                            generate_random_range(1.big(), 5.big());
 
                 curve_new.xmul(&mut R, beta.clone());
                 curve1_new.xmul(&mut R1, beta * mu);
