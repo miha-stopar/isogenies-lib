@@ -1108,15 +1108,8 @@ macro_rules! define_theta_structure {
             }
 
             let image_points = vec![P1P2_8, Q1Q2_8, P1P2, Q1Q2, P1P2_shift, Q1Q2_shift];
- 
             let (theta_A, images, b_theta, b_shift_theta) = product_to_theta(&E1E2, &P1P2_4, &Q1Q2_4, image_points.as_slice(), &b_couple_points, &b_shift_couple_points);
-
             let points = hat_phi_psi(theta_A, &images, &b_theta, &b_shift_theta, n, strategy);
-
-            // Theta to Montgomery product:
-
-            // TODO: not needed?
-            // points.push(images[0]);
 
             let (mut sqrt, err) = Fq::MINUS_ONE.sqrt(); // TODO: precompute
             // Note: there are two possible square roots, we change it to the other to be compatible with Sage code:
@@ -1168,31 +1161,83 @@ macro_rules! define_theta_structure {
         }
 
         pub fn hat_phi_psi(theta: ThetaStructure, images: &[ThetaPoint], b_theta: &[ThetaPoint], b_shift_theta: &[ThetaPoint], n: usize, strategy: &[usize]) -> Vec<ThetaPoint> {
-            // theta_B is theta null point on the variety B,
+            // domain is theta structure of the variety B,
             // theta_dual is its dual (hadamard operator applied on theta_B)
-            let (theta_dual, theta_dual_inv, theta_B) = codomain_isogeny(&images[0], &images[1]); 
+
+            // start of gluing_isogeny
+
+            let (_, theta_dual_inv, mut domain) = codomain_isogeny(&images[0], &images[1]); 
 
             // TODO: either use codomain_isogeny or gluing_codomain (gluing_isogeny)
             // domain.null_point = theta_B
-            let (mut domain, (a_inv, b_inv), z_idx) = gluing_codomain(&images[0], &images[1]);
+            // let (mut domain, (_, _), _) = gluing_codomain(&images[0], &images[1]);
+
+            /*
+            let (domain1, (a_inv, b_inv), z_idx) = gluing_codomain(&images[0], &images[1]);
+
+            let foo = domain.null_point;
+            let goo = domain1.null_point;
+
+            println!("=========");
+            println!("{}", foo.X / foo.Y);
+            println!("{}", goo.X / goo.Y);
+
+            println!("");
+            */
 
             let theta_null = theta.null_point();
             let theta_inv = proj_inv(&[theta_null.X, theta_null.Y, theta_null.Z, theta_null.T]);
             let theta_i = ThetaPoint::new(&theta_inv[0], &theta_inv[1], &theta_inv[2], &theta_inv[3]);
 
-            let theta_B_inv = proj_inv(&[theta_B.X, theta_B.Y, theta_B.Z, theta_B.T]);
- 
+            let theta_B_inv = proj_inv(&[domain.null_point.X, domain.null_point.Y, domain.null_point.Z, domain.null_point.T]);
             let mut isogeny_chain_dual_list = vec![theta_i, ThetaPoint::new(&theta_B_inv[0], &theta_B_inv[1], &theta_B_inv[2], &theta_B_inv[3])];
-            
             let mut kernel_pts = eval_isogeny_special(theta_dual_inv, &images[2..4], &images[4..6]);
-
             let imgs = eval_isogeny_special(theta_dual_inv, &b_theta, &b_shift_theta);
-            
+
             kernel_pts = imgs.into_iter().chain(kernel_pts).collect();
+
+            /*
+            // check:
+            let mut theta_images: Vec<ThetaPoint> = Vec::new();
+
+            // pub fn eval_isogeny_special(theta_dual_inv: ThetaPoint, points: &[ThetaPoint], points_shift: &[ThetaPoint]) -> Vec<ThetaPoint> {
+            // let mut points_result = vec![];
+
+
+            for i in 0..b_theta.len() {
+                let T = b_theta[i];
+                let T_shift = b_shift_theta[i];
+                let T_image = gluing_image(&T, &T_shift, &a_inv, &b_inv, z_idx);
+                theta_images.push(T_image);
+            }
+            
+            for i in 0..2 {
+                let T = images[2 + i];
+                let T_shift = images[4 + i];
+                let T_image = gluing_image(&T, &T_shift, &a_inv, &b_inv, z_idx);
+                theta_images.push(T_image);
+            }
+
+            kernel_pts = theta_images;
+            */
+
+            /*
+            for i in 0..theta_images.len() {
+                let foo = theta_images[i];
+                let goo = kernel_pts[i];
+                println!("foo i: {:?}", i);
+
+                assert!((foo.X / foo.Y).equals(&(goo.X / goo.Y)) == 0xFFFFFFFF);
+                assert!((foo.X / foo.Z).equals(&(goo.X / goo.Z)) == 0xFFFFFFFF);
+                assert!((foo.X / foo.T).equals(&(goo.X / goo.T)) == 0xFFFFFFFF);
+            }
+            */
+
+            // end of gluing_isogeny
 
             let mut strat_idx = 0;
             let mut level: Vec<usize> = vec![0];
-            let mut prev: usize = level.iter().sum();
+            let mut prev: usize;
 
             let mut Tp1: ThetaPoint;
             let mut Tp2: ThetaPoint;
@@ -1238,7 +1283,6 @@ macro_rules! define_theta_structure {
             let M = [Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ONE, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ZERO, Fq::ONE];
 
             for i in 0..kernel_pts.len() {
-                // images.push(base_change(kernel_pts[i].X, kernel_pts[i].Z, kernel_pts[i].Y, kernel_pts[i].T, M));
                 apply_base_change(&mut kernel_pts[i], M);
             }
 
@@ -1299,7 +1343,7 @@ macro_rules! define_theta_structure {
             points_result
         }
 
-        pub fn codomain_isogeny(Ta_8: &ThetaPoint, Tb_8: &ThetaPoint) -> (ThetaPoint, ThetaPoint, ThetaPoint) {
+        pub fn codomain_isogeny(Ta_8: &ThetaPoint, Tb_8: &ThetaPoint) -> (ThetaPoint, ThetaPoint, ThetaStructure) {
             let (x1, y1, z1, t1) = Ta_8.squared_theta(); // hadamard already there
             let (x2, y2, z2, t2) = Tb_8.squared_theta(); // hadamard already there
 
@@ -1307,6 +1351,9 @@ macro_rules! define_theta_structure {
             let theta_dual_inv: ThetaPoint;
 
             if t1 == Fq::ZERO {
+                // TODO
+                // println!("11111111111111111111111111111111111111111111111");
+                // println!("t1 == 0");
                 let alpha = x1 * x2;
                 let beta = y1 * x2;
                 let gamma = z2 * x1;
@@ -1321,6 +1368,8 @@ macro_rules! define_theta_structure {
                     &theta_dual_inv_list[3],
                 ); 
             } else {
+                // println!("222222222222222222222222222222222222222222222222");
+                // println!("t1 != 0");
                 let inv_list = proj_inv(&[x1, x2, y2]);
                 let mut alpha = x1 * inv_list[0];
                 let mut beta = y1 * inv_list[0];
@@ -1341,7 +1390,7 @@ macro_rules! define_theta_structure {
             }
 
             let (x, y, z, t) = theta_dual.hadamard();
-            let theta = ThetaPoint::new(&x, &y, &z, &t);
+            let theta = ThetaStructure::new_from_coords(&x, &y, &z, &t);
 
             (theta_dual, theta_dual_inv, theta)
         } 
