@@ -1457,36 +1457,43 @@ macro_rules! define_theta_structure {
 
         fn proj_inv(theta: &[Fq]) -> Vec<Fq> {
             let n = theta.len();
-        
-            if n == 1 {
-                return vec![Fq::ONE];
+
+            match n {
+                1 => return vec![Fq::ONE],
+                2 => return vec![theta[1].clone(), theta[0].clone()],
+                3 => return vec![
+                    &theta[1] * &theta[2],
+                    &theta[2] * &theta[0],
+                    &theta[0] * &theta[1],
+                ],
+                _ => {
+                    let m = n / 2;
+                    let (theta_left, theta_right) = theta.split_at(m);
+
+                    let mut result1 = proj_inv(theta_left);
+                    let mut result2 = proj_inv(theta_right);
+
+                    // Precompute edge values
+                    let left = &result1[0] * &theta[0];               // theta[0] is first
+                    let right = &result2[result2.len() - 1] * &theta[n - 1]; // theta[n-1] is last
+
+                    // Multiply in-place
+                    for r in &mut result1 {
+                        *r *= &right;
+                    }
+
+                    for r in &mut result2 {
+                        *r *= &left;
+                    }
+
+                    // Use with_capacity to avoid reallocation
+                    let mut result = Vec::with_capacity(n);
+                    result.extend(result1);
+                    result.extend(result2);
+
+                    result
+                }
             }
-        
-            if n == 2 {
-                return vec![theta[1], theta[0]];
-            }
-        
-            if n == 3 {
-                return vec![theta[1] * theta[2], theta[2] * theta[0], theta[0] * theta[1]];
-            }
-        
-            let m = n / 2;
-            let mut result1 = proj_inv(&theta[..m]);
-            let mut result2 = proj_inv(&theta[m..]);
-        
-            let left = result1[0] * theta[0];
-            let right = result2[result2.len() - 1] * theta[n - 1];
-        
-            for val in &mut result1 {
-                *val *= right;
-            }
-        
-            for val in &mut result2 {
-                *val *= left;
-            }
-        
-            result1.extend(result2);
-            result1
         }
 
         // ========================================================
