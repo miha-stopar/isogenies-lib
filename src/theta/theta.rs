@@ -1107,9 +1107,6 @@ macro_rules! define_theta_structure {
             }
 
             let image_points = vec![P1P2_8, Q1Q2_8, P1P2, Q1Q2, P1P2_shift, Q1Q2_shift];
-
-            let chain1 = std::time::Instant::now();
-
             let (theta_A, images, b_theta, b_shift_theta) = product_to_theta(&E1E2, &Q1Q2_4, image_points.as_slice(), &b_couple_points, &b_shift_couple_points);
             let points = hat_phi_psi(theta_A, &images, &b_theta, &b_shift_theta, n, strategy);
 
@@ -1140,35 +1137,11 @@ macro_rules! define_theta_structure {
                 mont_points.push(Q);
             }
 
-            println!("chain1: {:?}", chain1.elapsed());
-
             mont_points
         }
 
         pub fn hat_phi_psi(theta: ThetaStructure, images: &[ThetaPoint], b_theta: &[ThetaPoint], b_shift_theta: &[ThetaPoint], n: usize, strategy: &[usize]) -> Vec<ThetaPoint> {
-            // domain is theta structure of the variety B,
-            // theta_dual is its dual (hadamard operator applied on theta_B)
-
-            // start of gluing_isogeny
-
             let (_, theta_dual_inv, mut domain) = codomain_isogeny(&images[0], &images[1]); 
-
-            // TODO: either use codomain_isogeny or gluing_codomain (gluing_isogeny)
-            // domain.null_point = theta_B
-            // let (mut domain, (_, _), _) = gluing_codomain(&images[0], &images[1]);
-
-            /*
-            let (domain1, (a_inv, b_inv), z_idx) = gluing_codomain(&images[0], &images[1]);
-
-            let foo = domain.null_point;
-            let goo = domain1.null_point;
-
-            println!("=========");
-            println!("{}", foo.X / foo.Y);
-            println!("{}", goo.X / goo.Y);
-
-            println!("");
-            */
 
             let theta_null = theta.null_point();
             let theta_inv = proj_inv(&[theta_null.X, theta_null.Y, theta_null.Z, theta_null.T]);
@@ -1180,45 +1153,6 @@ macro_rules! define_theta_structure {
             let imgs = eval_isogeny_special(theta_dual_inv, &b_theta, &b_shift_theta);
 
             kernel_pts = imgs.into_iter().chain(kernel_pts).collect();
-
-            /*
-            // check:
-            let mut theta_images: Vec<ThetaPoint> = Vec::new();
-
-            // pub fn eval_isogeny_special(theta_dual_inv: ThetaPoint, points: &[ThetaPoint], points_shift: &[ThetaPoint]) -> Vec<ThetaPoint> {
-            // let mut points_result = vec![];
-
-
-            for i in 0..b_theta.len() {
-                let T = b_theta[i];
-                let T_shift = b_shift_theta[i];
-                let T_image = gluing_image(&T, &T_shift, &a_inv, &b_inv, z_idx);
-                theta_images.push(T_image);
-            }
-            
-            for i in 0..2 {
-                let T = images[2 + i];
-                let T_shift = images[4 + i];
-                let T_image = gluing_image(&T, &T_shift, &a_inv, &b_inv, z_idx);
-                theta_images.push(T_image);
-            }
-
-            kernel_pts = theta_images;
-            */
-
-            /*
-            for i in 0..theta_images.len() {
-                let foo = theta_images[i];
-                let goo = kernel_pts[i];
-                println!("foo i: {:?}", i);
-
-                assert!((foo.X / foo.Y).equals(&(goo.X / goo.Y)) == 0xFFFFFFFF);
-                assert!((foo.X / foo.Z).equals(&(goo.X / goo.Z)) == 0xFFFFFFFF);
-                assert!((foo.X / foo.T).equals(&(goo.X / goo.T)) == 0xFFFFFFFF);
-            }
-            */
-
-            // end of gluing_isogeny
 
             let mut strat_idx = 0;
             let mut level: Vec<usize> = vec![0];
@@ -1271,7 +1205,6 @@ macro_rules! define_theta_structure {
                 apply_base_change(&mut kernel_pts[i], M);
             }
 
-            // TODO: try to use eval_isogeny also above it's more efficient
             for i in 1..isogeny_chain_dual_list.len() {
                 kernel_pts = eval_isogeny(isogeny_chain_dual_list[isogeny_chain_dual_list.len() - i - 1], &kernel_pts);
             }

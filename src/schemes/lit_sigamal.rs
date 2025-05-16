@@ -257,8 +257,8 @@ macro_rules! define_litsigamal {
                 let order = standard_maximal_extremal_order().order;
                 let (coord, imprim) = gamma.factor_in_order(order.lattice.clone());
 
-                println!("1 (before apply endomorphism): {:?}", start.elapsed());
-                let second_part = Instant::now();
+                // println!("1 (before apply endomorphism): {:?}", start.elapsed());
+                // let second_part = Instant::now();
 
                 let torsion_a = l_a.big().pow(self.a + 2);
                 
@@ -309,13 +309,13 @@ macro_rules! define_litsigamal {
                 let torsion_b_minus = l_b.big().pow(power_b - 1);
                 let (Pb_gamma, Qb_gamma, _) = apply_endomorphism_on_torsion_group(&curve, coord.clone(), imprim.clone(), torsion_b.clone(), mat3_2, mat3_3, mat3_4, &Pb, &Qb, &PmQb);
 
-                println!("2 (after apply endomorphism): {:?}", second_part.elapsed());
-                let third_part = Instant::now();
+                // println!("2 (after apply endomorphism): {:?}", second_part.elapsed());
+                // let third_part = Instant::now();
 
                 let dlog1 = dlog_3(&curve, &Pb_gamma, &Qb_gamma, self.b.try_into().unwrap());
 
-                println!("3 (after dlog): {:?}", third_part.elapsed());
-                let fourth_part = Instant::now();
+                // println!("3 (after dlog): {:?}", third_part.elapsed());
+                // let fourth_part = Instant::now();
 
                 let bytes = big_to_bytes(dlog1);
                 let dlog_Pb = curve.mul(&Pb, &bytes, bytes.len() * 8);
@@ -361,8 +361,8 @@ macro_rules! define_litsigamal {
                 let Qb_shiftX = PointX::new_xz(&Qb_shift.X, &Qb_shift.Z);
                 let PQb_shiftX = PointX::new_xz(&PQb_shift.X, &PQb_shift.Z);
 
-                println!("4 (after 3-isogeny): {:?}", fourth_part.elapsed());
-                let fifth_part = Instant::now();
+                // println!("4 (after 3-isogeny): {:?}", fourth_part.elapsed());
+                // let fifth_part = Instant::now();
 
                 let b_points = [Pb_to_be_mapped, Qb_to_be_mapped, PQb_to_be_mapped];
                 let b_shift_points = [Pb_shiftX, Qb_shiftX, PQb_shiftX];
@@ -391,8 +391,8 @@ macro_rules! define_litsigamal {
                 let f_mul_len = f_mul_bytes.len() * 8;
                 let mut backtracking_check = PointX::INFINITY;
 
-                println!("5 (after (2,2)-isogeny): {:?}", fifth_part.elapsed());
-                let sixth_part = Instant::now();
+                // println!("5 (after (2,2)-isogeny): {:?}", fifth_part.elapsed());
+                // let sixth_part = Instant::now();
 
                 for _ in 0..6 {
                     let mut no_backtracking = false;
@@ -475,7 +475,7 @@ macro_rules! define_litsigamal {
                     PQb1_to_be_mapped = points[2];
                 }
 
-                println!("6 (after a series of (2,2)-isogenies): {:?}", sixth_part.elapsed());
+                // println!("6 (after a series of (2,2)-isogenies): {:?}", sixth_part.elapsed());
 
                 let alpha: Integer = generate_random_range(0.big(), l_c.big().pow(power_c - 2)) * l_c + 
                     generate_random_range(1.big(), 5.big());
@@ -522,8 +522,6 @@ macro_rules! define_litsigamal {
 
             pub fn encrypt(&self, pub_key: &PubKey, mu: Integer) -> Cipher {
                 let start = Instant::now();
-                println!("");
-                println!("encrypt");
 
                 let (points, points1) = (&pub_key.points, &pub_key.points1);
                 let (mut Pa, mut Qa, Pb, Qb, PQb, mut R) = (points.Pa, points.Qa, points.Pb, points.Qb, points.PQb, points.R);
@@ -543,9 +541,6 @@ macro_rules! define_litsigamal {
 
                 let n = self.strategy.len() + 1;
 
-                println!("before 3-isogeny: {:?}", start.elapsed());
-                let second_part = Instant::now();
-
                 let eval_points = [Pa, Qa, R];
                 let (curve_new, image_points) = three_isogeny_chain(&curve, &kernelx, eval_points.to_vec(), n, &self.strategy);
                 (Pa, Qa, R) = (image_points[0], image_points[1], image_points[2]);
@@ -554,9 +549,6 @@ macro_rules! define_litsigamal {
                 let (curve1_new, image_points) = three_isogeny_chain(&curve1, &kernel1x, eval_points.to_vec(), n, &self.strategy);
                 (Pa1, Qa1, R1) = (image_points[0], image_points[1], image_points[2]);
 
-                println!("after 3-isogeny: {:?}", second_part.elapsed());
-                let third_part = Instant::now();
- 
                 let beta = self.l_c * generate_random_range(0.big(), self.l_c.big().pow(pub_key.power_c - 1) - 1) +
                             generate_random_range(1.big(), 5.big());
                 let beta_bytes = big_to_bytes(beta.clone());
@@ -572,18 +564,12 @@ macro_rules! define_litsigamal {
                 let bob_secret_1_bytes = big_to_bytes(bob_secret_1.clone());
                 let bob_secret_2_bytes = big_to_bytes(bob_secret_2.clone());
 
-                println!("encrypt, before xmul: {:?}", third_part.elapsed());
-                let fourth_part = Instant::now();
-
                 Pa = curve_new.xmul(&Pa, &bob_secret_1_bytes, bob_secret_1_bytes.len() * 8);
                 Qa = curve_new.xmul(&Qa, &bob_secret_2_bytes, bob_secret_2_bytes.len() * 8);
 
                 Pa1 = curve1_new.xmul(&Pa1, &bob_secret_1_bytes, bob_secret_1_bytes.len() * 8);
                 Qa1 = curve1_new.xmul(&Qa1, &bob_secret_2_bytes, bob_secret_2_bytes.len() * 8);
 
-                println!("encrypt, after xmul: {:?}", fourth_part.elapsed());
-                let fifth_part = Instant::now();
- 
                 let points = CipherPoints::new(
                     Pa,
                     Qa,
@@ -596,8 +582,7 @@ macro_rules! define_litsigamal {
                     R1,
                 );
 
-                // println!("encrypt: {:?}", start.elapsed());
-                println!("encrypt: {:?}", fifth_part.elapsed());
+                println!("encrypt: {:?}", start.elapsed());
 
                 Cipher::new(
                     points,
@@ -678,9 +663,6 @@ macro_rules! define_litsigamal {
 
                 let ell_product = EllipticProduct::new(&curve, &curve1);
 
-                println!("before compute_isogeny: {:?}", start.elapsed());
-                let second_part = Instant::now();
-
                 let b_points = [R];
                 let b_shift_points = [R_shiftX];
                 let points_R = compute_isogeny(
@@ -701,15 +683,10 @@ macro_rules! define_litsigamal {
 
                 let R1_2 = points_R[0];
 
-                println!("after compute_isogeny: {:?}", second_part.elapsed());
-                let third_part = Instant::now();
-
                 let (R1_2_complete, _) = curve1.complete_pointX(&R1_2);
                 let mu2 = dlog_5(&curve1, &R1_2_complete, &R1_complete, self.c.try_into().unwrap());
 
-                println!("after dlog: {:?}", third_part.elapsed());
-                // println!("decrypt: {:?}", start.elapsed());
-                println!("");
+                println!("decrypt: {:?}", start.elapsed());
 
                 mu2
             }
