@@ -234,8 +234,8 @@ macro_rules! define_litsigamal {
                 let five = Integer::from(5);
                 let zero = Integer::ZERO;
                 loop {
-                    c1 = generate_random_range(0.big(), l_c.big().pow(power_c) - 1);
-                    c2 = generate_random_range(0.big(), l_c.big().pow(power_c) - 1);
+                    c1 = generate_random_range(0.big(), l_c.big().pow(power_c - 1) - 1);
+                    c2 = generate_random_range(0.big(), l_c.big().pow(power_c - 1) - 1);
                     if c1.clone().modulo(&five) != zero && c2.clone().modulo(&five) != zero {
                         break;
                     }
@@ -281,9 +281,9 @@ macro_rules! define_litsigamal {
                 let mut R_gamma = PointX::new_xz(&R.X, &R.Z);
 
                 // Set [2^a]Pa_gamma = (1,*)
-                let t = self.l_a.big().pow(self.a); // TODO: define once
-                let bytes = big_to_bytes(t);
-                let Pa_gamma_4 = curve.mul(&Pa_gamma, &bytes, bytes.len() * 8);
+                let l_a_pow = self.l_a.big().pow(self.a);
+                let l_a_pow_bytes = big_to_bytes(l_a_pow);
+                let Pa_gamma_4 = curve.mul(&Pa_gamma, &l_a_pow_bytes, l_a_pow_bytes.len() * 8);
                 if Pa_gamma_4.X.equals(&Pa_gamma_4.Z) != 0xFFFFFFFF {
                     Pa_gamma.X.set_neg();
                     Qa_rand_gamma.X.set_neg();
@@ -477,7 +477,7 @@ macro_rules! define_litsigamal {
 
                 // println!("6 (after a series of (2,2)-isogenies): {:?}", sixth_part.elapsed());
 
-                let alpha: Integer = generate_random_range(0.big(), l_c.big().pow(power_c - 2)) * l_c + 
+                let alpha: Integer = generate_random_range(0.big(), l_c.big().pow(power_c - 1)) * l_c + 
                     generate_random_range(1.big(), 5.big());
                 let alpha_bytes = big_to_bytes(alpha.clone());
 
@@ -530,7 +530,7 @@ macro_rules! define_litsigamal {
                 let A24 = get_montgomery_A24(&Pb, &Qb, &PQb);
                 let A24_1 = get_montgomery_A24(&Pb1, &Qb1, &PQb1);
 
-                let s = self.l_b * generate_random_range(0.big(), self.l_b.big().pow(pub_key.power_b) - 2) +
+                let s = self.l_b * generate_random_range(0.big(), self.l_b.big().pow(pub_key.power_b - 1) - 1) +
                             generate_random_range(1.big(), 3.big());
 
                 let curve = Curve::new_fromA24(&A24.0, &A24.1);
@@ -596,8 +596,6 @@ macro_rules! define_litsigamal {
 
             pub fn decrypt(&self, cipher: &Cipher, alice_secret: (Integer, Integer, Integer)) -> Integer {
                 let start = Instant::now();
-                println!("");
-                println!("decrypt");
 
                 let (points, points1) = (&cipher.points, &cipher.points1);
                 let (mut Pa, mut Qa, mut R) = (points.Pa, points.Qa, points.R);
@@ -615,7 +613,7 @@ macro_rules! define_litsigamal {
                 R = curve.xmul(&R, &alpha_bytes, alpha_bytes.len() * 8);
                 Pa = curve.xmul(&Pa, &alice_secret_0_bytes, alice_secret_0_bytes.len() * 8);
                 Qa = curve.xmul(&Qa, &alice_secret_1_bytes, alice_secret_1_bytes.len() * 8);
- 
+
                 let (mut Pa_complete, _) = curve.complete_pointX(&Pa);
                 let (Qa_complete, _) = curve.complete_pointX(&Qa);
                 let (R_complete, _) = curve.complete_pointX(&R);
