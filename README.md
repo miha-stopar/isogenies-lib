@@ -13,7 +13,7 @@ It also includes implementations of two isogeny-based schemes:
 This work uses:
  * [two-isogenies](https://github.com/ThetaIsogenies/two-isogenies) for computing (2, 2)-isogenies, implemented by [Jack](https://github.com/giacomopope).
  * Elliptic curve operations based on [finite field macros](https://github.com/pornin/crrl/blob/main/src/backend/w64/gfgen.rs) provided by [Thomas Pornin](https://github.com/pornin).
- * Sage scripts developed by [Tomoki](https://tomoriya.work).
+ * Sage Montgomery arithmetic developed by [Tomoki](https://tomoriya.work).
 
 ## Computing the isogeny chain
 

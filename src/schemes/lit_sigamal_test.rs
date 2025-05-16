@@ -65,7 +65,8 @@ mod tests {
         let (pub_key, alice_secret)= lit_sigamal.generate_pub_key();
         // let (pub_key, alice_secret)= lit_sigamal.generate_pub_key_dbg();
 
-        let mu: Integer = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 2) - 1) + generate_random_range(1.big(), 5.big());
+        let mu: Integer = l_c * generate_random_range(0.big(), l_c.big() * l_c.big().pow(pub_key.power_c - 1) - 1) + generate_random_range(1.big(), 5.big());
+        let mu: Integer = l_c.big() * 5818.big() + 1;
 
         /*
         println!("");

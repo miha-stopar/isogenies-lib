@@ -568,22 +568,62 @@ macro_rules! define_ec_core {
                 self.xadd(&X0, &Z0, &X0, &Z0, X, Z);
             }
 
-            #[inline(always)]
-            pub fn xmul(self, P: &mut PointX, s: Integer) {
-                let bits = bits_from_big(s);
+            pub fn xmul_into(self, P3: &mut PointX, P: &PointX, n: &[u8], nbitlen: usize) {
+                if nbitlen == 0 {
+                    P3.X = Fq::ONE;
+                    P3.Z = Fq::ZERO;
+                    return;
+                }
 
-                let P0 = *P;
-                let mut Q = *P;
-                self.xdbl(&mut Q.X, &mut Q.Z);
-
-                for b in bits.into_iter().rev().skip(1) {
-                    // TODO: constant time
-                    if b == 1 {
-                        (Q, *P) = self.double_add(&Q, P, &P0);
-                    } else {
-                        (*P, Q) = self.double_add(P, &Q, &P0);
+                let mut X0 = Fq::ONE;
+                let mut Z0 = Fq::ZERO;
+                let mut X1 = P.X;
+                let mut Z1 = P.Z;
+                let mut cc = 0u32;
+                if nbitlen > 21 {
+                    // If n is large enough then it is worthwhile to
+                    // normalize the source point to affine.
+                    // If P = inf, then this sets Xp to 0; thus, the
+                    // output of both xdbl() and xadd_aff() has Z = 0,
+                    // so we correctly get the point-at-infinity at the end.
+                    let Xp = P.X / P.Z;
+                    for i in (0..nbitlen).rev() {
+                        let ctl = (((n[i >> 3] >> (i & 7)) as u32) & 1).wrapping_neg();
+                        Fq::condswap(&mut X0, &mut X1, ctl ^ cc);
+                        Fq::condswap(&mut Z0, &mut Z1, ctl ^ cc);
+                        self.xadd_aff(&Xp, &X0, &Z0, &mut X1, &mut Z1);
+                        self.xdbl(&mut X0, &mut Z0);
+                        cc = ctl;
+                    }
+                } else {
+                    for i in (0..nbitlen).rev() {
+                        let ctl = (((n[i >> 3] >> (i & 7)) as u32) & 1).wrapping_neg();
+                        Fq::condswap(&mut X0, &mut X1, ctl ^ cc);
+                        Fq::condswap(&mut Z0, &mut Z1, ctl ^ cc);
+                        self.xadd(&P.X, &P.Z, &X0, &Z0, &mut X1, &mut Z1);
+                        self.xdbl(&mut X0, &mut Z0);
+                        cc = ctl;
                     }
                 }
+                Fq::condswap(&mut X0, &mut X1, cc);
+                Fq::condswap(&mut Z0, &mut Z1, cc);
+
+                // The ladder may fail if P = (0,0) (which is a point of
+                // order 2) because in that case xadd() (and xadd_aff())
+                // return Z = 0 systematically, so the result is considered
+                // to be the point-at-infinity, which is wrong is n is odd.
+                // We adjust the result in that case.
+                let spec = P.X.iszero() & !P.Z.iszero() & ((n[0] as u32) & 1).wrapping_neg();
+                P3.X = X0;
+                P3.Z = Z0;
+                P3.X.set_cond(&Fq::ZERO, spec);
+                P3.Z.set_cond(&Fq::ONE, spec);
+            }
+
+            pub fn xmul(self, P: &PointX, n: &[u8], nbitlen: usize) -> PointX {
+                let mut P3 = PointX::INFINITY;
+                self.xmul_into(&mut P3, P, n, nbitlen);
+                P3
             }
 
             #[inline(always)]
@@ -654,19 +694,19 @@ macro_rules! define_ec_core {
                 R1 
             }
 
+            #[inline(always)]
+            fn xadd_aff(self, Xp: &Fq, X0: &Fq, Z0: &Fq, X1: &mut Fq, Z1: &mut Fq) {
+                let V1 = &(X0 - Z0) * &(&*X1 + &*Z1);
+                let V2 = &(X0 + Z0) * &(&*X1 - &*Z1);
+                *X1 = (&V1 + &V2).square();
+                *Z1 = Xp * &(&V1 - &V2).square();
+            }
+
             /// P3 <- n*P
             /// Integer n is encoded as unsigned little-endian, with length
             /// nbitlen bits. Bits beyond that length are ignored.
             pub fn mul_into(self, P3: &mut Point, P: &Point, n: &[u8], nbitlen: usize) {
-                // Montgomery ladder: see https://eprint.iacr.org/2017/212
-
-                #[inline(always)]
-                fn xadd_aff(_curve: &Curve, Xp: &Fq, X0: &Fq, Z0: &Fq, X1: &mut Fq, Z1: &mut Fq) {
-                    let V1 = &(X0 - Z0) * &(&*X1 + &*Z1);
-                    let V2 = &(X0 + Z0) * &(&*X1 - &*Z1);
-                    *X1 = (&V1 + &V2).square();
-                    *Z1 = Xp * &(&V1 - &V2).square();
-                }
+                // Montgomery ladder: see https://eprint.iacr.org/2017/212 
 
                 // We will need the complete 2*P at the end, to handle some
                 // special cases of the formulas.
@@ -686,7 +726,7 @@ macro_rules! define_ec_core {
                         let ctl = (((n[i >> 3] >> (i & 7)) as u32) & 1).wrapping_neg();
                         Fq::condswap(&mut X0, &mut X1, ctl ^ cc);
                         Fq::condswap(&mut Z0, &mut Z1, ctl ^ cc);
-                        xadd_aff(&self, &Xp, &X0, &Z0, &mut X1, &mut Z1);
+                        self.xadd_aff(&Xp, &X0, &Z0, &mut X1, &mut Z1);
                         self.xdbl(&mut X0, &mut Z0);
                         cc = ctl;
                     }

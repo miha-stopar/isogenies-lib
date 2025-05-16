@@ -207,7 +207,7 @@ macro_rules! define_litsigamal {
 
                 let mut curve = self.curve.clone();
     
-                // TODO: prepare completions, also for Y!! Otherwise, the Y completion
+                // TODO: prepare completions, also for Y! Otherwise, the Y completion
                 // in Sage and Rust might be different.
                 let (Pa, _) = curve.complete_pointX(&PaX);
                 let (Qa, _) = curve.complete_pointX(&QaX);
@@ -225,12 +225,8 @@ macro_rules! define_litsigamal {
                 let l_b = 3;
                 let l_c = 5;
  
-                let mut a1 = generate_random_range(0.big(), l_a.big().pow(power_a) - 1);
-                let mut a2 = generate_random_range(0.big(), l_a.big().pow(power_a - 1)) * l_a + 1;
-                a1 = "67821213147103272121758535926151039005030912112029727951085328323311503610545609587044506281792717705600807906711
-952".big();
-                a2 = "10827571144677997620644424104650364372653000782849569633450213074630849473914074810111054720448115636003540948886
-5063".big();
+                let a1 = generate_random_range(0.big(), l_a.big().pow(self.a + 1) - 1);
+                let a2 = generate_random_range(0.big(), l_a.big().pow(self.a + 1)) * l_a + 1;
 
                 let mut c1: Integer;
                 let mut c2: Integer;
@@ -245,12 +241,12 @@ macro_rules! define_litsigamal {
                     }
                 }
                 // Pc = c1 * Pc + c2 * Qc
-                let mut bytes = big_to_bytes(c1.clone());
-                let c1Pc = self.curve.mul(&Pc, &bytes, bytes.len() * 8);
-                bytes = big_to_bytes(c2.clone());
-                let c2Qc = self.curve.mul(&Qc, &bytes, bytes.len() * 8);
+                let bytes1 = big_to_bytes(c1.clone());
+                let c1Pc = self.curve.mul(&Pc, &bytes1, bytes1.len() * 8);
+                let bytes2 = big_to_bytes(c2.clone());
+                let c2Qc = self.curve.mul(&Qc, &bytes2, bytes2.len() * 8);
                 let Pc_rand = self.curve.add(&c1Pc, &c2Qc);
- 
+
                 let Rx = PointX::new_xz(&Pc_rand.X, &Pc_rand.Z);
 
                 // N = (l_a**(2*a) - n**2) * l_b**b
@@ -261,8 +257,8 @@ macro_rules! define_litsigamal {
                 let order = standard_maximal_extremal_order().order;
                 let (coord, imprim) = gamma.factor_in_order(order.lattice.clone());
 
-                // println!("1 (before apply endomorphism): {:?}", start.elapsed());
-                // let second_part = Instant::now();
+                println!("1 (before apply endomorphism): {:?}", start.elapsed());
+                let second_part = Instant::now();
 
                 let torsion_a = l_a.big().pow(self.a + 2);
                 
@@ -313,13 +309,13 @@ macro_rules! define_litsigamal {
                 let torsion_b_minus = l_b.big().pow(power_b - 1);
                 let (Pb_gamma, Qb_gamma, _) = apply_endomorphism_on_torsion_group(&curve, coord.clone(), imprim.clone(), torsion_b.clone(), mat3_2, mat3_3, mat3_4, &Pb, &Qb, &PmQb);
 
-                // println!("2 (after apply endomorphism): {:?}", second_part.elapsed());
-                // let third_part = Instant::now();
+                println!("2 (after apply endomorphism): {:?}", second_part.elapsed());
+                let third_part = Instant::now();
 
                 let dlog1 = dlog_3(&curve, &Pb_gamma, &Qb_gamma, self.b.try_into().unwrap());
 
-                // println!("3 (after dlog): {:?}", third_part.elapsed());
-                // let fourth_part = Instant::now();
+                println!("3 (after dlog): {:?}", third_part.elapsed());
+                let fourth_part = Instant::now();
 
                 let bytes = big_to_bytes(dlog1);
                 let dlog_Pb = curve.mul(&Pb, &bytes, bytes.len() * 8);
@@ -344,7 +340,7 @@ macro_rules! define_litsigamal {
                 let (mut Qa_rand, _) = codomain.complete_pointX(&Qa_rand_isog3X);
 
                 let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) =
-                    self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa_rand, &Pa_gamma, &Qa_rand_gamma, torsion_b_minus.clone(), tau.clone(), 1);
+                    self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa_rand, &Pa_gamma, &Qa_rand_gamma, torsion_b_minus.clone(), tau.clone());
 
                 let ell_product = EllipticProduct::new(&codomain, &curve);
  
@@ -365,8 +361,8 @@ macro_rules! define_litsigamal {
                 let Qb_shiftX = PointX::new_xz(&Qb_shift.X, &Qb_shift.Z);
                 let PQb_shiftX = PointX::new_xz(&PQb_shift.X, &PQb_shift.Z);
 
-                // println!("4 (after 3-isogeny): {:?}", fourth_part.elapsed());
-                // let fifth_part = Instant::now();
+                println!("4 (after 3-isogeny): {:?}", fourth_part.elapsed());
+                let fifth_part = Instant::now();
 
                 let b_points = [Pb_to_be_mapped, Qb_to_be_mapped, PQb_to_be_mapped];
                 let b_shift_points = [Pb_shiftX, Qb_shiftX, PQb_shiftX];
@@ -391,56 +387,12 @@ macro_rules! define_litsigamal {
                 let mut Qb1_to_be_mapped = points[1];
                 let mut PQb1_to_be_mapped = points[2];
 
-                // start of debugging
-
-                let Qb11 = generate_random_fq(&codomain, torsion_b_minus.clone(), self.scalar_without_b.clone());
-
-                let mut bytes1 = big_to_bytes(Integer::from(self.n));
-                let torsion8_Qb = self.curve.mul(&Qb11, &bytes1, bytes1.len() * 8);
-
-                let factor = l_a.big().pow(self.a - 1);
-                bytes1 = big_to_bytes(factor);
-                let torsion8_Pa = self.curve.mul(&Pa_gamma, &bytes1, bytes1.len() * 8);
-                let torsion8_Qa = self.curve.mul(&Qa_gamma, &bytes1, bytes1.len() * 8);
-
-                let P1P2 = CouplePoint::new(&torsion8_Pa, &torsion8_Qa);
-                let Q1Q2 = CouplePoint::new(&torsion8_Qa, &torsion8_Qb);
-
-
-                // TODO:
-                let image_points1 = vec![
-                    P1P2,
-                    P1P2,
-                    P1P2
-                    // CouplePoint::new(&self.two_dim.P, &self.two_dim.Q),
-                    // CouplePoint::new(&self.two_dim.omegaP, &self.two_dim.omegaQ),
-                ];
-
-                // Precomputed with strategy.py
-                // TODO: derive 383 from self.a
-                // let strategy: [usize; 383] = [144, 89, 55, 34, 27, 21, 13, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 8, 6, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 21, 13, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 8, 5, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 2, 1, 1, 1, 1, 1];
-
-                let chain2 = Instant::now();
-
-                let (product1, points1) = product_isogeny(
-                    &ell_product,
-                    &P1P2,
-                    &Q1Q2,
-                    &image_points1,
-                    // self.a as usize,
-                    self.a as usize - 1,
-                    &self.strategy_2,
-                );
-
-                println!("chain2: {:?}", chain2.elapsed());
-
-                // end of debugging
-
-                let f_mul = l_b.big().pow(power_b - 1);
+                let f_mul_bytes = big_to_bytes(l_b.big().pow(power_b - 1));
+                let f_mul_len = f_mul_bytes.len() * 8;
                 let mut backtracking_check = PointX::INFINITY;
 
-                // println!("5 (after (2,2)-isogeny): {:?}", fifth_part.elapsed());
-                // let sixth_part = Instant::now();
+                println!("5 (after (2,2)-isogeny): {:?}", fifth_part.elapsed());
+                let sixth_part = Instant::now();
 
                 for _ in 0..6 {
                     let mut no_backtracking = false;
@@ -452,9 +404,8 @@ macro_rules! define_litsigamal {
                             generate_random_range(1.big(), 3.big());
 
                         kernel = codomain.ladder_3pt(&Pb_to_be_mapped, &Qb_to_be_mapped, &PQb_to_be_mapped, s.clone());
-
                         let mut check = kernel.clone();
-                        codomain.xmul(&mut check, f_mul.clone());
+                        check = codomain.xmul(&check, &f_mul_bytes, f_mul_len);
 
                         if (check.X * backtracking_check.Z).equals(&(backtracking_check.X * check.Z)) != 0xFFFFFFFF || backtracking_check.equals(&PointX::INFINITY) == 0xFFFFFFFF {
                             no_backtracking = true;
@@ -467,7 +418,7 @@ macro_rules! define_litsigamal {
                     (codomain, image_points) = three_isogeny_chain(&codomain, &kernel, eval_points.to_vec(), n, &self.strategy);
                     (Pa_to_be_mapped, Qa_to_be_mapped, Ra_to_be_mapped, backtracking_check) = (image_points[0], image_points[1], image_points[2], image_points[3]);
 
-                    codomain.xmul(&mut backtracking_check, f_mul.clone());
+                    backtracking_check = codomain.xmul(&backtracking_check, &f_mul_bytes, f_mul_len);
 
                     let eval_points = [Pa1_to_be_mapped, Qa1_to_be_mapped, Ra1_to_be_mapped]; 
                     (curve, image_points) = three_isogeny_chain(&curve, &kernel1, eval_points.to_vec(), n, &self.strategy);
@@ -479,7 +430,7 @@ macro_rules! define_litsigamal {
                     let (Qa1, _) = curve.complete_pointX(&Qa1_to_be_mapped);
 
                     let (Pa_shift, Qa_shift, Pa1_shift, Qa1_shift, Pb, Qb, PQb, Pb_shift, Qb_shift, PQb_shift) =
-                        self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa, &Pa1, &Qa1, torsion_b_minus.clone(), tau.clone(), 2);
+                        self.get_PQb_and_shift(&codomain, &curve, &Pa, &mut Qa, &Pa1, &Qa1, torsion_b_minus.clone(), tau.clone());
 
                     Pb_to_be_mapped = PointX::new_xz(&Pb.X, &Pb.Z);
                     Qb_to_be_mapped = PointX::new_xz(&Qb.X, &Qb.Z);
@@ -524,17 +475,21 @@ macro_rules! define_litsigamal {
                     PQb1_to_be_mapped = points[2];
                 }
 
-                // println!("6 (after a series of (2,2)-isogenies): {:?}", sixth_part.elapsed());
+                println!("6 (after a series of (2,2)-isogenies): {:?}", sixth_part.elapsed());
 
                 let alpha: Integer = generate_random_range(0.big(), l_c.big().pow(power_c - 2)) * l_c + 
                     generate_random_range(1.big(), 5.big());
-                curve.xmul(&mut Ra1_to_be_mapped, alpha.clone());
+                let alpha_bytes = big_to_bytes(alpha.clone());
 
-                let alice_secret0: Integer = generate_random_range(0.big(), l_a.big().pow(self.a + 2) - 2) * l_a + 1;
-                let alice_secret1: Integer = generate_random_range(0.big(), l_a.big().pow(self.a + 2) - 2) * l_a + 1;
+                Ra1_to_be_mapped = curve.xmul(&Ra1_to_be_mapped, &alpha_bytes, alpha_bytes.len() * 8);
 
-                curve.xmul(&mut Pa1_to_be_mapped, alice_secret0.clone());
-                curve.xmul(&mut Qa1_to_be_mapped, alice_secret1.clone());
+                let alice_secret0: Integer = generate_random_range(0.big(), l_a.big().pow(self.a + 1) - 1) * l_a + 1;
+                let alice_secret1: Integer = generate_random_range(0.big(), l_a.big().pow(self.a + 1) - 1) * l_a + 1;
+                let alice_secret0_bytes = big_to_bytes(alice_secret0.clone());
+                let alice_secret1_bytes = big_to_bytes(alice_secret1.clone());
+
+                Pa1_to_be_mapped = curve.xmul(&Pa1_to_be_mapped, &alice_secret0_bytes, alice_secret0_bytes.len() * 8);
+                Qa1_to_be_mapped = curve.xmul(&Qa1_to_be_mapped, &alice_secret1_bytes, alice_secret1_bytes.len() * 8);
 
                 let pubkey_points = PubKeyPoints::new(
                     Pa_to_be_mapped,
@@ -567,6 +522,8 @@ macro_rules! define_litsigamal {
 
             pub fn encrypt(&self, pub_key: &PubKey, mu: Integer) -> Cipher {
                 let start = Instant::now();
+                println!("");
+                println!("encrypt");
 
                 let (points, points1) = (&pub_key.points, &pub_key.points1);
                 let (mut Pa, mut Qa, Pb, Qb, PQb, mut R) = (points.Pa, points.Qa, points.Pb, points.Qb, points.PQb, points.R);
@@ -586,6 +543,9 @@ macro_rules! define_litsigamal {
 
                 let n = self.strategy.len() + 1;
 
+                println!("before 3-isogeny: {:?}", start.elapsed());
+                let second_part = Instant::now();
+
                 let eval_points = [Pa, Qa, R];
                 let (curve_new, image_points) = three_isogeny_chain(&curve, &kernelx, eval_points.to_vec(), n, &self.strategy);
                 (Pa, Qa, R) = (image_points[0], image_points[1], image_points[2]);
@@ -593,21 +553,36 @@ macro_rules! define_litsigamal {
                 let eval_points = [Pa1, Qa1, R1];
                 let (curve1_new, image_points) = three_isogeny_chain(&curve1, &kernel1x, eval_points.to_vec(), n, &self.strategy);
                 (Pa1, Qa1, R1) = (image_points[0], image_points[1], image_points[2]);
+
+                println!("after 3-isogeny: {:?}", second_part.elapsed());
+                let third_part = Instant::now();
  
-                let beta = self.l_c * generate_random_range(0.big(), self.l_c.big().pow(pub_key.power_c - 2) - 1) +
+                let beta = self.l_c * generate_random_range(0.big(), self.l_c.big().pow(pub_key.power_c - 1) - 1) +
                             generate_random_range(1.big(), 5.big());
+                let beta_bytes = big_to_bytes(beta.clone());
 
-                curve_new.xmul(&mut R, beta.clone());
-                curve1_new.xmul(&mut R1, beta * mu);
+                R = curve_new.xmul(&R, &beta_bytes, beta_bytes.len() * 8);
+                let beta_mu = beta * mu;
+                let beta_mu_bytes = big_to_bytes(beta_mu.clone());
+                R1 = curve1_new.xmul(&R1, &beta_mu_bytes, beta_mu_bytes.len() * 8);
 
-                let bob_secret_1: Integer = self.l_a * generate_random_range(0.big(), self.l_a.big().pow(self.a + 2) - 1) + 1;
-                let bob_secret_2: Integer = self.l_a * generate_random_range(0.big(), self.l_a.big().pow(self.a + 2) - 1) + 1;
+                let bob_secret_1: Integer = self.l_a * generate_random_range(0.big(), self.l_a.big().pow(self.a + 1) - 1) + 1;
+                let bob_secret_2: Integer = self.l_a * generate_random_range(0.big(), self.l_a.big().pow(self.a + 1) - 1) + 1;
 
-                curve_new.xmul(&mut Pa, bob_secret_1.clone());
-                curve_new.xmul(&mut Qa, bob_secret_2.clone());
+                let bob_secret_1_bytes = big_to_bytes(bob_secret_1.clone());
+                let bob_secret_2_bytes = big_to_bytes(bob_secret_2.clone());
 
-                curve1_new.xmul(&mut Pa1, bob_secret_1);
-                curve1_new.xmul(&mut Qa1, bob_secret_2);
+                println!("encrypt, before xmul: {:?}", third_part.elapsed());
+                let fourth_part = Instant::now();
+
+                Pa = curve_new.xmul(&Pa, &bob_secret_1_bytes, bob_secret_1_bytes.len() * 8);
+                Qa = curve_new.xmul(&Qa, &bob_secret_2_bytes, bob_secret_2_bytes.len() * 8);
+
+                Pa1 = curve1_new.xmul(&Pa1, &bob_secret_1_bytes, bob_secret_1_bytes.len() * 8);
+                Qa1 = curve1_new.xmul(&Qa1, &bob_secret_2_bytes, bob_secret_2_bytes.len() * 8);
+
+                println!("encrypt, after xmul: {:?}", fourth_part.elapsed());
+                let fifth_part = Instant::now();
  
                 let points = CipherPoints::new(
                     Pa,
@@ -621,7 +596,8 @@ macro_rules! define_litsigamal {
                     R1,
                 );
 
-                println!("encrypt: {:?}", start.elapsed());
+                // println!("encrypt: {:?}", start.elapsed());
+                println!("encrypt: {:?}", fifth_part.elapsed());
 
                 Cipher::new(
                     points,
@@ -635,6 +611,8 @@ macro_rules! define_litsigamal {
 
             pub fn decrypt(&self, cipher: &Cipher, alice_secret: (Integer, Integer, Integer)) -> Integer {
                 let start = Instant::now();
+                println!("");
+                println!("decrypt");
 
                 let (points, points1) = (&cipher.points, &cipher.points1);
                 let (mut Pa, mut Qa, mut R) = (points.Pa, points.Qa, points.R);
@@ -644,10 +622,14 @@ macro_rules! define_litsigamal {
                 let curve1 = Curve::new_fromA24(&cipher.A24_1_num, &cipher.A24_1_denom);
 
                 let alpha = alice_secret.2;
+
+                let alpha_bytes = big_to_bytes(alpha.clone());
+                let alice_secret_0_bytes = big_to_bytes(alice_secret.0.clone());
+                let alice_secret_1_bytes = big_to_bytes(alice_secret.1.clone());
                 
-                curve.xmul(&mut R, alpha);
-                curve.xmul(&mut Pa, alice_secret.0);
-                curve.xmul(&mut Qa, alice_secret.1);
+                R = curve.xmul(&R, &alpha_bytes, alpha_bytes.len() * 8);
+                Pa = curve.xmul(&Pa, &alice_secret_0_bytes, alice_secret_0_bytes.len() * 8);
+                Qa = curve.xmul(&Qa, &alice_secret_1_bytes, alice_secret_1_bytes.len() * 8);
  
                 let (mut Pa_complete, _) = curve.complete_pointX(&Pa);
                 let (Qa_complete, _) = curve.complete_pointX(&Qa);
@@ -696,6 +678,9 @@ macro_rules! define_litsigamal {
 
                 let ell_product = EllipticProduct::new(&curve, &curve1);
 
+                println!("before compute_isogeny: {:?}", start.elapsed());
+                let second_part = Instant::now();
+
                 let b_points = [R];
                 let b_shift_points = [R_shiftX];
                 let points_R = compute_isogeny(
@@ -716,17 +701,21 @@ macro_rules! define_litsigamal {
 
                 let R1_2 = points_R[0];
 
+                println!("after compute_isogeny: {:?}", second_part.elapsed());
+                let third_part = Instant::now();
+
                 let (R1_2_complete, _) = curve1.complete_pointX(&R1_2);
                 let mu2 = dlog_5(&curve1, &R1_2_complete, &R1_complete, self.c.try_into().unwrap());
 
-                println!("decrypt: {:?}", start.elapsed());
+                println!("after dlog: {:?}", third_part.elapsed());
+                // println!("decrypt: {:?}", start.elapsed());
                 println!("");
 
                 mu2
             }
 
             fn get_PQb_and_shift(&self, curve_1: &Curve, curve_2: &Curve, Pa: &Point, Qa: &mut Point,
-                    Pa1: &Point, Qa1: &Point, torsion_b_minus: Integer, tau: Integer, dbg_index: usize) -> (Point, Point, Point, Point, Point, Point, Point, Point, Point, Point) {
+                    Pa1: &Point, Qa1: &Point, torsion_b_minus: Integer, tau: Integer) -> (Point, Point, Point, Point, Point, Point, Point, Point, Point, Point) {
                 let mut Pb1;
                 let mut Qb1;
                 loop {
@@ -736,8 +725,10 @@ macro_rules! define_litsigamal {
                     // Pb1 and Qb1 needs to be linear independent
                     let mut Pb1_check = PointX::new_xz(&Pb1.X, &Pb1.Z);
                     let mut Qb1_check = PointX::new_xz(&Qb1.X, &Qb1.Z);
-                    curve_1.xmul(&mut Pb1_check, torsion_b_minus.clone());
-                    curve_1.xmul(&mut Qb1_check, torsion_b_minus.clone());
+
+                    let bytes = big_to_bytes(torsion_b_minus.clone());
+                    Pb1_check = curve_1.xmul(&Pb1_check, &bytes, bytes.len() * 8);
+                    Qb1_check = curve_1.xmul(&Qb1_check, &bytes, bytes.len() * 8);
                 
                     if (Pb1_check.X * Qb1_check.Z).equals(&(Qb1_check.X * Pb1_check.Z)) != 0xFFFFFFFF {
                         break;
